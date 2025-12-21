@@ -1,0 +1,82 @@
+{
+  "info": {
+    "name": "Groceries API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Register (Node)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{ \"username\":\"demo\", \"password\":\"demo\" }"
+        },
+        "url": {
+          "raw": "http://localhost:8081/auth/register",
+          "host": [
+            "http://localhost:8081"
+          ],
+          "path": [
+            "auth",
+            "register"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Login (Node)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{ \"username\":\"demo\", \"password\":\"demo\" }"
+        },
+        "url": {
+          "raw": "http://localhost:8081/auth/login",
+          "host": [
+            "http://localhost:8081"
+          ],
+          "path": [
+            "auth",
+            "login"
+          ]
+        }
+      }
+    },
+    {
+      "name": "List Groceries (Node)",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": {
+          "raw": "http://localhost:8081/api/groceries",
+          "host": [
+            "http://localhost:8081"
+          ],
+          "path": [
+            "api",
+            "groceries"
+          ]
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,87 @@
+/* Full page wrapper */
+.login-page {
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f6f8fb;
+}
+
+/* Login card */
+.login-card {
+  width: 380px;
+  max-width: 90%;
+  background: #ffffff;
+  padding: 32px;
+  border-radius: 14px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+}
+
+/* Title */
+.login-card h2 {
+  margin-bottom: 6px;
+  font-size: 26px;
+  font-weight: 600;
+  color: #222;
+}
+
+/* Subtitle */
+.login-card p {
+  margin-bottom: 24px;
+  color: #666;
+  font-size: 14px;
+}
+
+/* Form group */
+.login-card label {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 6px;
+  color: #333;
+}
+
+.login-card input {
+  width: 100%;
+  padding: 10px 12px;
+  margin-bottom: 16px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  font-size: 14px;
+}
+
+.login-card input:focus {
+  outline: none;
+  border-color: #6c63ff;
+}
+
+/* Login button */
+.login-btn {
+  width: 100%;
+  padding: 12px;
+  background: linear-gradient(135deg, #6c63ff, #8e7bff);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.login-btn:hover {
+  opacity: 0.95;
+}
+
+/* Footer text */
+.login-footer {
+  margin-top: 16px;
+  font-size: 14px;
+  text-align: center;
+}
+
+.login-footer a {
+  color: #6c63ff;
+  text-decoration: none;
+  font-weight: 500;
+}

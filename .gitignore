@@ -1,0 +1,16 @@
+# Node
+node_modules/
+dist/
+out/
+
+# Java
+target/
+*.log
+
+# Env
+.env
+
+# IDE
+.idea/
+.vscode/
+*.iml

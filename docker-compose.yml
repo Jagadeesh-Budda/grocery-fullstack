@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: groceries-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: pguser
+      POSTGRES_PASSWORD: pgpass
+      POSTGRES_DB: groceriesdb
+      TZ: Asia/Kolkata
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pguser -d groceriesdb"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  spring:
+    profiles: ["backend"]
+    build:
+      context: ./springboot-groceries
+      dockerfile: Dockerfile
+    container_name: groceries-spring
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/groceriesdb
+      SPRING_DATASOURCE_USERNAME: pguser
+      SPRING_DATASOURCE_PASSWORD: pgpass
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_JPA_PROPERTIES_HIBERNATE_JDBC_TIME_ZONE: Asia/Kolkata
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  node:
+    profiles: ["backend"]
+    build:
+      context: ./node-groceries
+      dockerfile: Dockerfile
+    container_name: groceries-node
+    ports:
+      - "8081:8080"
+    environment:
+      DATABASE_URL: postgres://pguser:pgpass@postgres:5432/groceriesdb
+
+  frontend:
+    profiles: ["frontend"]
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: groceries-frontend
+    ports:
+      - "5173:5173"
+
+volumes:
+  pgdata:
