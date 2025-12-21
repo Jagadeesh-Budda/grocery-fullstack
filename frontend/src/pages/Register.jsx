@@ -1,67 +1,104 @@
 import React from "react";
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
-import "./Login.css";
 
 export default function Register() {
   const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
 
-  async function handleRegister(e) {
+  const handleRegister = async (e) => {
     e.preventDefault();
+    if (loading) return;
+
+    setLoading(true);
 
     try {
-      await fetch(
-        `${import.meta.env.VITE_API_BASE_URL}/auth/register`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ username, password }),
-          credentials: "include",
-        }
-      );
+      const res = await fetch("http://localhost:8080/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username,
+          email,
+          password,
+        }),
+      });
 
-      navigate("/login");
+      if (!res.ok) {
+        throw new Error("Registration failed");
+      }
+
+      alert("Registration successful. Please login.");
+      window.location.href = "/login";
     } catch (err) {
-      alert("Registration failed");
+      alert("User already exists or invalid data");
+      setLoading(false);
     }
-  }
+  };
 
   return (
-    <div className="auth-page">
-      <div className="auth-card">
-        <h2>Create Account</h2>
-        <p>Register to manage your groceries</p>
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4 py-12">
+      <div className="max-w-md w-full bg-white rounded-2xl shadow-md border border-slate-200 p-8">
+        {/* Header */}
+        <div className="flex items-center gap-4 mb-6">
+          <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-700 rounded-lg flex items-center justify-center text-white font-bold text-lg">
+            G
+          </div>
+          <div>
+            <h1 className="text-xl font-semibold text-slate-900">
+              Create account
+            </h1>
+            <p className="text-sm text-slate-500">
+              Register to manage your groceries
+            </p>
+          </div>
+        </div>
 
-        <form onSubmit={handleRegister}>
-          <label>Username</label>
+        <form onSubmit={handleRegister} className="space-y-5">
+          {/* Username */}
           <input
             type="text"
-            placeholder="Enter your username"
+            required
+            placeholder="Username"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
-            required
+            className="w-full px-4 py-2.5 border rounded-lg bg-slate-50 focus:ring-2 focus:ring-green-400"
           />
 
-          <label>Password</label>
+          {/* Email */}
+          <input
+            type="email"
+            required
+            placeholder="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full px-4 py-2.5 border rounded-lg bg-slate-50 focus:ring-2 focus:ring-green-400"
+          />
+
+          {/* Password */}
           <input
             type="password"
-            placeholder="Enter your password"
+            required
+            placeholder="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            required
+            className="w-full px-4 py-2.5 border rounded-lg bg-slate-50 focus:ring-2 focus:ring-green-400"
           />
 
-          <button className="auth-btn" type="submit">
-            Register
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-green-600 hover:bg-green-700 text-white py-2.5 rounded-lg font-medium disabled:opacity-60"
+          >
+            {loading ? "Creating account…" : "Register"}
           </button>
         </form>
 
-        <div className="auth-footer">
-          Already have an account? <Link to="/login">Login here</Link>
+        <div className="text-center text-sm text-slate-600 mt-6">
+          Already have an account?{" "}
+          <a href="/login" className="text-green-600 font-medium hover:underline">
+            Login here
+          </a>
         </div>
       </div>
     </div>

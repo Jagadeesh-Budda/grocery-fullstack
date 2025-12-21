@@ -1,86 +1,57 @@
-import React from "react";
-import { useEffect, useState, useCallback } from "react";
-import {
-  fetchGroceries,
-  deleteGrocery,
-  updateGrocery,
-} from "../../services/groceryApi.js";
-import ShoppingItem from "./ShoppingItem.jsx";
+import React, { useMemo, useState } from "react";
+import ShoppingItem from "./ShoppingItem";
 
-export default function ShoppingList() {
-  const [items, setItems] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+export default function ShoppingList({
+  items = [],
+  selectedCategory = null,
+}) {
+  const [query, setQuery] = useState("");
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await fetchGroceries();
-      setItems(Array.isArray(data) ? data : []);
-    } catch (err) {
-      console.error(err);
-      setError(err.message || "Failed to load groceries");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const filteredItems = useMemo(() => {
+    return items.filter((item) => {
+      if (!item?.name) return false;
 
-  useEffect(() => {
-    load();
-  }, [load]);
+      const matchesSearch =
+        query.trim() === "" ||
+        item.name.toLowerCase().includes(query.toLowerCase());
 
-  async function handleDelete(id) {
-    const prev = items;
-    setItems((curr) => curr.filter((i) => i.id !== id));
-    try {
-      await deleteGrocery(id);
-    } catch (e) {
-      console.error(e);
-      setItems(prev);
-    }
-  }
+      const matchesCategory =
+        !selectedCategory ||
+        item.category === selectedCategory ||
+        item.category?.toLowerCase() === selectedCategory?.toLowerCase();
 
-  async function handleUpdate(updatedItem) {
-    const prev = items;
-    setItems((curr) =>
-      curr.map((it) => (it.id === updatedItem.id ? updatedItem : it))
-    );
-    try {
-      await updateGrocery(updatedItem.id, updatedItem);
-    } catch (e) {
-      console.error(e);
-      setItems(prev);
-      throw e;
-    }
-  }
-
-  if (loading) {
-    return <div className="p-4 text-sm text-slate-600">Loading groceries…</div>;
-  }
-
-  if (error) {
-    return <div className="p-4 text-sm text-red-600">Error: {error}</div>;
-  }
-
-  if (!items.length) {
-    return (
-      <div className="p-4 text-sm text-slate-600">
-        No groceries yet. Add some to get started.
-      </div>
-    );
-  }
+      return matchesSearch && matchesCategory;
+    });
+  }, [items, query, selectedCategory]);
 
   return (
-    <div className="p-3 grid gap-3">
-      {items.map((item) => (
-        <ShoppingItem
-          key={item.id}
-          item={item}
-          onDelete={handleDelete}
-          onUpdate={handleUpdate}
+    <div className="bg-white rounded-lg p-4 shadow-sm">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="font-semibold text-lg">Shopping List</h3>
+
+        <input
+          type="text"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search items..."
+          className="px-3 py-2 border rounded-md text-sm w-56"
         />
-      ))}
+      </div>
+
+      {/* Empty state */}
+      {filteredItems.length === 0 ? (
+        <p className="text-sm text-slate-500">
+          No items found
+          {selectedCategory ? ` in ${selectedCategory}` : ""}.
+        </p>
+      ) : (
+        <div className="space-y-3">
+          {filteredItems.map((item) => (
+            <ShoppingItem key={item.id} item={item} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
