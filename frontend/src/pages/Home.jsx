@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import MainLayout from "../layouts/MainLayout";
 import ShoppingList from "../features/shopping/ShoppingList";
 import CategoryGrid from "../features/discovery/CategoryGrid";
+import ProductGrid from "../features/products/ProductGrid";
 
 export default function Home() {
   const [selectedCategory, setSelectedCategory] = useState(null);
@@ -27,6 +28,19 @@ export default function Home() {
     },
   ];
 
+  const sampleProducts = [
+    { id: 1, name: "Tomatoes", image: "", pricePerKg: 2.5 },
+    { id: 2, name: "Potatoes", image: "", pricePerKg: 1.2 },
+    { id: 3, name: "Onions", image: "", pricePerKg: 1.8 },
+    { id: 4, name: "Apples", image: "", pricePerKg: 3.4 },
+  ];
+
+  const handleAddToCart = (product) => {
+    // placeholder handler
+    // eslint-disable-next-line no-console
+    console.log("Add to cart:", product);
+  };
+
   return (
     <MainLayout
       left={
@@ -36,10 +50,13 @@ export default function Home() {
         />
       }
       right={
-        <CategoryGrid
-          selectedCategory={selectedCategory}
-          onSelectCategory={setSelectedCategory}
-        />
+        <div>
+          <CategoryGrid
+            selectedCategory={selectedCategory}
+            onSelectCategory={setSelectedCategory}
+          />
+          <ProductGrid products={sampleProducts} onAddToCart={handleAddToCart} />
+        </div>
       }
     />
   );
