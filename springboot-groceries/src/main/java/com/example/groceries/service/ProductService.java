@@ -1,37 +1,43 @@
 package com.example.groceries.service;
 
-import com.example.groceries.model.Product;
-import com.example.groceries.repository.ProductRepository;
+import com.example.groceries.model.ProductMaster;
+import com.example.groceries.repository.ProductMasterRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional; // 1. Add this import
 
 import java.util.List;
 
 @Service
 public class ProductService {
 
-    private final ProductRepository productRepository;
+    private final ProductMasterRepository productMasterRepository;
 
-    public ProductService(ProductRepository productRepository) {
-        this.productRepository = productRepository;
+    public ProductService(ProductMasterRepository productMasterRepository) {
+        this.productMasterRepository = productMasterRepository;
     }
 
-    public List<Product> getAllProducts() {
-        return productRepository.findAll();
+    @Transactional(readOnly = true) // 2. Add this to your getter
+    public List<ProductMaster> getAllProducts() {
+        return productMasterRepository.findAll();
     }
 
-    public Product getProductById(Long id) {
-        return productRepository.findById(id).orElse(null);
+    @Transactional(readOnly = true) // 3. Add this here too
+    public ProductMaster getProductById(Long id) {
+        return productMasterRepository.findById(id).orElse(null);
     }
 
-    public List<Product> getProductsByCategory(Long categoryId) {
-        return productRepository.findByCategoryId(categoryId);
+    @Transactional(readOnly = true) // 4. And here
+    public List<ProductMaster> getProductsByCategory(Long categoryId) {
+        return productMasterRepository.findByCategoryId(categoryId);
     }
 
-    public Product saveProduct(Product product) {
-        return productRepository.save(product);
+    @Transactional // 5. Add without (readOnly = true) for saving
+    public ProductMaster saveProduct(ProductMaster product) {
+        return productMasterRepository.save(product);
     }
 
+    @Transactional
     public void deleteProduct(Long id) {
-        productRepository.deleteById(id);
+        productMasterRepository.deleteById(id);
     }
 }

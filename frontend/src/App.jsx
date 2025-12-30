@@ -1,40 +1,40 @@
+// src/App.jsx
 import React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
-
-import Login from "./pages/Login";
-import Register from "./pages/Register";
 import Home from "./pages/Home";
-import ProtectedRoute from "./routes/ProtectedRoute";
-import AdminRoute from "./routes/AdminRoute";
+import Login from "./pages/Login";
 import AdminDashboard from "./pages/AdminDashboard";
-
+import Products from './pages/Products';
+import MainLayout from "./layouts/MainLayout";
+import AdminLayout from "./layouts/AdminLayout";
+import ProtectedRoute from "./routes/ProtectedRoute";
+import AdminCategories from "./pages/AdminCategories";
+import Register from "./pages/Register";
 
 export default function App() {
   return (
     <Routes>
-      {/* Auto redirect root */}
       <Route path="/" element={<Navigate to="/login" replace />} />
-
-      {/* Public routes */}
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
 
-      {/* Protected user routes */}
-      <Route element={<ProtectedRoute />}>
-        <Route path="/groceries" element={<Home />} />
-        {/* add more user-only routes here */}
+      {/* 1st: User Routes (Accessible by both USER and ADMIN) */}
+      <Route element={<ProtectedRoute allowedRoles={['ROLE_USER', 'ROLE_ADMIN']} />}>
+        <Route path="/groceries" element={<MainLayout />}>
+          <Route index element={<Home />} />
+        </Route>
       </Route>
 
-      {/* Admin routes (role-based) */}
-      <Route path="/admin" element={<AdminRoute title="Admin" />}>
-  <Route path="" element={<AdminDashboard />} />
+      {/* 2nd: Admin Routes (Strictly ROLE_ADMIN only) */}
+      <Route element={<ProtectedRoute allowedRoles={['ROLE_ADMIN']} />}>
+        <Route path="/admin" element={<AdminLayout />}>
+          <Route index element={<AdminDashboard />} />
+          <Route path="products" element={<Products />} />
+          <Route path="categories" element={<AdminCategories />} />
+        </Route>
+      </Route>
 
-
-        {/* nested admin routes can go here, e.g. <Route path="products" element={<AdminProducts/>} /> */}
-</Route>
-      {/* Fallback */}
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   );
 }
-

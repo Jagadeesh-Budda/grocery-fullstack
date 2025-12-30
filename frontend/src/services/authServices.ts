@@ -19,3 +19,14 @@ export async function loginUser(
 
   return res.json();
 }
+const authServices = {
+  getToken: () => localStorage.getItem("token"),
+  getUser: () => JSON.parse(localStorage.getItem("user") || "{}"),
+  isLoggedIn: () => !!localStorage.getItem("token"),
+  logout: () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+  }
+};
+
+export default authServices;

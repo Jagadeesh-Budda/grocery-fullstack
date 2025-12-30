@@ -5,6 +5,9 @@ public class DashboardStatsDTO {
     private Double totalIncome;
     private Long totalVisitors;
     private Double salesGrowthPercent;
+    private long TotalProducts;
+    private long TotalCategories;
+    private long TotalUsers;
 
     public Long getTotalSales() {
         return totalSales;
@@ -36,5 +39,14 @@ public class DashboardStatsDTO {
 
     public void setSalesGrowthPercent(Double salesGrowthPercent) {
         this.salesGrowthPercent = salesGrowthPercent;
+    }
+
+    public void setTotalProducts(long TotalProducts) { this.TotalProducts = TotalProducts;
+    }
+
+    public void setTotalCategories(long count) { this.TotalCategories = TotalCategories;
+    }
+
+    public void setTotalUsers(long count) { this.TotalCategories = TotalCategories;
     }
 }

@@ -1,37 +1,30 @@
 package com.example.groceries.controller;
 
 import com.example.groceries.controller.dto.DashboardStatsDTO;
-import com.example.groceries.model.Product;
+import com.example.groceries.model.ProductMaster;
 import com.example.groceries.service.AdminStatsService;
-import com.example.groceries.service.CategoryService;
+import com.example.groceries.service.DashboardService;
 import com.example.groceries.service.ProductService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.HashMap;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/admin")
 public class AdminController {
 
-    private final ProductService productService;
-    private final CategoryService categoryService;
+    private final DashboardService dashboardService;
     private final AdminStatsService adminStatsService;
+    private final ProductService productService;
 
-    public AdminController(ProductService productService, CategoryService categoryService, AdminStatsService adminStatsService) {
-        this.productService = productService;
-        this.categoryService = categoryService;
+    // Constructor injection (BEST PRACTICE)
+    public AdminController(
+            DashboardService dashboardService,
+            AdminStatsService adminStatsService,
+            ProductService productService
+    ) {
+        this.dashboardService = dashboardService;
         this.adminStatsService = adminStatsService;
-    }
-
-    @GetMapping("/dashboard")
-    public ResponseEntity<Map<String, Object>> getDashboardData() {
-        Map<String, Object> stats = new HashMap<>();
-        stats.put("totalProducts", productService.getAllProducts().size());
-        stats.put("totalCategories", categoryService.getAllCategories().size());
-        stats.put("status", "Active");
-        return ResponseEntity.ok(stats);
+        this.productService = productService;
     }
 
     @GetMapping("/stats")
@@ -39,8 +32,13 @@ public class AdminController {
         return ResponseEntity.ok(adminStatsService.getDashboardStats());
     }
 
+    @GetMapping("/dashboard/stats")
+    public DashboardStatsDTO getDashboardStats() {
+        return dashboardService.getDashboardStats(); // ✅ FIXED
+    }
+
     @PostMapping("/product")
-    public ResponseEntity<Product> addProduct(@RequestBody Product product) {
+    public ResponseEntity<ProductMaster> addProduct(@RequestBody ProductMaster product) {
         return ResponseEntity.ok(productService.saveProduct(product));
     }
 

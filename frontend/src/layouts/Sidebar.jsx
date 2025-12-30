@@ -1,69 +1,55 @@
+// src/components/Sidebar.jsx
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Home, Grid, ShoppingCart, Heart, Settings, LogOut } from 'lucide-react';
+import { Home, Grid, ShoppingCart, Settings, LogOut, Package } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const items = [
-  { key: 'dashboard', label: 'Dashboard', icon: Home, href: '/' },
-  { key: 'categories', label: 'Categories', icon: Grid, href: '/categories' },
-  { key: 'orders', label: 'Orders', icon: ShoppingCart, href: '/orders' },
-  { key: 'favorites', label: 'Favorites', icon: Heart, href: '/favorites' },
-  { key: 'settings', label: 'Settings', icon: Settings, href: '/settings' },
+  { key: 'dashboard', label: 'Dashboard', icon: Home, href: '/admin' },
+  { key: 'categories', label: 'Categories', icon: Grid, href: '/admin/categories' },
+  { key: 'products', label: 'Products', icon: Package, href: '/admin/products' },
+  { key: 'orders', label: 'Orders', icon: ShoppingCart, href: '/admin/orders' },
+  { key: 'settings', label: 'Settings', icon: Settings, href: '/admin/settings' },
 ];
 
-export default function Sidebar({ active = 'dashboard', onNavigate = () => {}, onLogout = () => {} }) {
+export default function Sidebar({ active = 'dashboard', onLogout = () => {} }) {
+  const navigate = useNavigate();
+
   return (
-    <aside
-      aria-label="Primary"
-      style={{
-        width: 260,
-        background: '#ffffff',
-        borderRight: '1px solid rgba(15,23,42,0.06)',
-        padding: 16,
-        boxSizing: 'border-box',
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'space-between',
-        gap: 12,
-      }}
-    >
+    <aside className="w-64 h-screen bg-white border-r border-gray-100 p-4 flex flex-col justify-between shadow-sm">
       <div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 18 }}>
-          <div style={{ width: 36, height: 36, borderRadius: 8, background: 'linear-gradient(135deg,#34d399,#10b981)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700 }}>
-            G
+        {/* Logo Section */}
+        <div className="flex items-center gap-3 mb-8 px-2">
+          <div className="w-9 h-9 rounded-xl bg-grocery-primary flex items-center justify-center text-white shadow-lg shadow-green-100">
+            <ShoppingCart size={20} strokeWidth={2.5} />
           </div>
-          <div style={{ fontWeight: 700, fontSize: 16, color: '#0f172a' }}>GroceryHub</div>
+          <div className="font-bold text-lg text-grocery-heading tracking-tight">
+            Grocery<span className="text-grocery-primary">Hub</span>
+          </div>
         </div>
 
+        {/* Navigation Items */}
         <nav aria-label="Sidebar navigation">
-          <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <ul className="space-y-2">
             {items.map((it) => {
               const Icon = it.icon;
               const isActive = it.key === active;
               return (
                 <li key={it.key}>
                   <button
-                    onClick={() => onNavigate(it)}
-                    aria-current={isActive ? 'page' : undefined}
-                    style={{
-                      width: '100%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 12,
-                      padding: '10px 12px',
-                      borderRadius: 10,
-                      background: isActive ? '#ecfdf5' : 'transparent',
-                      color: isActive ? '#065f46' : '#0f172a',
-                      border: 'none',
-                      cursor: 'pointer',
-                      textAlign: 'left',
-                      boxShadow: isActive ? 'inset 0 1px 0 rgba(0,0,0,0.02)' : 'none',
-                      transition: 'background 160ms ease, transform 160ms ease',
-                    }}
+                    onClick={() => navigate(it.href)}
+                    className={`
+                      w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group
+                      ${isActive 
+                        ? 'bg-grocery-success text-grocery-successText' 
+                        : 'text-grocery-body hover:bg-gray-50 hover:text-grocery-heading'}
+                    `}
                   >
-                    <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <Icon size={18} />
-                    </span>
-                    <span style={{ fontSize: 14, fontWeight: 600 }}>{it.label}</span>
+                    <Icon 
+                      size={20} 
+                      className={`${isActive ? 'text-grocery-primary' : 'text-gray-400 group-hover:text-grocery-primary'}`} 
+                    />
+                    <span className="text-sm font-semibold">{it.label}</span>
                   </button>
                 </li>
               );
@@ -72,25 +58,14 @@ export default function Sidebar({ active = 'dashboard', onNavigate = () => {}, o
         </nav>
       </div>
 
-      <div>
+      {/* Logout Section */}
+      <div className="pt-4 border-t border-gray-50">
         <button
           onClick={onLogout}
-          style={{
-            width: '100%',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 10,
-            padding: '10px 12px',
-            borderRadius: 10,
-            background: 'transparent',
-            color: '#ef4444',
-            border: '1px solid rgba(239,68,68,0.08)',
-            cursor: 'pointer',
-            fontWeight: 600,
-          }}
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-red-500 hover:bg-red-50 font-semibold transition-colors"
         >
-          <LogOut size={18} />
-          <span>Logout</span>
+          <LogOut size={20} />
+          <span className="text-sm">Logout</span>
         </button>
       </div>
     </aside>
@@ -99,6 +74,5 @@ export default function Sidebar({ active = 'dashboard', onNavigate = () => {}, o
 
 Sidebar.propTypes = {
   active: PropTypes.string,
-  onNavigate: PropTypes.func,
   onLogout: PropTypes.func,
 };

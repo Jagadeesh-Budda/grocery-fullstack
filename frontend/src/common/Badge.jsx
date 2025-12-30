@@ -1,30 +1,30 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-/**
- * Presentational Badge component.
- * - Purely presentational: accepts props and renders UI only.
- * - No API/routing/business logic.
- */
 const Badge = ({
   children,
   text,
-  variant,
-  className,
-  ariaLabel,
-  title,
+  variant = 'info', // Defaulting to info
+  className = '',
   ...rest
 }) => {
-  const rootClass = `badge${variant ? ` badge--${variant}` : ''}${className ? ` ${className}` : ''}`;
+  // Mapping variants to our grocery design system colors
+  const variants = {
+    success: 'bg-grocery-success text-grocery-successText',
+    warning: 'bg-grocery-warning text-grocery-warningText',
+    danger: 'bg-grocery-danger text-grocery-dangerText',
+    info: 'bg-grocery-info text-grocery-infoText',
+    default: 'bg-gray-100 text-gray-600',
+  };
+
+  const selectedVariant = variants[variant] || variants.default;
 
   return (
     <span
-      className={rootClass}
-      aria-label={ariaLabel}
-      title={title}
+      className={`inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-bold tracking-wide uppercase ${selectedVariant} ${className}`}
       {...rest}
     >
-      {children != null ? children : text}
+      {children || text}
     </span>
   );
 };
@@ -32,19 +32,8 @@ const Badge = ({
 Badge.propTypes = {
   children: PropTypes.node,
   text: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-  variant: PropTypes.string,
+  variant: PropTypes.oneOf(['success', 'warning', 'danger', 'info', 'default']),
   className: PropTypes.string,
-  ariaLabel: PropTypes.string,
-  title: PropTypes.string,
-};
-
-Badge.defaultProps = {
-  children: null,
-  text: '',
-  variant: 'default',
-  className: '',
-  ariaLabel: undefined,
-  title: undefined,
 };
 
 export default Badge;

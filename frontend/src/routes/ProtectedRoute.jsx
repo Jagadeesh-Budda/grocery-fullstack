@@ -1,22 +1,21 @@
+// src/routes/ProtectedRoute.jsx
 import React from "react";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 
-export default function ProtectedRoute() {
+export default function ProtectedRoute({ allowedRoles }) {
   const location = useLocation();
+  const user = JSON.parse(localStorage.getItem("user"));
+  const token = localStorage.getItem("token");
 
-  let user = null;
-  try {
-    const raw = localStorage.getItem("user");
-    user = raw ? JSON.parse(raw) : null;
-  } catch {
-    user = null;
+  // Check if logged in
+  if (!user || !token) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // ✅ simple check: user exists
-  const isAuthenticated = Boolean(user);
-
-  if (!isAuthenticated) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
+  // Check if role is authorized
+  if (allowedRoles && !allowedRoles.includes(user.role)) {
+    // If Admin tries to enter user area or vice-versa, redirect them to their rightful home
+    return <Navigate to={user.role === 'ROLE_ADMIN' ? "/admin" : "/groceries"} replace />;
   }
 
   return <Outlet />;
