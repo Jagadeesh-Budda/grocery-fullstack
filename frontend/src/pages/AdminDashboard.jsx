@@ -1,6 +1,7 @@
-import React from "react";
-import { useEffect, useState } from "react";
-import { TrendingUp, DollarSign, Users, AlertCircle } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { fetchAdminDashboard } from "../services/adminapi";
+import { DollarSign, ShoppingBag, Users, TrendingUp } from 'lucide-react';
+import Card from "../common/Card"; // Ensure this path to your new Card is correct
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState(null);
