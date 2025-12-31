@@ -1,78 +1,125 @@
-import React, { useState } from 'react';
-import Card from '../common/Card';
-import Badge from '../common/Badge';
-import { Plus, Search, Edit2, Trash2 } from 'lucide-react';
+import React, { useEffect, useState } from "react";
+import "./Products.css";
 
-const productData = [
-  { id: 1, name: "Organic Bananas", price: "60", stock: 15, image: "https://placehold.co/400x300/f3f4f6/059669?text=Bananas" },
-  { id: 2, name: "Fresh Milk (1L)", price: "55", stock: 0, image: "https://placehold.co/400x300/f3f4f6/059669?text=Milk" },
-  { id: 3, name: "Whole Wheat Bread", price: "40", stock: 5, image: "https://placehold.co/400x300/f3f4f6/059669?text=Bread" },
-  { id: 4, name: "Red Apples", price: "120", stock: 25, image: "https://placehold.co/400x300/f3f4f6/059669?text=Apples" },
-];
+const PAGE_SIZE = 8;           // products per page
+const MAX_VISIBLE_PAGES = 5;   // pagination buttons
 
 export default function Products() {
-  const [searchTerm, setSearchTerm] = useState("");
+  const [allProducts, setAllProducts] = useState([]);
+  const [products, setProducts] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [loading, setLoading] = useState(false);
 
-  const filteredProducts = productData.filter(product =>
-    product.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // 🔹 Fetch ALL products once
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  // 🔹 Slice products when page changes
+  useEffect(() => {
+    paginateProducts();
+  }, [currentPage, allProducts]);
+
+  // ✅ WORKING fetch (matches your backend)
+  const fetchProducts = async () => {
+    try {
+      setLoading(true);
+
+      const res = await fetch("http://localhost:8080/admin/products");
+      const data = await res.json(); // ← ARRAY
+
+      setAllProducts(data);
+      setTotalPages(Math.ceil(data.length / PAGE_SIZE));
+    } catch (err) {
+      console.error("Failed to load products", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 🔹 Frontend pagination
+  const paginateProducts = () => {
+    const start = (currentPage - 1) * PAGE_SIZE;
+    const end = start + PAGE_SIZE;
+    setProducts(allProducts.slice(start, end));
+  };
+
+  // 🔹 Sliding pagination logic
+  const getVisiblePages = () => {
+    let start = Math.max(
+      1,
+      currentPage - Math.floor(MAX_VISIBLE_PAGES / 2)
+    );
+    let end = start + MAX_VISIBLE_PAGES - 1;
+
+    if (end > totalPages) {
+      end = totalPages;
+      start = Math.max(1, end - MAX_VISIBLE_PAGES + 1);
+    }
+
+    const pages = [];
+    for (let i = start; i <= end; i++) {
+      pages.push(i);
+    }
+    return pages;
+  };
 
   return (
-    <div className="space-y-6">
-      {/* 1. Enhanced Header with Search */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-5 rounded-xl3 shadow-sm border border-gray-100">
-        <div>
-          <h1 className="text-xl font-bold text-grocery-heading">Product Inventory</h1>
-          <p className="text-xs text-grocery-body">Manage {productData.length} items in your store</p>
+    <div className="products-page">
+
+      <h2 className="page-title">Products</h2>
+
+      {/* 🔹 Product Grid */}
+      {loading ? (
+        <p className="loading">Loading products...</p>
+      ) : (
+        <div className="product-grid">
+          {products.map((p) => (
+            <div className="product-card" key={p.id}>
+              <h4>{p.name}</h4>
+              <p className="price">₹{p.price}</p>
+              <p className="stock">Stock: {p.stock}</p>
+              <span className="sku">{p.sku}</span>
+            </div>
+          ))}
         </div>
-        
-        <div className="flex items-center gap-3">
-          <div className="relative">
-            <Search className="absolute left-3 top-2.5 text-gray-400" size={16} />
-            <input 
-              type="text" 
-              placeholder="Search by name..." 
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 pr-4 py-2 bg-gray-50 border-none rounded-lg text-sm focus:ring-2 focus:ring-grocery-primary/20 outline-none w-64"
-            />
-          </div>
-          <button className="flex items-center gap-2 bg-grocery-primary hover:bg-grocery-primaryHover text-white px-4 py-2 rounded-lg font-bold text-sm transition-all shadow-sm active:scale-95">
-            <Plus size={18} />
-            Add Product
+      )}
+
+      {/* 🔹 Pagination */}
+      {totalPages > 1 && (
+        <div className="pagination">
+
+          <button
+            disabled={currentPage === 1}
+            onClick={() => setCurrentPage((p) => p - 1)}
+          >
+            Prev
           </button>
+
+          {currentPage > 3 && <span className="dots">...</span>}
+
+          {getVisiblePages().map((page) => (
+            <button
+              key={page}
+              className={page === currentPage ? "active" : ""}
+              onClick={() => setCurrentPage(page)}
+            >
+              {page}
+            </button>
+          ))}
+
+          {currentPage < totalPages - 2 && <span className="dots">...</span>}
+
+          <button
+            disabled={currentPage === totalPages}
+            onClick={() => setCurrentPage((p) => p + 1)}
+          >
+            Next
+          </button>
+
         </div>
-      </div>
-
-      {/* 2. Responsive Product Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {filteredProducts.map((product) => (
-          <Card key={product.id} className="group overflow-hidden !p-0 relative border-none shadow-card hover:shadow-glass transition-all">
-            
-            {/* Action Buttons (Visible on Hover) */}
-            <div className="absolute top-2 right-2 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-              <button className="p-2 bg-white/90 backdrop-blur-sm text-grocery-heading rounded-lg shadow-sm hover:bg-white"><Edit2 size={14} /></button>
-              <button className="p-2 bg-white/90 backdrop-blur-sm text-red-500 rounded-lg shadow-sm hover:bg-red-50"><Trash2 size={14} /></button>
-            </div>
-
-            <img src={product.image} alt={product.name} className="h-40 w-full object-cover group-hover:scale-105 transition-transform duration-500" />
-            
-            <div className="p-4 space-y-3">
-              <div className="flex justify-between items-start">
-                <h3 className="font-bold text-grocery-heading text-sm">{product.name}</h3>
-                <span className="text-grocery-primary font-black text-sm">₹{product.price}</span>
-              </div>
-              
-              <div className="flex justify-between items-center pt-2 border-t border-gray-50">
-                <span className="text-[10px] text-gray-400 font-bold uppercase tracking-tight">Stock: {product.stock} units</span>
-                <Badge variant={product.stock > 10 ? 'success' : product.stock > 0 ? 'warning' : 'danger'}>
-                  {product.stock > 10 ? 'In Stock' : product.stock > 0 ? 'Low Stock' : 'Out of Stock'}
-                </Badge>
-              </div>
-            </div>
-          </Card>
-        ))}
-      </div>
+      )}
     </div>
   );
 }

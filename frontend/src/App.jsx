@@ -10,6 +10,10 @@ import AdminLayout from "./layouts/AdminLayout";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import AdminCategories from "./pages/AdminCategories";
 import Register from "./pages/Register";
+import './styles/theme.css';
+import './styles/cards.css';
+
+
 
 export default function App() {
   return (

@@ -1,7 +1,9 @@
 package com.example.groceries.controller;
 
 import com.example.groceries.controller.dto.ProductMasterDTO;
+import com.example.groceries.controller.dto.ProductVariantDTO;
 import com.example.groceries.model.ProductMaster;
+import com.example.groceries.model.ProductVariant;
 import com.example.groceries.service.ProductService;
 import com.example.groceries.service.mapper.ProductMapper;
 import org.springframework.http.HttpStatus;
@@ -31,9 +33,9 @@ public class AdminProductController {
     }
 
     @GetMapping
-    public ResponseEntity<List<ProductMasterDTO>> getAllProducts() {
-        List<ProductMasterDTO> products = productService.getAllProducts().stream()
-                .map(productMapper::toMasterDTO)
+    public ResponseEntity<List<ProductVariantDTO>> getAllProducts() {
+        List<ProductVariantDTO> products = productService.getAllProducts().stream()
+                .map(productMapper::toVariantDTO)
                 .collect(Collectors.toList());
         return new ResponseEntity<>(products, HttpStatus.OK);
     }

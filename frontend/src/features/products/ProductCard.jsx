@@ -5,28 +5,28 @@ import { Heart } from 'lucide-react';
 const ProductCard = ({ product, onAddToCart, onToggleFavorite }) => {
     const [hovered, setHovered] = useState(false);
     const [isFavorite, setIsFavorite] = useState(false);
-    const { name, image, description, pricePerKg } = product || {};
+    const { name, image, description, pricePerKg, category } = product || {};
 
     const cardStyle = {
-        width: 220,
-        borderRadius: 14,
+        width: 260,
+        borderRadius: 12,
         overflow: 'hidden',
         background: '#ffffff',
-        boxShadow: hovered ? '0 14px 40px rgba(15,23,42,0.08)' : '0 6px 18px rgba(15,23,42,0.06)',
-        transform: hovered ? 'scale(1.04) translateY(-4px)' : 'scale(1) translateY(0)',
-        transition: 'transform 160ms ease, box-shadow 160ms ease',
+        boxShadow: hovered ? '0 10px 30px rgba(2,6,23,0.08)' : '0 6px 18px rgba(2,6,23,0.06)',
+        transform: hovered ? 'translateY(-4px)' : 'translateY(0)',
+        transition: 'transform 180ms ease, box-shadow 180ms ease',
         cursor: 'pointer',
         display: 'flex',
         flexDirection: 'column',
         userSelect: 'none',
-        border: '1px solid rgba(15,23,42,0.06)',
+        border: '1px solid rgba(15,23,42,0.04)',
         position: 'relative',
     };
 
     const imageWrap = {
         width: '100%',
         height: 140,
-        background: '#f9fafb',
+        background: '#f8fafc',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -45,9 +45,9 @@ const ProductCard = ({ product, onAddToCart, onToggleFavorite }) => {
 
     const favoriteBtn = {
         position: 'absolute',
-        top: 8,
-        right: 8,
-        background: 'rgba(255,255,255,0.9)',
+        top: 10,
+        right: 10,
+        background: 'rgba(255,255,255,0.95)',
         border: 'none',
         borderRadius: 8,
         padding: 6,
@@ -56,11 +56,11 @@ const ProductCard = ({ product, onAddToCart, onToggleFavorite }) => {
         alignItems: 'center',
         justifyContent: 'center',
         transition: 'background 160ms ease, transform 160ms ease',
-        backdropFilter: 'blur(4px)',
+        boxShadow: '0 2px 8px rgba(2,6,23,0.06)',
     };
 
     const body = {
-        padding: 12,
+        padding: 14,
         display: 'flex',
         flexDirection: 'column',
         gap: 8,
@@ -68,12 +68,33 @@ const ProductCard = ({ product, onAddToCart, onToggleFavorite }) => {
         flex: 1,
     };
 
+    const headerRow = {
+        display: 'flex',
+        alignItems: 'center',
+        gap: 8,
+        width: '100%',
+    };
+
     const nameStyle = {
         margin: 0,
         fontSize: 15,
-        fontWeight: 700,
+        fontWeight: 800,
         color: '#0f172a',
-        lineHeight: 1.3,
+        lineHeight: 1.2,
+        flex: 1,
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        whiteSpace: 'nowrap',
+    };
+
+    const categoryLabel = {
+        fontSize: 12,
+        color: '#6b7280',
+        background: '#f3f4f6',
+        padding: '4px 8px',
+        borderRadius: 999,
+        fontWeight: 600,
+        whiteSpace: 'nowrap',
     };
 
     const descStyle = {
@@ -83,15 +104,30 @@ const ProductCard = ({ product, onAddToCart, onToggleFavorite }) => {
         lineHeight: 1.4,
     };
 
+    const priceRow = {
+        display: 'flex',
+        alignItems: 'baseline',
+        gap: 6,
+        width: '100%',
+        marginTop: 4,
+    };
+
     const priceStyle = {
         margin: 0,
-        fontSize: 14,
-        fontWeight: 700,
-        color: '#10b981',
+        fontSize: 16,
+        fontWeight: 800,
+        color: '#059669', // highlighted green
+    };
+
+    const unitStyle = {
+        fontSize: 12,
+        color: '#065f46',
+        opacity: 0.85,
+        marginLeft: 4,
     };
 
     const btnStyle = {
-        marginTop: 'auto',
+        marginTop: '12px',
         padding: '10px 12px',
         borderRadius: 10,
         border: 'none',
@@ -101,7 +137,7 @@ const ProductCard = ({ product, onAddToCart, onToggleFavorite }) => {
         cursor: 'pointer',
         alignSelf: 'stretch',
         transition: 'box-shadow 160ms ease, transform 160ms ease',
-        boxShadow: '0 4px 12px rgba(16,185,129,0.1)',
+        boxShadow: '0 4px 12px rgba(16,185,129,0.08)',
     };
 
     const handleFavoriteClick = (e) => {
@@ -124,7 +160,7 @@ const ProductCard = ({ product, onAddToCart, onToggleFavorite }) => {
                 ) : (
                     <div style={{ color: '#9ca3af', fontSize: 13 }}>No image</div>
                 )}
-                
+
                 <button
                     type="button"
                     style={favoriteBtn}
@@ -141,15 +177,24 @@ const ProductCard = ({ product, onAddToCart, onToggleFavorite }) => {
             </div>
 
             <div style={body}>
-                <h3 style={nameStyle}>{name || 'Unnamed product'}</h3>
+                <div style={headerRow}>
+                    <h3 style={nameStyle} title={name || 'Unnamed product'}>{name || 'Unnamed product'}</h3>
+                    {category && <span style={categoryLabel}>{category}</span>}
+                </div>
+
                 {description && <p style={descStyle}>{description}</p>}
-                <p style={priceStyle}>₹{Number(pricePerKg || 0).toFixed(2)} / kg</p>
+
+                <div style={priceRow}>
+                    <p style={priceStyle}>₹{Number(pricePerKg || 0).toFixed(2)}</p>
+                    <small style={unitStyle}>/ kg</small>
+                </div>
+
                 <button
                     type="button"
                     style={btnStyle}
                     onClick={() => onAddToCart && onAddToCart(product)}
-                    onMouseEnter={(e) => e.target.style.boxShadow = '0 8px 20px rgba(16,185,129,0.15)'}
-                    onMouseLeave={(e) => e.target.style.boxShadow = '0 4px 12px rgba(16,185,129,0.1)'}
+                    onMouseEnter={(e) => e.currentTarget.style.boxShadow = '0 8px 20px rgba(16,185,129,0.12)'}
+                    onMouseLeave={(e) => e.currentTarget.style.boxShadow = '0 4px 12px rgba(16,185,129,0.08)'}
                 >
                     Add to cart
                 </button>
@@ -164,6 +209,7 @@ ProductCard.propTypes = {
         image: PropTypes.string,
         description: PropTypes.string,
         pricePerKg: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+        category: PropTypes.string,
     }).isRequired,
     onAddToCart: PropTypes.func,
     onToggleFavorite: PropTypes.func,

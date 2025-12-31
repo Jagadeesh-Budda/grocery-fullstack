@@ -1,6 +1,8 @@
 package com.example.groceries.controller;
 
+import com.example.groceries.controller.dto.ProductListView;
 import com.example.groceries.controller.dto.ProductMasterDTO;
+import com.example.groceries.controller.dto.ProductVariantDTO;
 import com.example.groceries.model.ProductMaster;
 import com.example.groceries.service.ProductService;
 import com.example.groceries.service.mapper.ProductMapper;
@@ -23,14 +25,31 @@ public class ProductController {
         this.productMapper = productMapper;
     }
 
+    /* ================= PAGINATED LIST (UI) ================= */
     @GetMapping
-    public ResponseEntity<List<ProductMasterDTO>> getAllProducts() {
-        List<ProductMasterDTO> products = productService.getAllProducts().stream()
-                .map(productMapper::toMasterDTO)
+    public ResponseEntity<List<ProductListView>> getProducts(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        return ResponseEntity.ok(productService.getProducts(page, size));
+    }
+    @GetMapping("/count")
+    public ResponseEntity<Long> getVariantCount() {
+        return ResponseEntity.ok(productService.getVariantCount());
+    }
+
+    /* ================= ALL PRODUCTS (ADMIN / INTERNAL) ================= */
+    @GetMapping("/list")
+    public ResponseEntity<List<ProductVariantDTO>> getAllProducts() {
+        List<ProductVariantDTO> products = productService.getAllProducts()
+                .stream()
+                .map(productMapper::toVariantDTO)
                 .collect(Collectors.toList());
+
         return ResponseEntity.ok(products);
     }
 
+    /* ================= PRODUCT BY ID ================= */
     @GetMapping("/{id}")
     public ResponseEntity<ProductMasterDTO> getProductById(@PathVariable Long id) {
         ProductMaster product = productService.getProductById(id);
@@ -40,21 +59,30 @@ public class ProductController {
         return ResponseEntity.ok(productMapper.toMasterDTO(product));
     }
 
+    /* ================= PRODUCTS BY CATEGORY ================= */
     @GetMapping("/category/{categoryId}")
-    public ResponseEntity<List<ProductMasterDTO>> getProductsByCategory(@PathVariable Long categoryId) {
-        List<ProductMasterDTO> products = productService.getProductsByCategory(categoryId).stream()
+    public ResponseEntity<List<ProductMasterDTO>> getProductsByCategory(
+            @PathVariable Long categoryId
+    ) {
+        List<ProductMasterDTO> products = productService.getProductsByCategory(categoryId)
+                .stream()
                 .map(productMapper::toMasterDTO)
                 .collect(Collectors.toList());
+
         return ResponseEntity.ok(products);
     }
 
+    /* ================= CREATE / UPDATE ================= */
     @PostMapping
-    public ResponseEntity<ProductMasterDTO> saveProduct(@RequestBody ProductMasterDTO productDTO) {
+    public ResponseEntity<ProductMasterDTO> saveProduct(
+            @RequestBody ProductMasterDTO productDTO
+    ) {
         ProductMaster product = productMapper.toMasterEntity(productDTO);
         ProductMaster savedProduct = productService.saveProduct(product);
         return ResponseEntity.ok(productMapper.toMasterDTO(savedProduct));
     }
 
+    /* ================= DELETE ================= */
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
         productService.deleteProduct(id);

@@ -1,0 +1,52 @@
+:root{
+  --primary: #10B981;
+  --primary-dark: #059669;
+  --bg-soft: #f8fafc;
+  --card-bg: #ffffff;
+  --card-border: rgba(15,23,42,0.04);
+  --muted: #6b7280;
+  --danger: #ef4444;
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-pill: 999px;
+
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 12px;
+  --space-lg: 16px;
+
+  --elevation-subtle: 0 6px 18px rgba(2,6,23,0.06);
+  --elevation-hover: 0 10px 30px rgba(2,6,23,0.08);
+}
+
+/* Layout helpers */
+.theme-bg { background-color: var(--bg-soft); }
+.center { display:flex; align-items:center; justify-content:center; }
+
+/* Card */
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--elevation-subtle);
+  transition: transform 180ms ease, box-shadow 180ms ease;
+}
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--elevation-hover);
+}
+
+/* Typography */
+.card-title {
+  font-size: 15px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.price {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--primary-dark);
+}
