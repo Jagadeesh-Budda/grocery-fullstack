@@ -14,3 +14,7 @@ target/
 .idea/
 .vscode/
 *.iml
+
+# Image pipeline (ADD)
+image-pipeline/raw/
+image-pipeline/webp/
