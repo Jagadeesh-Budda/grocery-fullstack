@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import Pagination from "../components/Pagination"; // Ensure this path is correct
 import "./Home.css";
+import { getAdminProductsPaged, getAdminProductsCount } from "../services/adminapi";
+
 
 const Home = () => {
   const [products, setProducts] = useState([]);
@@ -9,42 +11,31 @@ const Home = () => {
   const [totalPages, setTotalPages] = useState(0);
   const pageSize = 20;
 
-  // Fetch Total Pages Count
-  useEffect(() => {
-    fetch("http://localhost:8080/api/products/count")
-      .then((res) => res.json())
-      .then((count) => {
-        setTotalPages(Math.ceil(count / pageSize));
-      })
-      .catch((err) => console.error("Error fetching count:", err));
-  }, []);
+ // Fetch Total Pages Count
+useEffect(() => {
+  getAdminProductsCount()
+    .then((count) => {
+      setTotalPages(Math.ceil(count / pageSize));
+    })
+    .catch((err) => console.error("Error fetching count:", err));
+}, []);
 
-  // Fetch Paginated Products
-  useEffect(() => {
-    setLoading(true);
-    // Spring Boot expects 0-indexed pages, so we subtract 1 from currentPage
-    const pageIndex = currentPage - 1;
-    
-    fetch(`http://localhost:8080/api/products?page=${pageIndex}&size=${pageSize}`)
-      .then((res) => res.json())
-      .then((data) => {
-        setProducts(data);
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.error("Error fetching products:", err);
-        setLoading(false);
-      });
-  }, [currentPage]);
+// Fetch Paginated Products
+useEffect(() => {
+  setLoading(true);
+  const pageIndex = currentPage - 1;
 
-  const handlePageChange = (page) => {
-    setCurrentPage(page);
-    window.scrollTo(0, 0); // Scroll to top on page change
-  };
+  getAdminProductsPaged(pageIndex, pageSize)
+    .then((data) => {
+      setProducts(data);
+      setLoading(false);
+    })
+    .catch((err) => {
+      console.error("Error fetching products:", err);
+      setLoading(false);
+    });
+}, [currentPage]);
 
-  if (loading && products.length === 0) {
-    return <div className="loader">Loading Groceries...</div>;
-  }
 
   return (
     <div className="home-container">

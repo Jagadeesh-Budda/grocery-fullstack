@@ -11,8 +11,9 @@ public class ProductVariant {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String name; // e.g., "500g", "1kg", "Red"
-    
+    @Column(name = "variant_name")
+    private String variantName;
+
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal price;
 
@@ -21,16 +22,19 @@ public class ProductVariant {
 
     private String sku;
 
+    @Column(name = "image_url")
+    private String imageUrl;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_master_id", nullable = false)
     private ProductMaster productMaster;
 
-    // Getters and Setters
+    // ✅ Getters & Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
+    public String getVariantName() { return variantName; }
+    public void setVariantName(String variantName) { this.variantName = variantName; }
 
     public BigDecimal getPrice() { return price; }
     public void setPrice(BigDecimal price) { this.price = price; }
@@ -40,6 +44,9 @@ public class ProductVariant {
 
     public String getSku() { return sku; }
     public void setSku(String sku) { this.sku = sku; }
+
+    public String getImageUrl() { return imageUrl; }
+    public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
 
     public ProductMaster getProductMaster() { return productMaster; }
     public void setProductMaster(ProductMaster productMaster) { this.productMaster = productMaster; }

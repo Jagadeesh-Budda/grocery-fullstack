@@ -1,56 +1,48 @@
 import React, { useEffect, useState } from "react";
 import "./Products.css";
 
-const PAGE_SIZE = 8;           // products per page
-const MAX_VISIBLE_PAGES = 5;   // pagination buttons
+const PAGE_SIZE = 8;
+const MAX_VISIBLE_PAGES = 5;
 
 export default function Products() {
-  const [allProducts, setAllProducts] = useState([]);
   const [products, setProducts] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(false);
 
-  // 🔹 Fetch ALL products once
-  useEffect(() => {
-    fetchProducts();
-  }, []);
-
-  // 🔹 Slice products when page changes
-  useEffect(() => {
-    paginateProducts();
-  }, [currentPage, allProducts]);
-
-  // ✅ WORKING fetch (matches your backend)
+  // ✅ Fetch paginated products from backend
   const fetchProducts = async () => {
     try {
       setLoading(true);
 
-      const res = await fetch("http://localhost:8080/admin/products");
-      const data = await res.json(); // ← ARRAY
+      const res = await fetch(
+        `http://localhost:8080/admin/products?page=${currentPage - 1}&size=${PAGE_SIZE}`
+      );
 
-      setAllProducts(data);
-      setTotalPages(Math.ceil(data.length / PAGE_SIZE));
+      if (!res.ok) {
+        throw new Error("Failed to fetch products");
+      }
+
+      const data = await res.json();
+
+      // ✅ Spring Boot Page response
+      setProducts(data.content || []);
+      setTotalPages(data.totalPages || 1);
     } catch (err) {
-      console.error("Failed to load products", err);
+      console.error("Failed to load products:", err);
+      setProducts([]);
     } finally {
       setLoading(false);
     }
   };
 
-  // 🔹 Frontend pagination
-  const paginateProducts = () => {
-    const start = (currentPage - 1) * PAGE_SIZE;
-    const end = start + PAGE_SIZE;
-    setProducts(allProducts.slice(start, end));
-  };
+  useEffect(() => {
+    fetchProducts();
+  }, [currentPage]);
 
-  // 🔹 Sliding pagination logic
+  // 🔹 Pagination numbers
   const getVisiblePages = () => {
-    let start = Math.max(
-      1,
-      currentPage - Math.floor(MAX_VISIBLE_PAGES / 2)
-    );
+    let start = Math.max(1, currentPage - Math.floor(MAX_VISIBLE_PAGES / 2));
     let end = start + MAX_VISIBLE_PAGES - 1;
 
     if (end > totalPages) {
@@ -67,7 +59,6 @@ export default function Products() {
 
   return (
     <div className="products-page">
-
       <h2 className="page-title">Products</h2>
 
       {/* 🔹 Product Grid */}
@@ -75,29 +66,37 @@ export default function Products() {
         <p className="loading">Loading products...</p>
       ) : (
         <div className="product-grid">
-          {products.map((p) => (
-            <div className="product-card" key={p.id}>
-              <h4>{p.name}</h4>
-              <p className="price">₹{p.price}</p>
-              <p className="stock">Stock: {p.stock}</p>
-              <span className="sku">{p.sku}</span>
-            </div>
-          ))}
+          {products.length === 0 ? (
+            <p>No products found</p>
+          ) : (
+            products.map((product) => (
+              <div className="product-card" key={product.id}>
+                <img
+                  src={`http://localhost:8080${product.imageUrl}`}
+                  alt={product.productName}
+                  onError={(e) => {
+                    e.target.src = "https://via.placeholder.com/150";
+                  }}
+                />
+                <h4>{product.productName}</h4>
+                <p className="price">₹{product.price}</p>
+                <p className="stock">Stock: {product.stock}</p>
+                <span className="sku">{product.sku}</span>
+              </div>
+            ))
+          )}
         </div>
       )}
 
       {/* 🔹 Pagination */}
       {totalPages > 1 && (
         <div className="pagination">
-
           <button
             disabled={currentPage === 1}
             onClick={() => setCurrentPage((p) => p - 1)}
           >
             Prev
           </button>
-
-          {currentPage > 3 && <span className="dots">...</span>}
 
           {getVisiblePages().map((page) => (
             <button
@@ -109,15 +108,12 @@ export default function Products() {
             </button>
           ))}
 
-          {currentPage < totalPages - 2 && <span className="dots">...</span>}
-
           <button
             disabled={currentPage === totalPages}
             onClick={() => setCurrentPage((p) => p + 1)}
           >
             Next
           </button>
-
         </div>
       )}
     </div>

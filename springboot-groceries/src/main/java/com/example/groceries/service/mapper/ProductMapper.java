@@ -39,10 +39,18 @@ public class ProductMapper {
 
         ProductVariantDTO dto = new ProductVariantDTO();
         dto.setId(variant.getId());
-        dto.setName(variant.getName());
         dto.setPrice(variant.getPrice());
         dto.setStock(variant.getStock());
         dto.setSku(variant.getSku());
+
+        // ✅ FIXED
+        dto.setVariantName(variant.getVariantName());
+        dto.setImageUrl(variant.getImageUrl());
+
+        // ✅ VERY IMPORTANT: product name
+        if (variant.getProductMaster() != null) {
+            dto.setProductName(variant.getProductMaster().getName());
+        }
 
         return dto;
     }
@@ -81,11 +89,14 @@ public class ProductMapper {
 
         ProductVariant variant = new ProductVariant();
         variant.setId(dto.getId());
-        variant.setName(dto.getName());
+        variant.setVariantName(dto.getVariantName()); // ✅ FIX
         variant.setPrice(dto.getPrice());
         variant.setStock(dto.getStock());
         variant.setSku(dto.getSku());
+        variant.setImageUrl(dto.getImageUrl());
 
         return variant;
     }
+
 }
+

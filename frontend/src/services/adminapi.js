@@ -34,3 +34,14 @@ export const updateCategory = async (id, data) => {
 export const deleteCategory = async (id) => {
   await api.delete(`/categories/${id}`);
 };
+/* ============ PRODUCTS ============ */
+
+export const getAdminProductsPaged = async (page, size) => {
+  const res = await api.get(`/products?page=${page}&size=${size}`);
+  return res.data;
+};
+
+export const getAdminProductsCount = async () => {
+  const res = await api.get(`/products/count`);
+  return res.data;
+};
