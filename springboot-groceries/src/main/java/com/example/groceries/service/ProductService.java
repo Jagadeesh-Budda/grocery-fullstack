@@ -1,70 +1,63 @@
 package com.example.groceries.service;
 
-import com.example.groceries.controller.dto.ProductListView;
+import com.example.groceries.controller.dto.GroupedProductDTO;
+import com.example.groceries.controller.dto.ProductVariantDTO;
+import com.example.groceries.controller.dto.UserProductDTO;
 import com.example.groceries.model.ProductMaster;
 import com.example.groceries.model.ProductVariant;
-import com.example.groceries.repository.ProductListingRepository;
 import com.example.groceries.repository.ProductMasterRepository;
 import com.example.groceries.repository.ProductVariantRepository;
+import com.example.groceries.service.mapper.ProductMapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional; // 1. Add this import
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 @Service
+@RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class ProductService {
 
     private final ProductMasterRepository productMasterRepository;
-    private final ProductListingRepository productListingRepository;
     private final ProductVariantRepository productVariantRepository;
+    private final ProductMapper productMapper;
 
-    public ProductService(
-            ProductMasterRepository productMasterRepository,
-            ProductListingRepository productListingRepository,
-            ProductVariantRepository productVariantRepository
-    ) {
-        this.productMasterRepository = productMasterRepository;
-        this.productListingRepository = productListingRepository;
-        this.productVariantRepository = productVariantRepository;
+    /* =========================
+       USER SHOP PRODUCTS
+       ========================= */
+    public Page<UserProductDTO> getUserProducts(Pageable pageable) {
+        Page<ProductVariant> page =
+                productVariantRepository.findActiveVariants(pageable);
+
+        return page.map(productMapper::toUserProductDTO);
     }
 
-    /* ---------------- PAGINATED PRODUCT LIST (NEW) ---------------- */
-
-    @Transactional(readOnly = true)
-    public List<ProductListView> getProducts(int page, int size) {
-        int offset = page * size;
-        return productListingRepository.findProducts(size, offset);
+    /* =========================
+       GROUPED PRODUCTS (ADMIN / USER)
+       ========================= */
+    public Page<GroupedProductDTO> getGroupedProducts(Pageable pageable) {
+        Page<ProductMaster> page = productMasterRepository.findAll(pageable);
+        return page.map(productMapper::toGroupedDTO);
+    }
+    public Page<ProductVariantDTO> getAllVariantsForAdmin(Pageable pageable) {
+        return productVariantRepository.findAll(pageable)
+                .map(productMapper::toVariantDTO);
     }
 
-    /* ---------------- EXISTING METHODS (RESTORED) ---------------- */
-
-    @Transactional(readOnly = true)
-    public List<ProductVariant> getAllProducts() {
-        return productVariantRepository.findAll();
-    }
-    @Transactional(readOnly = true)
-    public long getVariantCount() {
-        return productListingRepository.countVariants();
-    }
-
-    @Transactional(readOnly = true)
-    public ProductMaster getProductById(Long id) {
-        return productMasterRepository.findById(id).orElse(null);
-    }
-
-    @Transactional(readOnly = true)
-    public List<ProductMaster> getProductsByCategory(Long categoryId) {
-        return productMasterRepository.findByCategoryId(categoryId);
-    }
-
+    /* =========================
+       ADMIN SAVE
+       ========================= */
     @Transactional
     public ProductMaster saveProduct(ProductMaster product) {
         return productMasterRepository.save(product);
     }
 
+    /* =========================
+       ADMIN DELETE
+       ========================= */
     @Transactional
     public void deleteProduct(Long id) {
         productMasterRepository.deleteById(id);
-
     }
 }

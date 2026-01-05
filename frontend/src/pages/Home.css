@@ -1,41 +1,62 @@
-/* Pagination Container */
-.pagination-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 8px;
-  margin: 40px 0;
-  flex-wrap: nowrap; /* Forces one single line */
+.scroll-trigger {
+  padding: 40px 0;
+  text-align: center;
+  width: 100%;
 }
 
-/* Individual Buttons */
-.page-btn, .nav-btn {
-  padding: 8px 14px;
-  border: 1px solid #e2e8f0;
-  background: #ffffff;
-  border-radius: 8px;
-  cursor: pointer;
+.loading-spinner {
+  color: #10B981;
   font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.no-more-products {
   color: #64748b;
-  transition: all 0.2s ease;
+  font-style: italic;
+}
+/* COMPACT HERO */
+.hero-compact {
+  margin: 14px 0 16px;
+  padding: 16px 24px;
+  background: linear-gradient(
+    135deg,
+    #4c1d95,
+    #6d28d9
+  );
+  border-radius: 14px;
+  font-size: 16px;
+  color: #ffffff;
+  font-weight: 500;
+  box-shadow: 0 10px 25px rgba(76, 29, 149, 0.25);
 }
 
-/* Active State */
-.page-btn.active {
-  background-color: #10B981; /* Primary Green */
-  color: white;
-  border-color: #10B981;
+.hero-compact strong {
+  font-weight: 800;
 }
 
-/* Dots Styling */
-.page-btn.dots {
-  border: none;
-  cursor: default;
-  background: transparent;
+.product-grid {
+  display: grid;
+  gap: 20px;
+  justify-content: center;
+  justify-items: center;
+  width: 100%;
+  margin: 0 auto;
 }
 
-.page-btn:hover:not(.active):not(.dots), 
-.nav-btn:hover:not(:disabled) {
-  background-color: #f8fafc;
-  border-color: #cbd5e1;
+@media (max-width: 767px) {
+  .product-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .product-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .product-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
 }

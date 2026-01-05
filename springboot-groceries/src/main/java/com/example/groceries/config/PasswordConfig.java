@@ -14,30 +14,41 @@ import java.util.List;
 
 @Configuration
 public class PasswordConfig {
+
     @Bean
     public BCryptPasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
+        http
+                .csrf(csrf -> csrf.disable())
+                .cors(Customizer.withDefaults())
 
+                .authorizeHttpRequests(auth -> auth
 
-        @Bean
-        public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+                        // ✅ STATIC RESOURCES (CRITICAL)
+                        .requestMatchers(
+                                "/images/**",
+                                "/css/**",
+                                "/js/**",
+                                "/webjars/**"
 
-            http
-                    .csrf(csrf -> csrf.disable())
-                    .cors(Customizer.withDefaults())
-                    .authorizeHttpRequests(auth -> auth
-                            .requestMatchers("/auth/**").permitAll()
-                            .anyRequest().permitAll()   // TEMP: allow frontend routing
-                    );
+                        ).permitAll()
 
-            return http.build();
-        }
+                        // ✅ AUTH APIs
+                        .requestMatchers("/auth/**").permitAll()
 
+                        // ✅ TEMP: allow everything else
+                        .anyRequest().permitAll()
+                );
 
-        @Bean
+        return http.build();
+    }
+
+    @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOrigins(List.of("http://localhost:5173"));

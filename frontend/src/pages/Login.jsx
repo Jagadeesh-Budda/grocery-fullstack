@@ -35,7 +35,7 @@ export default function Login() {
                 <ShoppingCart size={24} strokeWidth={2.5} />
               </div>
               <span className="text-2xl font-black tracking-tight">
-                Cartvera
+                groceRythm
               </span>
             </div>
 
@@ -59,7 +59,7 @@ export default function Login() {
         <div className="md:w-1/2 p-16 flex flex-col justify-center bg-white">
           <div className="mb-12">
             <h3 className="text-3xl font-black text-[#3B1E54] mb-3">
-              Welcome back to Cartvera
+              Welcome back to groceRythm
             </h3>
             <p className="text-slate-400 font-semibold text-sm">
               Sign in to manage your daily essentials.
@@ -115,7 +115,7 @@ export default function Login() {
               type="submit"
               className="w-full bg-[#3B1E54] hover:bg-[#2A153D] text-[#D4BDAC] font-black py-4 rounded-2xl flex items-center justify-center gap-3 transition-all transform active:scale-[0.98] shadow-2xl shadow-[#3B1E54]/20"
             >
-              Enter Cartvera
+              Enter groceRythm
               <ArrowRight size={20} />
             </button>
           </form>

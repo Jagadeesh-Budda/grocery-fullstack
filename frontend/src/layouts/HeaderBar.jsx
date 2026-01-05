@@ -1,9 +1,12 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
+import { useCart } from "../context/CartContext";
+import { ShoppingCart } from "lucide-react";
 import "./HeaderBar.css";
 
 export default function HeaderBar() {
   const navigate = useNavigate();
+  const { totalItems } = useCart();
   const [open, setOpen] = useState(false);
 
   const user = JSON.parse(localStorage.getItem("user"));
@@ -23,7 +26,7 @@ const avatarLetter = username
       <div className="hb-inner">
         {/* LEFT */}
         <div className="hb-logo">
-          <strong>GroceryHub</strong>
+          <strong>groceRythm</strong>
         </div>
 
         {/* CENTER */}
@@ -39,6 +42,13 @@ const avatarLetter = username
 
         {/* RIGHT */}
         <div className="hb-controls">
+          <Link to="/groceries/cart" className="hb-cart-btn">
+            <ShoppingCart size={22} />
+            {totalItems > 0 && (
+              <span className="hb-cart-badge">{totalItems}</span>
+            )}
+          </Link>
+
           <button className="hb-btn">🔔</button>
 
           <div style={{ position: "relative" }}>

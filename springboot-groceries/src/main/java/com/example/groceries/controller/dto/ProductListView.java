@@ -3,7 +3,6 @@ package com.example.groceries.controller.dto;
 import java.math.BigDecimal;
 
 public interface ProductListView {
-
     Long getProductId();
     String getProductName();
     String getCategory();
@@ -11,4 +10,3 @@ public interface ProductListView {
     String getVariantName();
     BigDecimal getPrice();
 }
-
