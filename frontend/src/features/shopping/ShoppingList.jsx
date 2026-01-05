@@ -40,6 +40,14 @@ export default function ShoppingList({
     return { totalPrice: sum, totalItems: count };
   }, [filteredItems]);
 
+  const formatCurrency = (amount) => {
+    const numericAmount = Number(amount) || 0;
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR',
+    }).format(numericAmount);
+  };
+
   return (
     <div
       style={{
@@ -127,10 +135,10 @@ export default function ShoppingList({
                 <div className="sl-item-info">
                   <h4 className="sl-item-name">{item.name}</h4>
                   <p className="sl-item-price">
-                    ₹{pricePerKg.toFixed(2)} / kg
+                    {formatCurrency(pricePerKg)} / kg
                   </p>
                   <p className="sl-item-total">
-                    ₹{itemTotal.toFixed(2)}
+                    {formatCurrency(itemTotal)}
                   </p>
                 </div>
 
@@ -185,7 +193,7 @@ export default function ShoppingList({
 
           <div className="sl-total">
             <span className="sl-total-label">Total</span>
-            <span className="sl-total-amount">₹{totalPrice.toFixed(2)}</span>
+            <span className="sl-total-amount">{formatCurrency(totalPrice)}</span>
           </div>
 
           <button className="sl-checkout" type="button">

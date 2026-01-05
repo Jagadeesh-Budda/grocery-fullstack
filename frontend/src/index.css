@@ -286,6 +286,34 @@ button { font-family: inherit; }
     background: var(--soft-border);
   }
 
+  /* Standard Product Grid */
+  .product-grid {
+    display: grid;
+    gap: 20px;
+    justify-content: center;
+    justify-items: center;
+    width: 100%;
+    margin: 0 auto;
+  }
+
+  @media (max-width: 767px) {
+    .product-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (min-width: 768px) and (max-width: 1023px) {
+    .product-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .product-grid {
+      grid-template-columns: repeat(4, 1fr);
+    }
+  }
+
   /* Loading & disabled states */
   .disabled,
   :disabled {

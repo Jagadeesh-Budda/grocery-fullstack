@@ -12,8 +12,8 @@ import AdminCategories from "./pages/AdminCategories";
 import Register from "./pages/Register";
 import './styles/theme.css';
 import './styles/cards.css';
-
-
+import UserDashboard from "./pages/UserDashboard";
+import CartPage from "./pages/CartPage";
 
 export default function App() {
   return (
@@ -25,7 +25,8 @@ export default function App() {
       {/* 1st: User Routes (Accessible by both USER and ADMIN) */}
       <Route element={<ProtectedRoute allowedRoles={['ROLE_USER', 'ROLE_ADMIN']} />}>
         <Route path="/groceries" element={<MainLayout />}>
-          <Route index element={<Home />} />
+          <Route index element={<UserDashboard />} />
+          <Route path="cart" element={<CartPage />} />
         </Route>
       </Route>
 

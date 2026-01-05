@@ -2,13 +2,14 @@ package com.example.groceries.service.mapper;
 
 import com.example.groceries.controller.dto.CategoryDTO;
 import com.example.groceries.model.Category;
+import org.springframework.stereotype.Component;
 
+@Component
 public class CategoryMapper {
 
-    public static CategoryDTO toDTO(Category category) {
-        if (category == null) {
-            return null;
-        }
+    public CategoryDTO toDTO(Category category) {
+        if (category == null) return null;
+
         CategoryDTO dto = new CategoryDTO();
         dto.setId(category.getId());
         dto.setName(category.getName());
@@ -17,15 +18,14 @@ public class CategoryMapper {
         return dto;
     }
 
-    public static Category toEntity(CategoryDTO dto) {
-        if (dto == null) {
-            return null;
-        }
+    public Category toEntity(CategoryDTO dto) {
+        if (dto == null) return null;
+
         Category category = new Category();
         category.setId(dto.getId());
         category.setName(dto.getName());
         category.setImageUrl(dto.getImageUrl());
-        category.setActive(dto.getActive());
+        category.setActive(dto.getActive() != null ? dto.getActive() : true);
         return category;
     }
 }

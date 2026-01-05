@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const BASE_URL = "http://localhost:8080/api/admin";
+const BASE_URL = "http://localhost:8080/api";
 
 const api = axios.create({
   baseURL: BASE_URL,
@@ -10,7 +10,7 @@ const api = axios.create({
 /* ================= DASHBOARD ================= */
 
 export const fetchAdminDashboard = async () => {
-  const res = await api.get("/dashboard");
+  const res = await api.get("/admin/dashboard/stats");
   return res.data;
 };
 
@@ -33,4 +33,15 @@ export const updateCategory = async (id, data) => {
 
 export const deleteCategory = async (id) => {
   await api.delete(`/categories/${id}`);
+};
+/* ============ PRODUCTS ============ */
+
+export const getAdminProductsPaged = async (page, size) => {
+  const res = await axios.get(`http://localhost:8080/products/grouped?page=${page}&size=${size}`, { withCredentials: true });
+  return res.data;
+};
+
+export const getAdminProductsCount = async () => {
+  const res = await axios.get(`http://localhost:8080/products/grouped?page=0&size=1`, { withCredentials: true });
+  return res.data.totalElements || 0;
 };

@@ -1,0 +1,223 @@
+.dashboard-container {
+    padding: 24px;
+    background: #F4F7F6;
+    min-height: 100vh;
+    box-sizing: border-box;
+}
+
+/* responsive grid: fallback auto-fill, ensure at least 4 columns on wide screens */
+.dashboard-grid {
+    display: grid;
+    gap: 20px;
+    justify-content: center;
+    justify-items: center;
+    width: 100%;
+    margin: 0 auto;
+    align-items: start;
+    max-width: 1400px;
+}
+
+@media (max-width: 767px) {
+    .dashboard-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+    .dashboard-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (min-width: 1024px) {
+    .dashboard-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+/* Gromuse-style card */
+.gromuse-card {
+    background: #F7F8F9; /* light gray card background */
+    border-radius: 24px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.28s ease, box-shadow 0.25s ease;
+    box-shadow: 0 6px 18px rgba(16,24,40,0.06);
+}
+
+.gromuse-card:hover,
+.gromuse-card:focus-within {
+    transform: translateY(-6px);
+    box-shadow: 0 18px 48px rgba(16,24,40,0.12);
+}
+
+.card-media {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    background: linear-gradient(180deg,#f0f0f0,#e9e9e9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.card-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.card-placeholder {
+    width: 60%;
+    height: 60%;
+    background: #e6e7e8;
+    border-radius: 8px;
+}
+
+/* body */
+.card-body {
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.card-title {
+    font-size: 0.98rem;
+    font-weight: 600;
+    color: #0f172a;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* footer with price and add button */
+.card-footer {
+    margin-top: auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.price {
+    color: #28a745; /* groceRythm green */
+    font-weight: 700;
+    font-size: 1rem;
+    background: rgba(40,167,69,0.06);
+    padding: 6px 10px;
+    border-radius: 12px;
+}
+
+.add-btn {
+    background: #3B1E54; /* rounded Add button (brand purple) */
+    color: #ffffff;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 999px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.95rem;
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.add-btn:active {
+    transform: translateY(1px);
+}
+
+/* Hero utilities */
+.bg-grocery-success { background-color: #28a745; color: #fff; }
+.rounded-xl4 { border-radius: 24px; }
+
+/* Hero card */
+.hero-card {
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 10px 30px rgba(16,24,40,0.06);
+}
+
+.hero-content {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    justify-content: space-between;
+}
+
+/* Left side copy */
+.hero-copy {
+    flex: 1 1 55%;
+    min-width: 220px;
+}
+
+.hero-title {
+    margin: 0 0 8px 0;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #ffffff;
+}
+
+.hero-sub {
+    margin: 0 0 16px 0;
+    color: rgba(255,255,255,0.95);
+    font-size: 1rem;
+}
+
+/* CTA */
+.hero-cta .shop-now {
+    background: #ffffff;
+    color: #3B1E54;
+    border: none;
+    padding: 10px 18px;
+    border-radius: 12px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+/* Right side media placeholder */
+.hero-media {
+    flex: 0 0 36%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 160px;
+}
+
+.hero-image-placeholder {
+    width: 160px;
+    height: 120px;
+    background: rgba(255,255,255,0.18);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255,255,255,0.95);
+    font-weight: 600;
+}
+
+/* Responsive adjustments */
+@media (max-width: 800px) {
+    .hero-content { flex-direction: column; align-items: stretch; }
+    .hero-media { width: 100%; justify-content: center; margin-top: 12px; }
+    .hero-image-placeholder { width: 100%; height: 160px; }
+}
+.scroll-trigger {
+    padding: 40px 0;
+    text-align: center;
+    width: 100%;
+}
+
+.loading {
+    color: #28a745;
+    font-weight: 600;
+}
+
+.no-more {
+    color: #6b7280;
+    font-style: italic;
+}
+
+.error {
+    color: #c0392b;
+    font-weight: 600;
+}
