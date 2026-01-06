@@ -1,6 +1,7 @@
 package com.example.groceries.service.mapper;
 
 import com.example.groceries.controller.dto.GroupedProductDTO;
+import com.example.groceries.controller.dto.ProductDetailDTO;
 import com.example.groceries.controller.dto.ProductVariantDTO;
 import com.example.groceries.controller.dto.UserProductDTO;
 import com.example.groceries.model.ProductMaster;
@@ -22,8 +23,33 @@ public class ProductMapper {
         return new ProductVariantDTO(
                 variant.getId(),
                 variant.getVariantName(),
+                variant.getMrp(),
+                variant.getDiscountPercent(),
                 variant.getPrice(),
-                variant.getImageUrl()
+                variant.getImageUrl(),
+                variant.getStock()
+        );
+    }
+
+    /* =========================
+       MASTER → DETAIL DTO
+       ========================= */
+    public ProductDetailDTO toDetailDTO(ProductMaster master) {
+        if (master == null) return null;
+
+        return new ProductDetailDTO(
+                master.getId(),
+                master.getName(),
+                master.getDescription(),
+                master.getCategory() != null ? master.getCategory().getName() : "Uncategorized",
+                master.getImageUrl(),
+                master.getImages(),
+                master.getVariants() == null
+                        ? List.of()
+                        : master.getVariants()
+                        .stream()
+                        .map(this::toVariantDTO)
+                        .collect(Collectors.toList())
         );
     }
 
@@ -41,6 +67,8 @@ public class ProductMapper {
                 master.getName(),
                 master.getCategory() != null ? master.getCategory().getName() : "Uncategorized",
                 variant.getUnit(),
+                variant.getMrp(),
+                variant.getDiscountPercent(),
                 variant.getPrice(),
                 variant.getImageUrl() != null ? variant.getImageUrl() : master.getImageUrl()
         );
@@ -74,7 +102,8 @@ public class ProductMapper {
         ProductVariant variant = new ProductVariant();
         variant.setId(dto.getVariantId());
         variant.setVariantName(dto.getVariantName());
-        variant.setPrice(dto.getPrice());
+        variant.setMrp(dto.getMrp());
+        variant.setDiscountPercent(dto.getDiscountPercent());
         variant.setImageUrl(dto.getImageUrl());
         return variant;
     }

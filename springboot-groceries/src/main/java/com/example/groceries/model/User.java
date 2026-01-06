@@ -1,5 +1,7 @@
 package com.example.groceries.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -9,6 +11,7 @@ import lombok.*;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonIgnoreProperties({"password", "hibernateLazyInitializer", "handler"})
 public class User {
     @Enumerated(EnumType.STRING)
     private Role role;

@@ -53,7 +53,8 @@ class OrderServiceTest {
         variant = new ProductVariant();
         variant.setId(100L);
         variant.setVariantName("500g");
-        variant.setPrice(BigDecimal.valueOf(50.0));
+        variant.setMrp(BigDecimal.valueOf(50.0));
+        variant.setDiscountPercent(0);
         variant.setProductMaster(productMaster);
     }
 
@@ -80,7 +81,7 @@ class OrderServiceTest {
         // Assert
         assertNotNull(createdOrder);
         assertEquals(user, createdOrder.getUser());
-        assertEquals("PENDING", createdOrder.getStatus());
+        assertEquals(OrderStatus.CREATED, createdOrder.getStatus());
         assertEquals(0, BigDecimal.valueOf(100.0).compareTo(createdOrder.getTotalAmount()));
         assertEquals(1, createdOrder.getOrderItems().size());
 
@@ -101,11 +102,119 @@ class OrderServiceTest {
         // Arrange
         CreateOrderRequest request = CreateOrderRequest.builder()
                 .userId(1L)
+                .items(List.of(OrderItemRequest.builder().variantId(100L).quantity(1).build()))
                 .build();
         when(userRepository.findById(1L)).thenReturn(Optional.empty());
 
         // Act & Assert
         assertThrows(RuntimeException.class, () -> orderService.createOrder(request));
+        verify(orderRepository, never()).save(any());
+    }
+
+    @Test
+    void updateOrderStatus_ValidTransition_ToConfirmed_ShouldReduceStock() {
+        // Arrange
+        variant.setStock(10);
+        OrderItem item = new OrderItem();
+        item.setVariant(variant);
+        item.setQuantity(2);
+
+        Order order = new Order();
+        order.setId(1L);
+        order.setStatus(OrderStatus.CREATED);
+        order.addOrderItem(item);
+
+        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+        when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        // Act
+        Order updatedOrder = orderService.updateOrderStatus(1L, OrderStatus.CONFIRMED);
+
+        // Assert
+        assertEquals(OrderStatus.CONFIRMED, updatedOrder.getStatus());
+        assertEquals(8, variant.getStock());
+        verify(productVariantRepository).save(variant);
+        verify(orderRepository).save(order);
+    }
+
+    @Test
+    void updateOrderStatus_ValidTransition_ToConfirmed_InsufficientStock_ShouldThrowException() {
+        // Arrange
+        variant.setStock(1);
+        OrderItem item = new OrderItem();
+        item.setVariant(variant);
+        item.setQuantity(2);
+
+        Order order = new Order();
+        order.setId(1L);
+        order.setStatus(OrderStatus.CREATED);
+        order.addOrderItem(item);
+
+        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+
+        // Act & Assert
+        assertThrows(IllegalStateException.class, () -> orderService.updateOrderStatus(1L, OrderStatus.CONFIRMED));
+        assertEquals(1, variant.getStock());
+        verify(productVariantRepository, never()).save(any());
+    }
+
+    @Test
+    void cancelOrder_ConfirmedStatus_ShouldRestoreStock() {
+        // Arrange
+        variant.setStock(8);
+        OrderItem item = new OrderItem();
+        item.setVariant(variant);
+        item.setQuantity(2);
+
+        Order order = new Order();
+        order.setId(1L);
+        order.setStatus(OrderStatus.CONFIRMED);
+        order.addOrderItem(item);
+
+        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+        when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        // Act
+        Order cancelledOrder = orderService.cancelOrder(1L);
+
+        // Assert
+        assertEquals(OrderStatus.CANCELLED, cancelledOrder.getStatus());
+        assertEquals(10, variant.getStock());
+        verify(productVariantRepository).save(variant);
+        verify(orderRepository).save(order);
+    }
+
+    @Test
+    void updateOrderStatus_SameStatus_ShouldReturnOrderWithoutSaving() {
+        // Arrange
+        Order order = new Order();
+        order.setId(1L);
+        order.setStatus(OrderStatus.CONFIRMED);
+
+        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+
+        // Act
+        Order updatedOrder = orderService.updateOrderStatus(1L, OrderStatus.CONFIRMED);
+
+        // Assert
+        assertEquals(OrderStatus.CONFIRMED, updatedOrder.getStatus());
+        verify(orderRepository, never()).save(any());
+    }
+
+    @Test
+    void cancelOrder_AlreadyCancelled_ShouldReturnOrderWithoutSaving() {
+        // Arrange
+        Order order = new Order();
+        order.setId(1L);
+        order.setStatus(OrderStatus.CANCELLED);
+
+        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+
+        // Act
+        Order result = orderService.cancelOrder(1L);
+
+        // Assert
+        assertEquals(OrderStatus.CANCELLED, result.getStatus());
         verify(orderRepository, never()).save(any());
     }
 }

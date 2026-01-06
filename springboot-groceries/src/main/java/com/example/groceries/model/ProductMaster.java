@@ -22,6 +22,11 @@ public class ProductMaster {
     @Column(name = "image_url")
     private String imageUrl;
 
+    @ElementCollection
+    @CollectionTable(name = "product_images", joinColumns = @JoinColumn(name = "product_id"))
+    @Column(name = "image_url")
+    private List<String> images;
+
     private Boolean active;
 
     @ManyToOne(fetch = FetchType.LAZY)

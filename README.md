@@ -1,6 +1,6 @@
 # 🛒 Grocery Full-Stack Application
 
-A full-stack grocery management application built using **React**, **Node.js**, and **Spring Boot**, designed with a modular architecture and Docker support.
+A full-stack grocery management application built using **React** and **Spring Boot**, designed with a clean modular architecture and Docker support.
 
 ---
 
@@ -13,13 +13,12 @@ A full-stack grocery management application built using **React**, **Node.js**, 
 - Axios
 
 ### Backend
-- Node.js (Express)
 - Spring Boot
 - REST APIs
 - JPA / Hibernate
 
 ### Database
-- PostgreSQL (configurable)
+- PostgreSQL
 
 ### DevOps
 - Docker

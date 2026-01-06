@@ -2,6 +2,7 @@ package com.example.groceries.controller;
 
 import com.example.groceries.controller.dto.CreateOrderRequest;
 import com.example.groceries.model.Order;
+import com.example.groceries.model.OrderStatus;
 import com.example.groceries.service.OrderService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -25,6 +26,16 @@ public class OrderController {
     @GetMapping("/user/{userId}")
     public ResponseEntity<List<Order>> getOrdersByUser(@PathVariable Long userId) {
         return ResponseEntity.ok(orderService.getOrdersByUser(userId));
+    }
+
+    @PutMapping("/{orderId}/status")
+    public ResponseEntity<Order> updateOrderStatus(@PathVariable Long orderId, @RequestParam OrderStatus status) {
+        return ResponseEntity.ok(orderService.updateOrderStatus(orderId, status));
+    }
+
+    @PostMapping("/{orderId}/cancel")
+    public ResponseEntity<Order> cancelOrder(@PathVariable Long orderId) {
+        return ResponseEntity.ok(orderService.cancelOrder(orderId));
     }
 
     @GetMapping

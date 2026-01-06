@@ -37,17 +37,7 @@ services:
       postgres:
         condition: service_healthy
 
-  node:
-    profiles: ["backend"]
-    build:
-      context: ./node-groceries
-      dockerfile: Dockerfile
-    container_name: groceries-node
-    ports:
-      - "8081:8080"
-    environment:
-      DATABASE_URL: postgres://pguser:pgpass@postgres:5432/groceriesdb
-
+  
   frontend:
     profiles: ["frontend"]
     build:

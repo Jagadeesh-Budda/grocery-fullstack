@@ -3,6 +3,7 @@ package com.example.groceries.controller;
 import com.example.groceries.controller.dto.CreateOrderRequest;
 import com.example.groceries.controller.dto.OrderItemRequest;
 import com.example.groceries.model.Order;
+import com.example.groceries.model.OrderStatus;
 import com.example.groceries.service.OrderService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
@@ -19,7 +20,10 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.hamcrest.Matchers.is;
 
 @WebMvcTest(OrderController.class)
 @AutoConfigureMockMvc(addFilters = false)
@@ -52,7 +56,7 @@ class OrderControllerTest {
         Order savedOrder = new Order();
         savedOrder.setId(123L);
         savedOrder.setTotalAmount(BigDecimal.valueOf(200));
-        savedOrder.setStatus("PENDING");
+        savedOrder.setStatus(OrderStatus.CREATED);
         savedOrder.setCreatedAt(LocalDateTime.now());
 
         Mockito.when(orderService.createOrder(Mockito.any()))
@@ -62,5 +66,34 @@ class OrderControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    void updateOrderStatus_ShouldReturnUpdatedOrder() throws Exception {
+        Order updatedOrder = new Order();
+        updatedOrder.setId(1L);
+        updatedOrder.setStatus(OrderStatus.CONFIRMED);
+
+        Mockito.when(orderService.updateOrderStatus(1L, OrderStatus.CONFIRMED))
+                .thenReturn(updatedOrder);
+
+        mockMvc.perform(put("/api/orders/1/status")
+                        .param("status", "CONFIRMED"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status", is("CONFIRMED")));
+    }
+
+    @Test
+    void cancelOrder_ShouldReturnCancelledOrder() throws Exception {
+        Order cancelledOrder = new Order();
+        cancelledOrder.setId(1L);
+        cancelledOrder.setStatus(OrderStatus.CANCELLED);
+
+        Mockito.when(orderService.cancelOrder(1L))
+                .thenReturn(cancelledOrder);
+
+        mockMvc.perform(post("/api/orders/1/cancel"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status", is("CANCELLED")));
     }
 }

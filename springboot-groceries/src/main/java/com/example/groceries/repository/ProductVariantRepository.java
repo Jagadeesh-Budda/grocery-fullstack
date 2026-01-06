@@ -17,6 +17,13 @@ public interface ProductVariantRepository extends JpaRepository<ProductVariant, 
     @Query("""
         SELECT v FROM ProductVariant v
         WHERE v.productMaster.active = true
+        AND v.discountPercent >= :discountPercent
+    """)
+    Page<ProductVariant> findByDiscountPercentGreaterThanEqual(Integer discountPercent, Pageable pageable);
+
+    @Query("""
+        SELECT v FROM ProductVariant v
+        WHERE v.productMaster.active = true
     """)
     Page<ProductVariant> findActiveVariants(Pageable pageable);
 }

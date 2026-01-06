@@ -14,6 +14,8 @@ public class UserProductDTO {
     private String productName;
     private String category;
     private String unit;
+    private BigDecimal mrp;
+    private Integer discountPercent;
     private BigDecimal price;
     private String imageUrl;
 }
