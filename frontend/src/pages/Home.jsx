@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useInView } from "react-intersection-observer";
 import { useCart } from "../context/CartContext";
 import "./Home.css";
-import { getUserProductsPaged, getUserProductsCount } from "../services/userapi";
+import { getUserProductsPaged } from "../services/userapi";
 
 const Home = () => {
   const { addToCart, cartItems } = useCart();
@@ -11,16 +11,13 @@ const Home = () => {
   const [currentPage, setCurrentPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
 
-  // Helper to get quantity of a variant in cart
   const getCartQuantity = (variantId) => {
     const item = cartItems.find(i => i.variantId === variantId);
     return item ? item.quantity : 0;
   };
 
-  const pageSize = 20;
-  const { ref, inView } = useInView({
-    threshold: 0,
-  });
+  const pageSize = 10;
+  const { ref, inView } = useInView({ threshold: 0 });
 
   const loadMore = useCallback(async () => {
     if (loading || !hasMore) return;
@@ -28,17 +25,17 @@ const Home = () => {
     setLoading(true);
     try {
       const data = await getUserProductsPaged(currentPage, pageSize);
-      if (data.length === 0) {
+
+      if (!data || data.length === 0) {
         setHasMore(false);
       } else {
         setProducts((prev) => [...prev, ...data]);
         setCurrentPage((prev) => prev + 1);
-        if (data.length < pageSize) {
-          setHasMore(false);
-        }
+        if (data.length < pageSize) setHasMore(false);
       }
     } catch (error) {
-      console.error("Error fetching products:", error);
+      console.error("Error loading products:", error);
+      setHasMore(false);
     } finally {
       setLoading(false);
     }
@@ -50,105 +47,84 @@ const Home = () => {
     }
   }, [inView, hasMore, loadMore]);
 
-  /* -------------------- META FORMATTER (NO DUPLICATES) -------------------- */
-  const formatMeta = (product) => {
-    const parts = [];
-
-    if (product.category) {
-      parts.push(product.category);
-    }
-
-    if (
-      product.variantName &&
-      product.variantName !== product.productName &&
-      !product.variantName
-        .toLowerCase()
-        .includes(product.productName.toLowerCase())
-    ) {
-      parts.push(product.variantName);
-    }
-
-    return parts.join(" • ");
-  };
-
-  /* -------------------- CURRENCY FORMATTER -------------------- */
   const formatCurrency = (amount) => {
-    const numericAmount = Number(amount) || 0;
     return new Intl.NumberFormat('en-IN', {
       style: 'currency',
       currency: 'INR',
-    }).format(numericAmount);
+    }).format(amount || 0);
   };
 
   return (
-    <div className="home-container">
-      {/* -------------------- HERO -------------------- */}
-      <div className="hero-compact">
-        <strong>groceRythm</strong> — Fresh groceries delivered daily
+      <div className="home-container">
+        <div className="hero-compact">
+          <strong>groceRythm</strong> — Fresh groceries delivered daily
+        </div>
+
+        <div className="product-grid">
+          {products.map((product) => {
+            // ✅ Since products are grouped, we use the first variant for display
+            const displayVariant = product.variants?.[0] || {};
+
+            // Construct image URL based on your WebConfig mapping
+            const rawImg = displayVariant.imageUrl || "";
+            const fullImgUrl = rawImg
+                ? (rawImg.startsWith("http") ? rawImg : `http://localhost:8080${rawImg.startsWith("/") ? "" : "/"}${rawImg}`)
+                : "/brand-placeholder.png";
+
+            return (
+                <div key={product.id} className="product-card">
+                  <div className="image-wrap">
+                    <img
+                        src={fullImgUrl}
+                        alt={product.name}
+                        loading="lazy"
+                    />
+                  </div>
+
+                  <div className="product-info">
+                    <h4>{product.name}</h4>
+                    <p className="meta">
+                      {product.categoryName || "Grocery"} • {displayVariant.unit || "Pack"}
+                    </p>
+
+                    <div className="price-row">
+                  <span className="price">
+                    {formatCurrency(product.displayPrice || displayVariant.price)}
+                  </span>
+
+                      <button
+                          className="add-btn"
+                          onClick={() => addToCart(
+                              { id: product.id, name: product.name },
+                              {
+                                variantId: displayVariant.id,
+                                variantName: displayVariant.name || displayVariant.unit,
+                                price: displayVariant.price,
+                                imageUrl: displayVariant.imageUrl
+                              }
+                          )}
+                      >
+                        {getCartQuantity(displayVariant.id) > 0
+                            ? `+ ${getCartQuantity(displayVariant.id)}`
+                            : "+"}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+            );
+          })}
+        </div>
+
+        <div ref={ref} className="scroll-trigger">
+          {loading && <div className="loading-spinner">Loading products...</div>}
+          {!hasMore && products.length > 0 && (
+              <div className="no-more-products">End of catalogue</div>
+          )}
+          {!loading && products.length === 0 && (
+              <div className="no-products">No products found in database</div>
+          )}
+        </div>
       </div>
-
-      {/* -------------------- PRODUCT GRID -------------------- */}
-      <div className="product-grid">
-        {products.map((product) => (
-          <div key={`${product.variantId}-${product.productName}`} className="product-card">
-            <div className="image-wrap">
-              <img
-                src={
-                  product.imageUrl
-                    ? (product.imageUrl.startsWith("/images/") 
-                        ? `http://localhost:8080${product.imageUrl}` 
-                        : `http://localhost:8080/images${product.imageUrl.startsWith("/") ? product.imageUrl : `/${product.imageUrl}`}`)
-                    : "/brand-placeholder.png"
-                }
-                alt={product.productName}
-                loading="lazy"
-                onError={(e) => {
-                  e.target.src = "https://via.placeholder.com/150?text=No+Image";
-                }}
-              />
-            </div>
-
-            <div className="product-info">
-              {/* PRODUCT NAME (ONLY ONCE) */}
-              <h4>{product.productName}</h4>
-
-              {/* CATEGORY + UNIT (SMART, NO DUPLICATES) */}
-              <p className="meta">{formatMeta(product)}</p>
-
-              {/* PRICE + CART */}
-              <div className="price-row">
-                <span className="price">{formatCurrency(product.price)}</span>
-
-                <button
-                  className="add-btn"
-                  onClick={() => addToCart({
-                    id: product.productId,
-                    name: product.productName
-                  }, {
-                    variantId: product.variantId,
-                    variantName: product.variantName,
-                    price: product.price,
-                    imageUrl: product.imageUrl
-                  })}
-                >
-                  {getCartQuantity(product.variantId) > 0
-                    ? `+ ${getCartQuantity(product.variantId)}`
-                    : "+"}
-                </button>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* -------------------- LOADING & NO MORE -------------------- */}
-      <div ref={ref} className="scroll-trigger">
-        {loading && <div className="loading-spinner">Loading more products...</div>}
-        {!hasMore && products.length > 0 && (
-          <div className="no-more-products">No more products to show.</div>
-        )}
-      </div>
-    </div>
   );
 };
 

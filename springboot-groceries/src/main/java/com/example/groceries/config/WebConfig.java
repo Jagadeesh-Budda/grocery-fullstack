@@ -12,7 +12,7 @@ public class WebConfig implements WebMvcConfigurer {
         // This maps the URL localhost:8080/images/ to the actual folder
         // Use "file:./images/" if your folder is in the project root
         // Use "classpath:/static/images/" if it's inside src/main/resources/static/images
-        registry.addResourceHandler("/images/**")
+        registry.addResourceHandler("/api/images/**")
                 .addResourceLocations("classpath:/static/images/");
     }
 }

@@ -8,7 +8,9 @@ import com.example.groceries.model.ProductMaster;
 import com.example.groceries.model.ProductVariant;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Component
@@ -25,7 +27,7 @@ public class ProductMapper {
                 variant.getVariantName(),
                 variant.getMrp(),
                 variant.getDiscountPercent(),
-                variant.getPrice(),
+                variant.getPrice(), // 🔥 already calculated price
                 variant.getImageUrl(),
                 variant.getStock()
         );
@@ -41,7 +43,9 @@ public class ProductMapper {
                 master.getId(),
                 master.getName(),
                 master.getDescription(),
-                master.getCategory() != null ? master.getCategory().getName() : "Uncategorized",
+                master.getCategory() != null
+                        ? master.getCategory().getName()
+                        : "Uncategorized",
                 master.getImageUrl(),
                 master.getImages(),
                 master.getVariants() == null
@@ -65,32 +69,50 @@ public class ProductMapper {
                 master.getId(),
                 variant.getId(),
                 master.getName(),
-                master.getCategory() != null ? master.getCategory().getName() : "Uncategorized",
+                master.getCategory() != null
+                        ? master.getCategory().getName()
+                        : "Uncategorized",
                 variant.getUnit(),
                 variant.getMrp(),
                 variant.getDiscountPercent(),
-                variant.getPrice(),
-                variant.getImageUrl() != null ? variant.getImageUrl() : master.getImageUrl()
+                variant.getPrice(), // 🔥 correct selling price
+                variant.getImageUrl() != null
+                        ? variant.getImageUrl()
+                        : master.getImageUrl()
         );
     }
 
     /* =========================
        MASTER → GROUPED DTO
        ========================= */
-    public GroupedProductDTO toGroupedDTO(ProductMaster master) {
-        if (master == null) return null;
+    public GroupedProductDTO toGroupedDTO(ProductMaster product) {
 
-        return new GroupedProductDTO(
-                master.getId(),
-                master.getName(),
-                master.getActive(),
-                master.getVariants() == null
+        // ✅ CORE FIX: calculate display price for listing
+        BigDecimal displayPrice = product.getVariants() == null
+                ? BigDecimal.ZERO
+                : product.getVariants().stream()
+                .map(ProductVariant::getPrice) // 🔥 uses existing logic
+                .filter(Objects::nonNull)
+                .min(BigDecimal::compareTo)     // lowest selling price
+                .orElse(BigDecimal.ZERO);
+
+        GroupedProductDTO dto = new GroupedProductDTO();
+        dto.setId(product.getId());
+        dto.setName(product.getName());
+        dto.setActive(product.getActive());
+        dto.setVariants(
+                product.getVariants() == null
                         ? List.of()
-                        : master.getVariants()
+                        : product.getVariants()
                         .stream()
                         .map(this::toVariantDTO)
                         .collect(Collectors.toList())
         );
+
+        // ✅ THIS IS WHAT FIXES ₹0.00
+        dto.setDisplayPrice(displayPrice);
+
+        return dto;
     }
 
     /* =========================

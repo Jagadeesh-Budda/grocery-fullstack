@@ -16,6 +16,7 @@ export default function Register() {
       const res = await fetch("http://localhost:8080/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify(formData),
       });
 
@@ -42,12 +43,12 @@ export default function Register() {
               <div className="w-12 h-12 bg-[#D4BDAC] rounded-2xl flex items-center justify-center text-[#3B1E54] shadow-lg">
                 <ShoppingCart size={24} strokeWidth={2.5} />
               </div>
-              <span className="text-2xl font-black tracking-tighter uppercase">groceRythm</span>
+              <span className="text-2xl font-black tracking-tighter ">groceRythm</span>
             </div>
 
             <h2 className="text-4xl font-bold leading-tight mb-6">
               Join the <br /> 
-              <span className="text-[#D4BDAC] italic font-serif">Verdant Circle.</span>
+              <span className="text-[#D4BDAC] italic font-serif">groceRythm.</span>
             </h2>
             <ul className="space-y-4">
               {[ "Hand-picked organic selection", "Artisan logistics & tracking", "Exclusive morning arrivals" ].map((text, i) => (

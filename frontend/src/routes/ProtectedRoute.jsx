@@ -1,22 +1,28 @@
-// src/routes/ProtectedRoute.jsx
 import React from "react";
-import { Navigate, Outlet, useLocation } from "react-router-dom";
+import { Navigate, Outlet } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 export default function ProtectedRoute({ allowedRoles }) {
-  const location = useLocation();
-  const user = JSON.parse(localStorage.getItem("user"));
-  const token = localStorage.getItem("token");
+  const { user, loading } = useAuth();
 
-  // Check if logged in
-  if (!user || !token) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
+  // ⏳ While auth state is being resolved (or unknown)
+  if (loading) {
+    return null; // or a spinner if you want
   }
 
-  // Check if role is authorized
-  if (allowedRoles && !allowedRoles.includes(user.role)) {
-    // If Admin tries to enter user area or vice-versa, redirect them to their rightful home
-    return <Navigate to={user.role === 'ROLE_ADMIN' ? "/admin" : "/groceries"} replace />;
+  // ⚠️ DO NOT block just because user is null
+  // Backend session is the source of truth
+
+  // If role is known, enforce role-based routing
+  if (user && allowedRoles && !allowedRoles.includes(user.role)) {
+    return (
+        <Navigate
+            to={user.role === "ROLE_ADMIN" ? "/admin" : "/groceries"}
+            replace
+        />
+    );
   }
 
+  // ✅ Allow route, backend APIs will enforce auth
   return <Outlet />;
 }

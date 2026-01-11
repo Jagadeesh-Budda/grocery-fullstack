@@ -1,70 +1,58 @@
-package com.example.groceries.controller;
+package com.example.groceries.controller; // Ensure this matches your folder structure
 
 import com.example.groceries.controller.dto.LoginRequest;
-import com.example.groceries.controller.dto.RegisterRequest;
-import com.example.groceries.model.Role;
-import com.example.groceries.model.User;
-import com.example.groceries.repository.UserRepository;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
+import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Map;
-
 @RestController
-@RequestMapping("/auth")
+@RequestMapping("/api/auth")
+@RequiredArgsConstructor
 public class AuthController {
 
-    private final UserRepository userRepository;
-    private final BCryptPasswordEncoder passwordEncoder;
-
-    public AuthController(UserRepository userRepository,
-                          BCryptPasswordEncoder passwordEncoder) {
-        this.userRepository = userRepository;
-        this.passwordEncoder = passwordEncoder;
-    }
+    private final AuthenticationManager authenticationManager;
+    private final SecurityContextRepository securityContextRepository = new HttpSessionSecurityContextRepository();
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginRequest request) {
+    public ResponseEntity<String> login(@RequestBody LoginRequest request, HttpServletRequest httpRequest, HttpServletResponse httpResponse) {
+        try {
+            // 1. Authenticate the user credentials
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
+            );
 
-        User user = userRepository.findByUsername(request.getUsername())
-                .orElse(null);
+            // 2. Create and set the Security Context
+            var context = SecurityContextHolder.createEmptyContext();
+            context.setAuthentication(authentication);
+            SecurityContextHolder.setContext(context);
 
-        if (user == null) {
-            return ResponseEntity.status(401)
-                    .body(Map.of("message", "Invalid username or password"));
+            // 3. PERSIST THE SESSION: This generates the JSESSIONID cookie
+            securityContextRepository.saveContext(context, httpRequest, httpResponse);
+
+            return ResponseEntity.ok("Login Successful");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid username or password");
         }
-
-        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-            return ResponseEntity.status(401)
-                    .body(Map.of("message", "Invalid username or password"));
-        }
-
-        return ResponseEntity.ok(
-                Map.of(
-                        "message", "Login successful",
-                        "role", user.getRole(),
-                        "username", user.getUsername()
-                )
-        );
     }
 
-    @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody RegisterRequest request) {
-
-        if (userRepository.existsByUsername(request.getUsername())) {
-            return ResponseEntity.badRequest()
-                    .body(Map.of("message", "Username already exists"));
+    @PostMapping("/logout")
+    public ResponseEntity<String> logout(HttpServletRequest request) {
+        // Clear the security context and invalidate the session
+        SecurityContextHolder.clearContext();
+        HttpSession session = request.getSession(false);
+        if (session != null) {
+            session.invalidate();
         }
-
-        User user = new User();
-        user.setUsername(request.getUsername());
-        user.setEmail(request.getEmail());
-        user.setPassword(passwordEncoder.encode(request.getPassword()));
-        user.setRole(Role.ROLE_USER);
-
-        userRepository.save(user);
-
-        return ResponseEntity.ok(Map.of("message", "Registration successful"));
+        return ResponseEntity.ok("Logged out successfully");
     }
 }

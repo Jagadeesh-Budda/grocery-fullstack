@@ -1,62 +1,56 @@
-import React from 'react';
-import '../../styles/ProductCard.css';
+import React from "react";
 
-const ProductCard = ({ product = {} }) => {
-  const variants = product.variants || [];
-  const variant = variants[0] || {};
-  
-  const name = product.name || product.masterName || variant.variantName || 'Unnamed product';
-  const price = variant.price || product.price;
-  const unit = variant.unit || product.unit;
-  const stock = variant.stock || product.stock;
-  
-  const IMAGE_BASE = "http://localhost:8080";
-  const rawPath = variant.image_url || variant.imageUrl || product.imageUrl || product.imagePath || "";
-  const imagePath = rawPath ? (rawPath.startsWith("/images/") ? rawPath : (rawPath.startsWith("/") ? `/images${rawPath}` : `/images/${rawPath}`)) : "";
-  const src = imagePath ? `${IMAGE_BASE}${imagePath}` : null;
+export default function ProductCard({ product, onAdd }) {
+    const placeholder = "https://via.placeholder.com/400x300?text=No+Image";
+    const { name, price, unit, image } = product || {};
 
-  const formatCurrency = (amount) => {
-    const numericAmount = Number(amount) || 0;
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
-    }).format(numericAmount);
-  };
+    const baseUrl = "http://localhost:8080";
+    const fullImageUrl = image 
+        ? (image.startsWith("http") ? image : `${baseUrl}${image.startsWith("/") ? "" : "/"}${image}`)
+        : placeholder;
 
-  return (
-    <div className="product-card">
-      <div className="card-media">
-        {src ? (
-          <img
-            className="product-image"
-            src={src}
-            alt={name}
-            onError={(e) => {
-              e.target.src = "https://via.placeholder.com/150?text=No+Image";
-            }}
-          />
-        ) : (
-          <div className="product-image placeholder-image">No Image</div>
-        )}
-      </div>
+    return (
+        <div className="flex flex-col h-full bg-white rounded-2xl border border-slate-100 overflow-hidden transition-all duration-300 hover:shadow-lg group">
+            {/* Fixed aspect ratio container (4:3) */}
+            <div className="relative aspect-[4/3] w-full bg-slate-50 overflow-hidden">
+                <img
+                    src={fullImageUrl}
+                    alt={name}
+                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    onError={(e) => {
+                        if (e.currentTarget.src !== placeholder) {
+                            e.currentTarget.src = placeholder;
+                        }
+                    }}
+                />
+            </div>
 
-      <div className="product-info">
-        <h3 className="product-name">{name || 'Unnamed product'}</h3>
+            <div className="flex flex-1 flex-col p-4">
+                <div className="mb-auto">
+                    <h3 className="line-clamp-2 text-[14px] font-bold text-slate-900 leading-tight mb-1">
+                        {name}
+                    </h3>
+                    <p className="text-[12px] font-medium text-slate-500">
+                        {unit}
+                    </p>
+                </div>
 
-        <div className="product-price">
-          {price !== undefined ? formatCurrency(price) : '-'}
+                <div className="mt-4 flex items-center justify-between gap-2">
+          <span className="text-[15px] font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-lg">
+            ₹{price}
+          </span>
+                    <button
+                        onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            onAdd();
+                        }}
+                        className="flex items-center justify-center h-8 px-4 bg-[#3B1E54] hover:bg-[#2D1640] text-white text-[13px] font-bold rounded-full transition-all active:scale-95 shadow-sm"
+                    >
+                        Add
+                    </button>
+                </div>
+            </div>
         </div>
-
-        <div className="product-unit">
-          {unit ?? '-'}
-        </div>
-
-        <div className={`product-stock ${typeof stock === 'number' ? (stock > 0 ? 'in-stock' : 'out-of-stock') : ''}`}>
-          {typeof stock === 'number' ? (stock > 0 ? `In stock: ${stock}` : 'Out of stock') : 'Stock: -'}
-        </div>
-      </div>
-    </div>
-  );
-};
-
-export default ProductCard;
+    );
+}

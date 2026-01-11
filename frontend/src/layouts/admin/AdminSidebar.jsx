@@ -1,4 +1,4 @@
-// src/components/Sidebar.jsx (Refactored for groceRythm)
+// src/components/AdminSidebar.jsx (Refactored for groceRythm)
 import React from 'react';
 import { Home, Grid, ShoppingCart, Settings, LogOut, Package } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -11,7 +11,7 @@ const items = [
   { key: 'settings', label: 'Settings', icon: Settings, href: '/admin/settings' },
 ];
 
-export default function Sidebar({ active = 'dashboard', onLogout = () => {} }) {
+export default function AdminSidebar({ active = 'dashboard', onLogout = () => {} }) {
   const navigate = useNavigate();
 
   return (

@@ -4,6 +4,8 @@ import { Trash2, Plus, Minus, Search } from "lucide-react";
 export default function ShoppingList({
   items = [],
   selectedCategory = null,
+  cartTotal = "",
+  totalItems = 0,
   onUpdateQuantity = () => {},
   onRemoveItem = () => {},
 }) {
@@ -26,84 +28,16 @@ export default function ShoppingList({
     });
   }, [items, query, selectedCategory]);
 
-  const { totalPrice, totalItems } = useMemo(() => {
-    let sum = 0;
-    let count = 0;
-
-    filteredItems.forEach((item) => {
-      const price = Number(item.pricePerKg || 0);
-      const qty = Number(item.quantity || 0);
-      sum += price * qty;
-      count += qty;
-    });
-
-    return { totalPrice: sum, totalItems: count };
-  }, [filteredItems]);
-
-  const formatCurrency = (amount) => {
-    const numericAmount = Number(amount) || 0;
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
-    }).format(numericAmount);
-  };
-
   return (
-    <div
-      style={{
-        background: "#ffffff",
-        borderRadius: 14,
-        padding: "14px",
-        boxShadow: "0 6px 18px rgba(15,23,42,0.06)",
-        border: "1px solid rgba(15,23,42,0.06)",
-        display: "flex",
-        flexDirection: "column",
-        height: "100%",
-      }}
-    >
-      <style>
-        {`
-        .sl-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; gap: 10px; }
-        .sl-title { font-size: 16px; font-weight: 700; margin: 0; color: #0f172a; }
-        .sl-search { display: flex; align-items: center; gap: 6px; padding: 6px 8px; border-radius: 8px; background: #f9fafb; border: 1px solid rgba(15,23,42,0.06); flex: 1; max-width: 180px; }
-        .sl-search input { border: 0; outline: none; background: transparent; font-size: 12px; color: #0f172a; width: 100%; }
-        .sl-search input::placeholder { color: #9ca3af; }
-        .sl-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; padding-right: 2px; }
-        .sl-list::-webkit-scrollbar { width: 5px; }
-        .sl-list::-webkit-scrollbar-track { background: transparent; }
-        .sl-list::-webkit-scrollbar-thumb { background: rgba(15,23,42,0.06); border-radius: 2px; }
-        .sl-item { display: flex; align-items: center; gap: 8px; padding: 10px; background: #f9fafb; border-radius: 9px; transition: all 160ms ease; border: 1px solid rgba(15,23,42,0.03); }
-        .sl-item:hover { background: #f3f4f6; }
-        .sl-item-info { flex: 1; min-width: 0; }
-        .sl-item-name { margin: 0; font-size: 12px; font-weight: 600; color: #0f172a; line-height: 1.3; }
-        .sl-item-price { margin: 2px 0 0; font-size: 11px; color: #6b7280; }
-        .sl-item-total { margin: 3px 0 0; font-size: 11px; font-weight: 700; color: #10b981; }
-        .sl-qty-control { display: flex; align-items: center; gap: 5px; }
-        .sl-qty-btn { background: #fff; border: 1px solid rgba(15,23,42,0.06); width: 22px; height: 22px; border-radius: 5px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 140ms ease; flex-shrink: 0; }
-        .sl-qty-btn:hover { background: #ecfdf5; border-color: #10b981; transform: scale(1.05); }
-        .sl-qty { font-size: 11px; font-weight: 700; color: #0f172a; min-width: 20px; text-align: center; }
-        .sl-delete-btn { background: transparent; border: 0; color: #ef4444; cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center; transition: all 140ms ease; border-radius: 5px; flex-shrink: 0; }
-        .sl-delete-btn:hover { background: rgba(239,68,68,0.08); }
-        .sl-empty { text-align: center; color: #6b7280; font-size: 12px; padding: 30px 16px; }
-        .sl-footer { border-top: 1px solid rgba(15,23,42,0.06); padding-top: 10px; }
-        .sl-summary { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 12px; color: #6b7280; }
-        .sl-summary-value { font-weight: 600; color: #0f172a; }
-        .sl-total { display: flex; justify-content: space-between; align-items: center; padding: 11px; background: linear-gradient(135deg, #ecfdf5 0%, #f0fdf4 100%); border-radius: 9px; border: 1px solid rgba(16,185,129,0.12); margin-bottom: 9px; }
-        .sl-total-label { font-weight: 700; color: #065f46; font-size: 13px; }
-        .sl-total-amount { font-size: 16px; font-weight: 700; color: #10b981; }
-        .sl-checkout { width: 100%; padding: 10px; border-radius: 9px; background: linear-gradient(180deg, #10b981 0%, #059669 100%); color: #fff; border: 0; font-weight: 700; font-size: 13px; cursor: pointer; transition: all 160ms cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 4px 12px rgba(16,185,129,0.12); }
-        .sl-checkout:hover { box-shadow: 0 8px 20px rgba(16,185,129,0.16); transform: translateY(-2px); }
-        .sl-checkout:active { transform: translateY(0); box-shadow: 0 2px 6px rgba(16,185,129,0.1); }
-      `}
-      </style>
-
+    <div className="flex h-full flex-col rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
       {/* Header */}
-      <div className="sl-header">
-        <h3 className="sl-title">Cart Summary</h3>
-        <div className="sl-search">
-          <Search size={14} />
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <h3 className="text-lg font-bold text-slate-900">Cart Summary</h3>
+        <div className="flex max-w-[160px] flex-1 items-center gap-2 rounded-lg border border-slate-100 bg-slate-50 px-2 py-1.5 focus-within:ring-1 focus-within:ring-grocery-primary/30">
+          <Search size={14} className="text-slate-400" />
           <input
             type="text"
+            className="w-full border-0 bg-transparent text-xs text-slate-900 outline-none placeholder:text-slate-400"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search..."
@@ -113,10 +47,10 @@ export default function ShoppingList({
       </div>
 
       {/* Items List */}
-      <div className="sl-list">
+      <div className="flex-1 overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
         {filteredItems.length === 0 ? (
-          <div className="sl-empty">
-            <p>
+          <div className="py-12 text-center">
+            <p className="text-sm font-medium text-slate-500">
               {items.length === 0
                 ? "Your cart is empty"
                 : `No items found${
@@ -125,78 +59,92 @@ export default function ShoppingList({
             </p>
           </div>
         ) : (
-          filteredItems.map((item) => {
-            const pricePerKg = Number(item.pricePerKg || 0);
-            const quantity = Number(item.quantity || 0);
-            const itemTotal = pricePerKg * quantity;
+          <div className="flex flex-col gap-2 pb-2">
+            {filteredItems.map((item) => {
+              const quantity = Number(item.quantity || 0);
 
-            return (
-              <div className="sl-item" key={item.id}>
-                <div className="sl-item-info">
-                  <h4 className="sl-item-name">{item.name}</h4>
-                  <p className="sl-item-price">
-                    {formatCurrency(pricePerKg)} / kg
-                  </p>
-                  <p className="sl-item-total">
-                    {formatCurrency(itemTotal)}
-                  </p>
-                </div>
-
-                <div className="sl-qty-control">
-                  <button
-                    className="sl-qty-btn"
-                    onClick={() =>
-                      onUpdateQuantity(item.id, Math.max(0, quantity - 1))
-                    }
-                    aria-label="Decrease quantity"
-                    type="button"
-                    title="Decrease"
-                  >
-                    <Minus size={12} />
-                  </button>
-                  <span className="sl-qty">{quantity}</span>
-                  <button
-                    className="sl-qty-btn"
-                    onClick={() =>
-                      onUpdateQuantity(item.id, quantity + 1)
-                    }
-                    aria-label="Increase quantity"
-                    type="button"
-                    title="Increase"
-                  >
-                    <Plus size={12} />
-                  </button>
-                </div>
-
-                <button
-                  className="sl-delete-btn"
-                  onClick={() => onRemoveItem(item.id)}
-                  aria-label="Remove item"
-                  type="button"
-                  title="Delete"
+              return (
+                <div 
+                  className="group flex items-center gap-3 rounded-xl border border-slate-50 bg-slate-50/50 p-3 transition-colors hover:bg-slate-50" 
+                  key={item.id}
                 >
-                  <Trash2 size={14} />
-                </button>
-              </div>
-            );
-          })
+                  <div className="flex-1 min-w-0">
+                    <h4 className="truncate text-sm font-bold text-slate-900 leading-tight">
+                      {item.name}
+                    </h4>
+                    <div className="mt-1 flex items-center gap-2">
+                      <span className="text-xs font-medium text-slate-500">
+                        {item.displayPrice}/kg
+                      </span>
+                      <span className="text-[10px] text-slate-300">•</span>
+                      <span className="text-xs font-bold text-grocery-primary">
+                        {item.itemTotal}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-1 rounded-lg bg-white p-1 shadow-sm border border-slate-100">
+                    <button
+                      className="flex h-6 w-6 items-center justify-center rounded-md text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900"
+                      onClick={() =>
+                        onUpdateQuantity(item.id, Math.max(0, quantity - 1))
+                      }
+                      aria-label="Decrease quantity"
+                      type="button"
+                    >
+                      <Minus size={12} />
+                    </button>
+                    <span className="w-6 text-center text-xs font-bold text-slate-900">
+                      {quantity}
+                    </span>
+                    <button
+                      className="flex h-6 w-6 items-center justify-center rounded-md text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900"
+                      onClick={() =>
+                        onUpdateQuantity(item.id, quantity + 1)
+                      }
+                      aria-label="Increase quantity"
+                      type="button"
+                    >
+                      <Plus size={12} />
+                    </button>
+                  </div>
+
+                  <button
+                    className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 opacity-0 transition-all hover:bg-red-50 hover:text-red-500 group-hover:opacity-100"
+                    onClick={() => onRemoveItem(item.id)}
+                    aria-label="Remove item"
+                    type="button"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              );
+            })}
+          </div>
         )}
       </div>
 
       {/* Footer Summary & Checkout */}
       {filteredItems.length > 0 && (
-        <div className="sl-footer">
-          <div className="sl-summary">
-            <span>Items:</span>
-            <span className="sl-summary-value">{totalItems}</span>
+        <div className="mt-4 border-t border-slate-100 pt-4">
+          <div className="mb-3 flex flex-col gap-2">
+            <div className="flex justify-between text-xs font-medium text-slate-500 px-1">
+              <span>Subtotal ({totalItems} items)</span>
+              <span>{cartTotal}</span>
+            </div>
+            
+            <div className="flex items-center justify-between rounded-xl bg-grocery-primary/5 p-4 border border-grocery-primary/10">
+              <span className="text-sm font-bold text-slate-900">Total Amount</span>
+              <span className="text-xl font-extrabold text-grocery-primary">
+                {cartTotal}
+              </span>
+            </div>
           </div>
 
-          <div className="sl-total">
-            <span className="sl-total-label">Total</span>
-            <span className="sl-total-amount">{formatCurrency(totalPrice)}</span>
-          </div>
-
-          <button className="sl-checkout" type="button">
+          <button 
+            className="w-full rounded-xl bg-grocery-primary py-3.5 text-sm font-bold text-white shadow-md shadow-grocery-primary/20 transition-all hover:bg-grocery-primaryHover hover:shadow-lg active:scale-[0.98]"
+            type="button"
+          >
             Checkout
           </button>
         </div>

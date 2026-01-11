@@ -1,99 +1,126 @@
-import React from 'react';
-import PropTypes from 'prop-types';
-import ProductCard from './ProductCard';
-import { ChevronRight } from 'lucide-react';
+import React, { useEffect, useState, useCallback, useRef } from "react";
+import ProductCard from "./ProductCard";
+import { useCart } from "../../context/CartContext";
+import { fetchGroceries } from "../../services/groceryApi";
 
-const ProductGrid = ({ 
-  products = [], 
-  onAddToCart, 
-  onToggleFavorite,
-  onViewMore,
-  title = 'Popular Products',
-  showViewMore = false 
-}) => {
+export default function ProductGrid() {
+    const { addToCart } = useCart();
+
+    const [products, setProducts] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState("");
+    const [page, setPage] = useState(0);
+    const [hasMore, setHasMore] = useState(true);
+    const loaderRef = useRef(null);
+
+    const loadProducts = useCallback(async (pageNum) => {
+        try {
+            setLoading(true);
+            const data = await fetchGroceries(pageNum, 20);
+            const newProducts = data.content || [];
+            
+            setProducts(prev => pageNum === 0 ? newProducts : [...prev, ...newProducts]);
+            setHasMore(!data.last && (data.totalPages > data.number + 1));
+            setError("");
+        } catch (err) {
+            console.error("Failed to load products", err);
+            if (err.response && err.response.status === 401) {
+                setProducts([]); 
+                setError(""); 
+            } else {
+                setError("Failed to load products");
+            }
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        loadProducts(page);
+    }, [page, loadProducts]);
+
+    useEffect(() => {
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0].isIntersecting && hasMore && !loading) {
+                    setPage(prev => prev + 1);
+                }
+            },
+            { threshold: 0.1 }
+        );
+
+        if (loaderRef.current) {
+            observer.observe(loaderRef.current);
+        }
+
+        return () => {
+            if (loaderRef.current) {
+                observer.unobserve(loaderRef.current);
+            }
+        };
+    }, [hasMore, loading]);
+
+
+    if (error) {
+        return (
+            <div className="py-12 text-center text-sm text-red-500">
+                {error}
+            </div>
+        );
+    }
+
+    if (!loading && products.length === 0) {
+        return (
+            <div className="py-12 text-center text-sm text-gray-500">
+                No products found in database
+            </div>
+        );
+    }
+
     return (
-        <section className="section">
-            <style>
-                {`
-                .pg-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; gap: 12px; }
-                .pg-title { font-size: 16px; font-weight: 700; margin: 0; color: #0f172a; letter-spacing: -0.01em; }
-                .pg-grid { 
-                  display: grid; 
-                  grid-template-columns: repeat(4, 1fr);
-                  gap: 20px;
-                  width: 100%;
-                  justify-content: center;
-                  justify-items: center;
-                }
-                .pg-card { justify-self: center; width: 100%; display: flex; justify-content: center; }
-                .pg-empty { padding: 40px 20px; text-align: center; color: #6b7280; font-size: 13px; }
-                .pg-view-more { display: flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 8px; background: transparent; border: 1px solid rgba(15,23,42,0.06); color: #10b981; font-weight: 600; font-size: 12px; cursor: pointer; transition: background 160ms ease, transform 160ms ease; }
-                .pg-view-more:hover { background: rgba(16,185,129,0.06); transform: translateY(-1px); }
-                @media (max-width: 767px) {
-                  .pg-grid { grid-template-columns: repeat(2, 1fr); }
-                }
-                @media (min-width: 768px) and (max-width: 1023px) {
-                  .pg-grid { grid-template-columns: repeat(3, 1fr); }
-                }
-                @media (min-width: 1024px) {
-                  .pg-grid { grid-template-columns: repeat(4, 1fr); }
-                }
-                .pg-title { font-size: 15px; }
-                `}
-            </style>
-
-            <div className="pg-header">
-              <h2 className="pg-title">{title}</h2>
-              {showViewMore && (
-                <button 
-                  className="pg-view-more"
-                  onClick={onViewMore}
-                  type="button"
-                  aria-label="View all products"
-                >
-                  View all
-                  <ChevronRight size={14} />
-                </button>
-              )}
+        <div className="space-y-8">
+            <div
+                className="
+                    grid
+                    grid-cols-2
+                    gap-6
+                    sm:grid-cols-3
+                    md:grid-cols-4
+                    lg:grid-cols-5
+                    items-stretch
+                    auto-rows-fr
+                "
+            >
+                {products.map((product, index) => {
+                    const displayVariant = product.variants?.[0] || {};
+                    return (
+                        <ProductCard
+                            key={`${product.variantId || product.id}-${index}`}
+                            product={{
+                                ...product,
+                                price: product.displayPrice || displayVariant.price,
+                                unit: displayVariant.unit || product.unit,
+                                image: displayVariant.imageUrl || product.image
+                            }}
+                            onAdd={() => addToCart(product)}
+                        />
+                    );
+                })}
             </div>
 
-            <div className="pg-grid">
-                {products && products.length > 0 ? (
-                    products.map((prod) => (
-                        <div className="pg-card" key={prod.id ?? prod._id ?? prod.name}>
-                            <ProductCard 
-                              product={prod} 
-                              onAddToCart={onAddToCart}
-                              onToggleFavorite={onToggleFavorite}
-                            />
-                        </div>
-                    ))
-                ) : (
-                    <div className="pg-empty" style={{ gridColumn: '1 / -1' }}>
-                      <p style={{ margin: 0 }}>No products available.</p>
+            {/* Infinite Scroll Loader Trigger */}
+            <div ref={loaderRef} className="py-8 text-center">
+                {loading && (
+                    <div className="text-sm text-gray-500 animate-pulse">
+                        Loading more products...
+                    </div>
+                )}
+                {!hasMore && products.length > 0 && (
+                    <div className="text-sm text-gray-400">
+                        You've reached the end
                     </div>
                 )}
             </div>
-        </section>
+        </div>
     );
-};
-
-ProductGrid.propTypes = {
-    products: PropTypes.arrayOf(
-        PropTypes.shape({
-            id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-            _id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-            name: PropTypes.string,
-            image: PropTypes.string,
-            description: PropTypes.string,
-            pricePerKg: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
-        })
-    ),
-    onAddToCart: PropTypes.func,
-    onToggleFavorite: PropTypes.func,
-    onViewMore: PropTypes.func,
-    title: PropTypes.string,
-    showViewMore: PropTypes.bool,
-};
-
-export default ProductGrid;
+}

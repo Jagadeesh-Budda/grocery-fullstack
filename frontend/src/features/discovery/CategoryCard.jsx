@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import PropTypes from "prop-types";
 
-export default function CategoryCard({ category, onClick, selected = false }) {
-  const { id, name = "Unnamed", icon = "🛒", color, image } = category || {};
+export default function CategoryCard({ category, onClick, selected = false, small = false }) {
+  const { name = "Unnamed", icon = "🛒", color, image } = category || {};
   const [imgError, setImgError] = useState(false);
   const showImage = image && !imgError;
 
@@ -11,83 +11,43 @@ export default function CategoryCard({ category, onClick, selected = false }) {
       type="button"
       onClick={() => onClick && onClick(category)}
       aria-pressed={selected}
-      style={{
-        width: 140,
-        height: 160,
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        gap: 12,
-        padding: 14,
-        borderRadius: 16,
-        background: "#ffffff",
-        border: selected ? "2px solid #10b981" : "1px solid rgba(15,23,42,0.06)",
-        boxShadow: selected
-          ? "0 8px 24px rgba(16,185,129,0.12)"
-          : "0 4px 12px rgba(15,23,42,0.05)",
-        cursor: "pointer",
-        transition: "all 160ms cubic-bezier(0.4, 0, 0.2, 1)",
-        transform: selected ? "scale(1.06) translateY(-4px)" : "scale(1) translateY(0)",
-      }}
-      onMouseEnter={(e) => {
-        if (!selected) {
-          e.currentTarget.style.transform = "scale(1.04) translateY(-3px)";
-          e.currentTarget.style.boxShadow = "0 8px 24px rgba(15,23,42,0.08)";
+      className={`
+        ${small ? "w-[110px] h-[120px] p-2" : "w-[140px] h-[160px] p-[14px]"} 
+        flex flex-col items-center gap-2 rounded-[24px] bg-white cursor-pointer
+        transition-all duration-[160ms] ease-[cubic-bezier(0.4,0,0.2,1)]
+        ${
+          selected
+            ? "border-2 border-[#10b981] shadow-[0_8px_24px_rgba(16,185,129,0.12)] scale-[1.06] -translate-y-1"
+            : "border border-[rgba(15,23,42,0.06)] shadow-[0_4px_12px_rgba(15,23,42,0.05)] scale-100 translate-y-0 hover:scale-[1.04] hover:-translate-y-[3px] hover:shadow-[0_8px_24px_rgba(15,23,42,0.08)]"
         }
-      }}
-      onMouseLeave={(e) => {
-        if (!selected) {
-          e.currentTarget.style.transform = "scale(1) translateY(0)";
-          e.currentTarget.style.boxShadow = "0 4px 12px rgba(15,23,42,0.05)";
-        }
-      }}
+      `}
     >
       <div
-        style={{
-          width: 60,
-          height: 60,
-          borderRadius: 12,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          fontSize: 28,
-          overflow: "hidden",
-          backgroundColor: color || "#f3f4f6",
-          flexShrink: 0,
-        }}
+        className={`${small ? "w-[50px] h-[50px] text-[24px]" : "w-[60px] h-[60px] text-[28px]"} rounded-[12px] flex items-center justify-center overflow-hidden shrink-0`}
+        style={{ backgroundColor: color || "#f3f4f6" }}
         aria-hidden="true"
       >
         {showImage ? (
           <img
             src={image}
             alt={`${name} category`}
-            style={{
-              width: "100%",
-              height: "100%",
-              objectFit: "cover",
-              display: "block",
-            }}
+            className="w-full h-full object-cover block"
             onError={() => setImgError(true)}
             loading="lazy"
           />
         ) : (
-          <span style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <span className="flex items-center justify-center">
             {icon}
           </span>
         )}
       </div>
 
-      <div style={{ textAlign: "center", width: "100%", minWidth: 0 }}>
+      <div className="text-center w-full min-w-0">
         <div
-          style={{
-            fontWeight: 600,
-            fontSize: 13,
-            color: selected ? "#10b981" : "#0f172a",
-            textOverflow: "ellipsis",
-            overflow: "hidden",
-            whiteSpace: "nowrap",
-            transition: "color 160ms ease",
-          }}
+          className={`
+            font-semibold ${small ? "text-[12px]" : "text-[13px]"} truncate transition-colors duration-[160ms] ease-out
+            ${selected ? "text-[#10b981]" : "text-[#0f172a]"}
+          `}
           title={name}
         >
           {name}

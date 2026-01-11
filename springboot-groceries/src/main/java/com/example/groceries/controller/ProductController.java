@@ -13,12 +13,21 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/products")
+@RequestMapping("/api/products")
 @RequiredArgsConstructor
-@CrossOrigin
+@CrossOrigin(origins = "http://localhost:5173", allowCredentials = "true")
 public class ProductController {
 
     private final ProductService productService;
+
+
+
+    @GetMapping
+    public ResponseEntity<Page<UserProductDTO>> getAllProducts(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(productService.getUserProducts(PageRequest.of(page, size)));
+    }
 
     /* =========================
        PRODUCT DETAILS & RECOMMENDATIONS

@@ -1,156 +1,159 @@
-import React, { useEffect, useState, useCallback } from "react";
-import { useInView } from "react-intersection-observer";
+import React from "react";
+import { useNavigate } from "react-router-dom";
+
+import ProductGrid from "../features/products/ProductGrid";
+import ShoppingCart from "../components/ShoppingCart";
+import RecipeList from "../features/recipes/RecipeList";
 import { useCart } from "../context/CartContext";
-import "../styles/UserDashboard.css";
 
-const UserDashboard = () => {
-  const { addToCart, cartItems } = useCart();
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [currentPage, setCurrentPage] = useState(0);
-  const [hasMore, setHasMore] = useState(true);
-  const PAGE_SIZE = 8;
-  const API_BASE = "http://localhost:8080";
+export default function UserDashboard() {
+  const navigate = useNavigate();
 
-  const { ref, inView } = useInView({ threshold: 0 });
-
-  // Helper to clean branding from names
-  const cleanName = (name = "") => name.replace(/groceRythm\s*/gi, "").trim();
-
-  // Indian Rupee Formatter
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
-    }).format(Number(amount) || 0);
-  };
-
-  // Helper to get quantity of a variant in cart
-  const getCartQuantity = (variantId) => {
-    const item = cartItems.find(i => i.variantId === variantId);
-    return item ? item.quantity : 0;
-  };
-
-  const loadMore = useCallback(async () => {
-    if (loading || !hasMore) return;
-    setLoading(true);
-
-    try {
-      const token = localStorage.getItem("token");
-      const headers = { "Content-Type": "application/json" };
-      if (token) headers["Authorization"] = `Bearer ${token}`;
-
-      const res = await fetch(`${API_BASE}/products/grouped?page=${currentPage}&size=${PAGE_SIZE}`, { headers });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
-      const data = await res.json();
-      const newItems = data.content || [];
-
-      if (newItems.length === 0) {
-        setHasMore(false);
-      } else {
-        setProducts((prev) => {
-          const existingIds = new Set(prev.map(p => p.id));
-          const unique = newItems.filter(p => !existingIds.has(p.id));
-          return [...prev, ...unique];
-        });
-        setCurrentPage((prev) => prev + 1);
-        if (data.last) setHasMore(false);
-      }
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  }, [currentPage, loading, hasMore]);
-
-  useEffect(() => {
-    if (inView && hasMore) loadMore();
-  }, [inView, hasMore, loadMore]);
+  const {
+    cartItems,
+    increment,
+    decrement,
+  } = useCart();
 
   return (
-      <div className="dashboard-container">
-        {/* FIX 1: HERO BANNER
-         Class names 'hero-banner' and 'hero-copy' now match your CSS exactly
-      */}
-        <section className="hero-banner">
-          <div className="hero-copy">
-            <h1 className="hero-title">Fresh Picks for Today</h1>
-            <p className="hero-sub">Daily essentials delivered by <strong>groceRythm</strong></p>
-            <div className="hero-cta">
-              <button className="shop-now">Shop Now</button>
+      <div className="flex gap-6">
+        {/* ================= LEFT + CENTER ================= */}
+        <div className="flex-1 space-y-8">
+          {/* Greeting */}
+          <div className="rounded-2xl bg-gradient-to-r from-emerald-50 to-emerald-100 p-6">
+            <h1 className="text-2xl font-bold text-gray-900">
+              Good evening, Arjun 👋
+            </h1>
+            <p className="text-sm text-gray-600">
+              Time for breakfast? Here's what's running low!
+            </p>
+          </div>
+
+          {/* Usage cards */}
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+            <div className="rounded-xl bg-blue-50 p-4">
+              <p className="text-xs font-semibold text-blue-600">BUY AGAIN</p>
+              <p className="text-sm text-gray-700">
+                Add if you ran out this week
+              </p>
+              <button
+                  type="button"
+                  onClick={() => navigate("/products?filter=buy-again")}
+                  className="mt-3 w-full rounded-lg bg-emerald-500 py-2 text-sm font-semibold text-white"
+              >
+                Add to Cart
+              </button>
+            </div>
+
+            <div className="rounded-xl bg-green-50 p-4">
+              <p className="text-xs font-semibold text-green-600">
+                MONTHLY STOCK
+              </p>
+              <p className="text-sm text-gray-700">
+                Last buy stock lasts ~5 days
+              </p>
+              <button
+                  type="button"
+                  onClick={() => navigate("/products?filter=monthly")}
+                  className="mt-3 w-full rounded-lg bg-emerald-500 py-2 text-sm font-semibold text-white"
+              >
+                Add to Cart
+              </button>
+            </div>
+
+            <div className="rounded-xl bg-red-50 p-4">
+              <p className="text-xs font-semibold text-red-600">
+                RUNNING LOW
+              </p>
+              <p className="text-sm text-gray-700">
+                Only 1 left
+              </p>
+              <button
+                  type="button"
+                  onClick={() => navigate("/products?filter=running-low")}
+                  className="mt-3 w-full rounded-lg bg-emerald-500 py-2 text-sm font-semibold text-white"
+              >
+                Restock
+              </button>
             </div>
           </div>
-          <div className="hero-media">
-            <div className="hero-image-placeholder">
-              <span style={{color: 'white', fontSize: '0.8rem'}}>Fresh Groceries</span>
+
+          {/* Categories */}
+          <div>
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-gray-900">
+                Categories
+              </h2>
+              <button
+                  type="button"
+                  onClick={() => navigate("/categories")}
+                  className="text-sm font-medium text-emerald-600"
+              >
+                See all →
+              </button>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 lg:grid-cols-8">
+              {[
+                "Vegetables",
+                "Fruits",
+                "Dairy",
+                "Grains & Pasta",
+                "Meat & Poultry",
+                "Seafood",
+                "Eggs",
+                "Beverages",
+              ].map((cat) => (
+                  <div
+                      key={cat}
+                      onClick={() => navigate(`/products?category=${cat}`)}
+                      className="cursor-pointer rounded-xl bg-white p-4 text-center shadow-sm hover:shadow-md"
+                  >
+                    <p className="text-sm font-medium text-gray-800">
+                      {cat}
+                    </p>
+                  </div>
+              ))}
             </div>
           </div>
-        </section>
 
-        {/* FIX 2: PRODUCT GRID
-         Accessing variants[0] to fix the "N/A" and Price issue
-      */}
-        <div className="dashboard-grid">
-          {products.map((product) => {
-            // Based on GroupedProductDTO.java, we must pull from the variants list
-            const firstVariant = product.variants?.[0] || {};
-            const price = firstVariant.price || 0;
-            const unit =
-                firstVariant.variantName ||   // ✅ backend camelCase
-                firstVariant.variant_name ||  // (optional safety)
-                "Pack";
-
-
-            // Construct Image URL using the variant's path
-            const rawPath = firstVariant.imageUrl || firstVariant.image_url || "";
-            const fullImg = rawPath
-                ? `${API_BASE}${rawPath.startsWith('/images/') ? rawPath : `/images/${rawPath.replace(/^\//, '')}`}`
-                : "https://via.placeholder.com/150?text=No+Image";
-
-            return (
-                <div className="gromuse-card" key={product.id}>
-                  <div className="card-media">
-                    <img
-                        src={fullImg}
-                        alt={product.name}
-                        className="card-image"
-                        onError={(e) => { e.target.src = "https://via.placeholder.com/150?text=No+Image"; }}
-                    />
-                  </div>
-
-                  <div className="card-body">
-                    <div className="card-title">{cleanName(product.name)}</div>
-
-                    <div className="card-meta">
-                      Grocery • {unit}
-                    </div>
-
-                    <div className="card-footer">
-                      <div className="price">{formatCurrency(price)}</div>
-                      <button 
-                        className="add-btn"
-                        onClick={() => addToCart(product, firstVariant)}
-                      >
-                        {getCartQuantity(firstVariant.id || firstVariant.variantId) > 0
-                          ? `+ ${getCartQuantity(firstVariant.id || firstVariant.variantId)}`
-                          : "Add"}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-            );
-          })}
+          {/* Products */}
+          <div>
+            <h2 className="mb-4 text-lg font-semibold text-gray-900">
+              Popular near you
+            </h2>
+            <ProductGrid />
+          </div>
         </div>
 
-        {/* INFINITE SCROLL TRIGGER */}
-        <div ref={ref} className="scroll-trigger">
-          {loading && <div className="loading">Loading products...</div>}
-          {!hasMore && products.length > 0 && <div className="no-more">You've reached the end!</div>}
-        </div>
+        {/* ================= RIGHT SIDEBAR ================= */}
+        <aside className="hidden w-[320px] shrink-0 xl:block">
+          <div className="sticky top-24 space-y-4">
+            {/* Cart */}
+            <div className="rounded-2xl bg-white p-4 shadow-sm">
+              <h3 className="mb-3 text-sm font-semibold text-gray-800">
+                Your Cart
+              </h3>
+
+              <ShoppingCart
+                  items={cartItems}
+                  onIncrease={increment}
+                  onDecrease={decrement}
+              />
+
+              <button
+                  type="button"
+                  onClick={() => navigate("/checkout")}
+                  className="mt-4 w-full rounded-xl bg-emerald-600 py-3 text-sm font-semibold text-white"
+              >
+                Checkout
+              </button>
+            </div>
+
+            {/* 🔥 RECIPES (NEW) */}
+            <RecipeList />
+          </div>
+        </aside>
       </div>
   );
-};
-
-export default UserDashboard;
+}
