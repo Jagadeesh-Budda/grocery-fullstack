@@ -1,0 +1,11 @@
+{
+  "name": "Grocery Fullstack",
+  "image": "mcr.microsoft.com/devcontainers/java:17",
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "18"
+    }
+  },
+  "forwardPorts": [5173, 8080, 5432],
+  "postCreateCommand": "echo 'Devcontainer ready with Java 17 & Node 18'"
+}

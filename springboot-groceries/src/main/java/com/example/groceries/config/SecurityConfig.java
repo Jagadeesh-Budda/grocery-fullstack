@@ -90,11 +90,19 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        // ✅ MUST BE THE EXACT FRONTEND URL (No wildcards '*')
-        configuration.setAllowedOrigins(java.util.List.of("http://localhost:5173"));
-        configuration.setAllowedMethods(java.util.List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(java.util.List.of("Authorization", "Content-Type", "X-Requested-With"));
-        // ✅ REQUIRED TO PASS JSESSIONID COOKIES
+
+        configuration.setAllowedOriginPatterns(
+                java.util.List.of(
+                        "http://localhost:5173",
+                        "https://*.app.github.dev"
+                )
+        );
+
+        configuration.setAllowedMethods(
+                java.util.List.of("GET", "POST", "PUT", "DELETE", "OPTIONS")
+        );
+
+        configuration.setAllowedHeaders(java.util.List.of("*"));
         configuration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
