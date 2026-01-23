@@ -1,9 +1,4 @@
-import React, {
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-} from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import api from "../api/axios";
 
 const AuthContext = createContext(null);
@@ -12,30 +7,28 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // 🔄 Check existing session on app load
   useEffect(() => {
-    async function loadUser() {
+    const loadUser = async () => {
       try {
-        const res = await api.get("/user/me"); // ✅ FIXED
+        const res = await api.get("/user/me");
         setUser(res.data);
       } catch (err) {
         if (err.response?.status !== 401) {
-          console.error("Auth check failed:", err);
+          console.error("Auth check failed:", err.message || err);
         }
         setUser(null);
       } finally {
         setLoading(false);
       }
-    }
+    };
 
     loadUser();
   }, []);
 
-  // 🔐 Login
   const login = async (credentials) => {
     try {
-      await api.post("/auth/login", credentials); // ✅ correct
-      const res = await api.get("/user/me");      // ✅ FIXED
+      await api.post("/auth/login", credentials);
+      const res = await api.get("/user/me");
       setUser(res.data);
       return res.data;
     } catch (err) {
@@ -44,7 +37,6 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // 🔐 Logout
   const logout = async () => {
     try {
       await api.post("/auth/logout");
@@ -54,17 +46,17 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-      <AuthContext.Provider
-          value={{
-            user,
-            loading,
-            isAuthenticated: !!user,
-            login,
-            logout,
-          }}
-      >
-        {children}
-      </AuthContext.Provider>
+    <AuthContext.Provider
+      value={{
+        user,
+        loading,
+        isAuthenticated: !!user,
+        login,
+        logout,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
   );
 };
 

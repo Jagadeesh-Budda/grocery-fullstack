@@ -1,149 +1,197 @@
 package com.example.groceries.service;
 
+import com.example.groceries.controller.dto.CartItemRequest;
+import com.example.groceries.controller.dto.CartItemResponse;
 import com.example.groceries.controller.dto.CartSummaryResponse;
-import com.example.groceries.controller.dto.CreateOrderRequest;
-import com.example.groceries.controller.dto.OrderItemRequest;
 import com.example.groceries.model.*;
-import com.example.groceries.repository.CartItemRepository;
-import com.example.groceries.repository.CartRepository;
-import com.example.groceries.repository.ProductVariantRepository;
-import com.example.groceries.repository.UserRepository;
+import com.example.groceries.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class CartService {
 
     private final CartRepository cartRepository;
     private final CartItemRepository cartItemRepository;
     private final UserRepository userRepository;
     private final ProductVariantRepository productVariantRepository;
-    private final OrderService orderService;
 
-    @Transactional
+    /* ======================
+       CORE CART
+       ====================== */
+
     public Cart getOrCreateCart(Long userId) {
-        return cartRepository.findByUserId(userId)
+        Cart cart = cartRepository.findByUserId(userId)
                 .orElseGet(() -> {
                     User user = userRepository.findById(userId)
                             .orElseThrow(() -> new RuntimeException("User not found"));
-                    Cart cart = new Cart();
-                    cart.setUser(user);
-                    return cartRepository.save(cart);
+                    Cart c = new Cart();
+                    c.setUser(user);
+                    c.setItems(new ArrayList<>());
+                    return cartRepository.save(c);
                 });
+
+        if (cart.getItems() == null) {
+            cart.setItems(new ArrayList<>());
+        }
+        return cart;
     }
 
-    @Transactional
-    public Cart addItemToCart(Long userId, Long variantId, Integer quantity) {
-        if (quantity < 1) {
-            throw new IllegalArgumentException("Quantity must be at least 1");
-        }
+    /* ======================
+       ADD ITEM
+       ====================== */
 
+    public Cart addItem(Long userId, Long variantId, Integer quantity) {
         Cart cart = getOrCreateCart(userId);
+
         ProductVariant variant = productVariantRepository.findById(variantId)
-                .orElseThrow(() -> new RuntimeException("Product variant not found"));
+                .orElseThrow(() -> new RuntimeException("Variant not found"));
 
-        if (variant.getStock() != null && variant.getStock() < quantity) {
-            throw new IllegalStateException("Insufficient stock for product: " + variant.getVariantName());
-        }
+        int qty = quantity != null && quantity > 0 ? quantity : 1;
 
-        Optional<CartItem> existingItem = cart.getItems().stream()
-                .filter(item -> item.getProductVariant().getId().equals(variantId))
+        Optional<CartItem> existing = cart.getItems().stream()
+                .filter(i -> i.getProductVariant().getId().equals(variantId))
                 .findFirst();
 
-        if (existingItem.isPresent()) {
-            CartItem item = existingItem.get();
-            int newQuantity = item.getQuantity() + quantity;
-            if (variant.getStock() != null && variant.getStock() < newQuantity) {
-                throw new IllegalStateException("Insufficient stock for product: " + variant.getVariantName());
-            }
-            item.setQuantity(newQuantity);
+        if (existing.isPresent()) {
+            CartItem item = existing.get();
+            item.setQuantity(item.getQuantity() + qty);
         } else {
-            CartItem newItem = new CartItem();
-            newItem.setCart(cart);
-            newItem.setProductVariant(variant);
-            newItem.setQuantity(quantity);
-            cart.getItems().add(newItem);
+            CartItem item = new CartItem();
+            item.setCart(cart);
+            item.setProductVariant(variant);
+            item.setQuantity(qty);
+            cart.getItems().add(item);
         }
 
         return cartRepository.save(cart);
     }
 
-    @Transactional
+    /* ======================
+       UPDATE QUANTITY
+       ====================== */
+
     public Cart updateQuantity(Long userId, Long variantId, Integer delta) {
         Cart cart = getOrCreateCart(userId);
-        CartItem item = cart.getItems().stream()
-                .filter(i -> i.getProductVariant().getId().equals(variantId))
-                .findFirst()
-                .orElseThrow(() -> new RuntimeException("Item not found in cart"));
 
-        int newQuantity = item.getQuantity() + delta;
-        if (newQuantity <= 0) {
-            cart.getItems().remove(item);
-        } else {
-            ProductVariant variant = item.getProductVariant();
-            if (delta > 0 && variant.getStock() != null && variant.getStock() < newQuantity) {
-                throw new IllegalStateException("Insufficient stock for product: " + variant.getVariantName());
+        cart.getItems().removeIf(item -> {
+            if (item.getProductVariant().getId().equals(variantId)) {
+                int newQty = item.getQuantity() + delta;
+                if (newQty <= 0) return true;
+                item.setQuantity(newQty);
             }
-            item.setQuantity(newQuantity);
+            return false;
+        });
+
+        return cartRepository.save(cart);
+    }
+
+    /* ======================
+       MERGE CART
+       ====================== */
+
+    public Cart mergeCart(Long userId, List<CartItemRequest> items) {
+        Cart cart = getOrCreateCart(userId);
+
+        if (items == null || items.isEmpty()) return cart;
+
+        for (CartItemRequest req : items) {
+            ProductVariant variant = productVariantRepository.findById(req.getVariantId())
+                    .orElseThrow(() -> new RuntimeException("Variant not found"));
+
+            int qty = req.getQuantity() != null && req.getQuantity() > 0 ? req.getQuantity() : 1;
+
+            Optional<CartItem> existing = cart.getItems().stream()
+                    .filter(i -> i.getProductVariant().getId().equals(req.getVariantId()))
+                    .findFirst();
+
+            if (existing.isPresent()) {
+                existing.get().setQuantity(existing.get().getQuantity() + qty);
+            } else {
+                CartItem item = new CartItem();
+                item.setCart(cart);
+                item.setProductVariant(variant);
+                item.setQuantity(qty);
+                cart.getItems().add(item);
+            }
         }
 
         return cartRepository.save(cart);
     }
 
+    /* ======================
+       DTO SAFE METHODS
+       ====================== */
+
     @Transactional(readOnly = true)
-    public CartSummaryResponse getCartSummary(Long userId) {
-        Cart cart = getOrCreateCart(userId);
-
-        int itemCount = cart.getItems().stream()
-                .mapToInt(CartItem::getQuantity)
-                .sum();
-
-        BigDecimal totalAmount = cart.getItems().stream()
-                .map(item -> {
-                    BigDecimal price = item.getProductVariant().getPrice();
-                    return price.multiply(BigDecimal.valueOf(item.getQuantity()));
-                })
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        return CartSummaryResponse.builder()
-                .itemCount(itemCount)
-                .totalAmount(totalAmount)
-                .build();
+    public List<CartItemResponse> getCartItems(Long userId) {
+        return toResponse(getOrCreateCart(userId));
     }
 
+    public List<CartItemResponse> addItemAndReturn(Long userId, Long variantId, Integer quantity) {
+        return toResponse(addItem(userId, variantId, quantity));
+    }
 
-    @Transactional
-    public Order checkout(Long userId) {
+    public List<CartItemResponse> updateQuantityAndReturn(Long userId, Long variantId, Integer delta) {
+        return toResponse(updateQuantity(userId, variantId, delta));
+    }
+
+    public List<CartItemResponse> mergeAndReturn(Long userId, List<CartItemRequest> items) {
+        return toResponse(mergeCart(userId, items));
+    }
+
+    /* ======================
+       SUMMARY
+       ====================== */
+
+    @Transactional(readOnly = true)
+    public CartSummaryResponse getSummary(Long userId) {
         Cart cart = getOrCreateCart(userId);
-        if (cart.getItems().isEmpty()) {
-            throw new IllegalStateException("Cannot checkout an empty cart");
+
+        BigDecimal total = BigDecimal.ZERO;
+        int count = 0;
+
+        for (CartItem item : cart.getItems()) {
+            total = total.add(
+                    item.getProductVariant().getPrice()
+                            .multiply(BigDecimal.valueOf(item.getQuantity()))
+            );
+            count += item.getQuantity();
         }
 
-        List<OrderItemRequest> orderItems = cart.getItems().stream()
-                .map(item -> OrderItemRequest.builder()
-                        .variantId(item.getProductVariant().getId())
-                        .quantity(item.getQuantity())
-                        .build())
-                .collect(Collectors.toList());
+        return new CartSummaryResponse(count, total);
+    }
 
-        CreateOrderRequest orderRequest = CreateOrderRequest.builder()
-                .userId(userId)
-                .items(orderItems)
-                .build();
+    /* ======================
+       MAPPER
+       ====================== */
 
-        Order order = orderService.createOrder(orderRequest);
+    public List<CartItemResponse> toResponse(Cart cart) {
+        List<CartItemResponse> response = new ArrayList<>();
 
-        // Clear cart only after successful order creation
-        cart.getItems().clear();
-        cartRepository.save(cart);
+        for (CartItem item : cart.getItems()) {
+            ProductVariant v = item.getProductVariant();
 
-        return order;
+            response.add(
+                    CartItemResponse.builder()
+                            .Id(v.getId())
+                            .productName(v.getProductMaster().getName())
+                            .variantName(v.getVariantName())
+                            .quantity(item.getQuantity())
+                            .price(v.getPrice())
+                            .imageUrl(v.getImageUrl())
+                            .build()
+            );
+
+        }
+        return response;
     }
 }

@@ -2,9 +2,9 @@ import api from "../api/axios";
 
 /* ---------- PRODUCTS ---------- */
 
-export async function fetchGroceries(page = 0, size = 10) {
+export async function fetchGroceries(page = 0, size = 10, category = "") {
   const res = await api.get("/products/grouped", {
-    params: { page, size }
+    params: { page, size, category }
   });
   // Return the full Page object so the caller can check last/totalPages
   return res.data;
@@ -28,3 +28,4 @@ export async function fetchCategories() {
   const res = await api.get("/categories");
   return res.data;
 }
+export default api;

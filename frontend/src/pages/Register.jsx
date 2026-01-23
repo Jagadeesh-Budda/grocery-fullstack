@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { User, Mail, Lock, ArrowRight, CheckCircle2, ShoppingCart } from "lucide-react";
+import api from "../api/axios";
 
 export default function Register() {
   const navigate = useNavigate();
@@ -13,19 +14,12 @@ export default function Register() {
     setLoading(true);
 
     try {
-      const res = await fetch("http://localhost:8080/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify(formData),
-      });
-
-      if (!res.ok) throw new Error("Registration failed");
+      await api.post("/auth/register", formData);
 
       alert("Registration successful! Welcome to the circle.");
       navigate("/login"); 
     } catch (err) {
-      alert("Registration failed. Please try again.");
+      alert(err.response?.data || "Registration failed. Please try again.");
       setLoading(false);
     }
   };

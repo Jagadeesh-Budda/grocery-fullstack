@@ -7,15 +7,42 @@ class OrderStatusValidatorTest {
 
     @Test
     void validateTransition_ValidTransitions_ShouldNotThrowException() {
-        assertDoesNotThrow(() -> OrderStatusValidator.validate(OrderStatus.CREATED, OrderStatus.CONFIRMED));
-        assertDoesNotThrow(() -> OrderStatusValidator.validate(OrderStatus.CREATED, OrderStatus.CANCELLED));
-        assertDoesNotThrow(() -> OrderStatusValidator.validate(OrderStatus.PENDING, OrderStatus.CONFIRMED));
-        assertDoesNotThrow(() -> OrderStatusValidator.validate(OrderStatus.PENDING, OrderStatus.CANCELLED));
-        assertDoesNotThrow(() -> OrderStatusValidator.validate(OrderStatus.CONFIRMED, OrderStatus.PACKED));
-        assertDoesNotThrow(() -> OrderStatusValidator.validate(OrderStatus.CONFIRMED, OrderStatus.CANCELLED));
-        assertDoesNotThrow(() -> OrderStatusValidator.validate(OrderStatus.PACKED, OrderStatus.SHIPPED));
-        assertDoesNotThrow(() -> OrderStatusValidator.validate(OrderStatus.SHIPPED, OrderStatus.DELIVERED));
+
+        // CREATED
+        assertDoesNotThrow(() ->
+                OrderStatusValidator.validate(OrderStatus.CREATED, OrderStatus.PENDING)
+        );
+        assertDoesNotThrow(() ->
+                OrderStatusValidator.validate(OrderStatus.CREATED, OrderStatus.CANCELLED)
+        );
+
+        // PENDING
+        assertDoesNotThrow(() ->
+                OrderStatusValidator.validate(OrderStatus.PENDING, OrderStatus.CONFIRMED)
+        );
+        assertDoesNotThrow(() ->
+                OrderStatusValidator.validate(OrderStatus.PENDING, OrderStatus.CANCELLED)
+        );
+
+        // CONFIRMED
+        assertDoesNotThrow(() ->
+                OrderStatusValidator.validate(OrderStatus.CONFIRMED, OrderStatus.PACKED)
+        );
+        assertDoesNotThrow(() ->
+                OrderStatusValidator.validate(OrderStatus.CONFIRMED, OrderStatus.CANCELLED)
+        );
+
+        // PACKED
+        assertDoesNotThrow(() ->
+                OrderStatusValidator.validate(OrderStatus.PACKED, OrderStatus.SHIPPED)
+        );
+
+        // SHIPPED
+        assertDoesNotThrow(() ->
+                OrderStatusValidator.validate(OrderStatus.SHIPPED, OrderStatus.DELIVERED)
+        );
     }
+
 
     @Test
     void validateTransition_InvalidTransitions_ShouldThrowIllegalStateException() {

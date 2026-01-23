@@ -1,0 +1,650 @@
+
+    Directory: E:\grocery_fullstack_enhanced\springboot-groceries
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----        11-01-2026     02:02                .idea
+d-----        25-12-2025     18:20                src
+d-----        25-12-2025     18:20                target
+-a----        27-12-2025     06:23            212 -H
+-a----        25-12-2025     18:23          16600 .output.txt
+-a----        14-12-2025     20:34            150 Dockerfile
+-a----        05-01-2026     22:43           2690 pom.xml
+    Directory: E:\grocery_fullstack_enhanced\springboot-groceries\.idea
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----        09-01-2026     23:33                dataSources
+d-----        11-01-2026     00:56                queries
+-a----        14-12-2025     14:47            238 .gitignore
+-a----        25-12-2025     19:04             29 .name
+-a----        27-12-2025     06:29            779 compiler.xml
+-a----        16-12-2025     06:44            989 dataSources.local.xml
+-a----        16-12-2025     06:44            558 dataSources.xml
+-a----        30-12-2025     21:02            809 data_source_mapping.xml
+-a----        14-12-2025     14:48            191 encodings.xml
+-a----        14-12-2025     14:48            864 jarRepositories.xml
+-a----        22-12-2025     21:11           4327 misc.xml
+-a----        30-12-2025     21:02            832 sqldialects.xml
+-a----        21-12-2025     17:54            188 vcs.xml
+-a----        11-01-2026     02:02          22117 workspace.xml
+    Directory:
+    E:\grocery_fullstack_enhanced\springboot-groceries\.idea\dataSources
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----        16-12-2025     06:44                85c22617-7863-4b07-bacd-6d6b9
+                                                  2f19ed8
+-a----        09-01-2026     23:33         191868 85c22617-7863-4b07-bacd-6d6b9
+                                                  2f19ed8.xml
+    Directory: E:\grocery_fullstack_enhanced\springboot-groceries\.idea\dataSou
+    rces\85c22617-7863-4b07-bacd-6d6b92f19ed8
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----        16-12-2025     06:44                storage_v2
+    Directory: E:\grocery_fullstack_enhanced\springboot-groceries\.idea\dataSou
+    rces\85c22617-7863-4b07-bacd-6d6b92f19ed8\storage_v2
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----        16-12-2025     06:44                _src_
+    Directory: E:\grocery_fullstack_enhanced\springboot-groceries\.idea\dataSou
+    rces\85c22617-7863-4b07-bacd-6d6b92f19ed8\storage_v2\_src_
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----        16-12-2025     06:44                database
+    Directory: E:\grocery_fullstack_enhanced\springboot-groceries\.idea\dataSou
+    rces\85c22617-7863-4b07-bacd-6d6b92f19ed8\storage_v2\_src_\database
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----        16-12-2025     06:44                groceriesdb.KejNzQ
+-a----        16-12-2025     06:44             14 groceriesdb.KejNzQ.meta
+    Directory: E:\grocery_fullstack_enhanced\springboot-groceries\.idea\dataSou
+    rces\85c22617-7863-4b07-bacd-6d6b92f19ed8\storage_v2\_src_\database\groceri
+    esdb.KejNzQ
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----        16-12-2025     06:44                schema
+    Directory: E:\grocery_fullstack_enhanced\springboot-groceries\.idea\dataSou
+    rces\85c22617-7863-4b07-bacd-6d6b92f19ed8\storage_v2\_src_\database\groceri
+    esdb.KejNzQ\schema
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----        16-12-2025     06:44             76 information_schema.FNRwLQ.met
+                                                  a
+-a----        16-12-2025     06:44             68 pg_catalog.0S1ZNQ.meta
+-a----        09-01-2026     23:32             63 public.abK9xQ.meta
+    Directory: E:\grocery_fullstack_enhanced\springboot-groceries\.idea\queries
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----        16-12-2025     06:39              0 Query.sql
+-a----        16-12-2025     06:41              0 Query_1.sql
+-a----        11-01-2026     00:56             20 Query_2.sql
+-a----        23-12-2025     22:07              0 Query_3.sql
+-a----        27-12-2025     07:23            120 Query_4.sql
+-a----        27-12-2025     07:28             52 Query_5.sql
+-a----        31-12-2025     20:06             63 Query_6.sql
+-a----        07-01-2026     22:50            147 Query_7.sql
+    Directory: E:\grocery_fullstack_enhanced\springboot-groceries\src
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----        10-12-2025     22:14                main
+d-----        25-12-2025     18:23                test
+    Directory: E:\grocery_fullstack_enhanced\springboot-groceries\src\main
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----        14-12-2025     14:59                java
+d-----        13-01-2026     19:52                resources
+    Directory: E:\grocery_fullstack_enhanced\springboot-groceries\src\main\java
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----        10-12-2025     22:14                com
+    Directory:
+    E:\grocery_fullstack_enhanced\springboot-groceries\src\main\java\com
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----        10-12-2025     22:14                example
+    Directory: E:\grocery_fullstack_enhanced\springboot-groceries\src\main\java
+    \com\example
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----        11-01-2026     09:01                groceries
+    Directory: E:\grocery_fullstack_enhanced\springboot-groceries\src\main\java
+    \com\example\groceries
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----        18-01-2026     18:46                config
+d-----        13-01-2026     19:39                controller
+d-----        10-01-2026     23:37                model
+d-----        13-01-2026     19:39                repository
+d-----        11-01-2026     09:04                security
+d-----        13-01-2026     19:39                service
+-a----        11-01-2026     09:01            504 GroceryApplication.java
+    Directory: E:\grocery_fullstack_enhanced\springboot-groceries\src\main\java
+    \com\example\groceries\config
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----        27-12-2025     22:54           1441 CategoryInitializer.java
+-a----        17-12-2025     17:17           5428 GroceryInitializer.java
+-a----        18-01-2026     18:46           4624 SecurityConfig.java
+-a----        25-12-2025     18:19           1381 UserInitializer.java
+-a----        13-01-2026     19:55            578 WebConfig.java
+    Directory: E:\grocery_fullstack_enhanced\springboot-groceries\src\main\java
+    \com\example\groceries\controller
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----        13-01-2026     19:39                dto
+-a----        10-01-2026     22:39            758 AdminDashboardController.java
+-a----        10-01-2026     22:39            868 AdminOrderController.java
+-a----        13-01-2026     19:39           2714 AuthController.java
+-a----        10-01-2026     22:39           1968 CartController.java
+-a----        10-01-2026     22:38           1633 CategoryController.java
+-a----        05-01-2026     22:44           1566 GlobalExceptionHandler.java
+-a----        10-01-2026     22:39           1619 OrderController.java
+-a----        13-01-2026     19:39           2588 ProductController.java
+-a----        11-01-2026     00:35           1414 UserController.java
+    Directory: E:\grocery_fullstack_enhanced\springboot-groceries\src\main\java
+    \com\example\groceries\controller\dto
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----        05-01-2026     22:22            265 CartSummaryResponse.java
+-a----        05-01-2026     06:51            325 CategoryDTO.java
+-a----        05-01-2026     22:44            360 CreateOrderRequest.java
+-a----        05-01-2026     06:51            480 DashboardStatsDTO.java
+-a----        07-01-2026     22:07            440 GroupedProductDTO.java
+-a----        11-01-2026     01:08            207 LoginRequest.java
+-a----        05-01-2026     22:44            323 OrderItemRequest.java
+-a----        05-01-2026     22:36            471 ProductDetailDTO.java
+-a----        05-01-2026     06:51            285 ProductListView.java
+-a----        05-01-2026     06:51            464 ProductMasterDTO.java
+-a----        05-01-2026     22:36            472 ProductVariantDTO.java
+-a----        05-01-2026     06:51            278 RegisterRequest.java
+-a----        13-01-2026     19:39            526 UserProductDTO.java
+-a----        05-01-2026     06:51            345 UserResponseDTO.java
+    Directory: E:\grocery_fullstack_enhanced\springboot-groceries\src\main\java
+    \com\example\groceries\model
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----        05-01-2026     23:46            786 Cart.java
+-a----        05-01-2026     23:58            875 CartItem.java
+-a----        05-01-2026     06:51            360 Category.java
+-a----        05-01-2026     06:51            289 DashboardStats.java
+-a----        05-01-2026     06:51            394 Grocery.java
+-a----        17-12-2025     17:17            872 GroceryCategory.java
+-a----        05-01-2026     07:27           1316 Order.java
+-a----        05-01-2026     06:51           1137 OrderItem.java
+-a----        05-01-2026     07:29            202 OrderStatus.java
+-a----        05-01-2026     21:50           1778 OrderStatusValidator.java
+-a----        05-01-2026     22:36           1024 ProductMaster.java
+-a----        05-01-2026     22:36           1422 ProductVariant.java
+-a----        25-12-2025     18:15             95 Role.java
+-a----        10-01-2026     23:37           1186 User.java
+    Directory: E:\grocery_fullstack_enhanced\springboot-groceries\src\main\java
+    \com\example\groceries\repository
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----        05-01-2026     22:22            236 CartItemRepository.java
+-a----        05-01-2026     22:22            384 CartRepository.java
+-a----        23-12-2025     21:25            300 CategoryRepository.java
+-a----        14-12-2025     14:59            233 GroceryRepository.java
+-a----        05-01-2026     06:51            379 OrderItemRepository.java
+-a----        05-01-2026     06:51            299 OrderRepository.java
+-a----        31-12-2025     23:03           1744 ProductListingRepository.java
+-a----        05-01-2026     06:51            923 ProductMasterRepository.java
+-a----        13-01-2026     19:39           1065 ProductVariantRepository.java
+-a----        23-12-2025     21:30            444 UserRepository.java
+    Directory: E:\grocery_fullstack_enhanced\springboot-groceries\src\main\java
+    \com\example\groceries\security
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----        11-01-2026     09:04           1626 CustomUserDetailsService.java
+    Directory: E:\grocery_fullstack_enhanced\springboot-groceries\src\main\java
+    \com\example\groceries\service
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----        13-01-2026     19:39                mapper
+-a----        30-12-2025     19:04           1329 AdminStatsService.java
+-a----        05-01-2026     23:36           5837 CartService.java
+-a----        23-12-2025     21:25            896 CategoryService.java
+-a----        30-12-2025     19:05           1203 DashboardService.java
+-a----        05-01-2026     22:44           6851 OrderService.java
+-a----        13-01-2026     19:39           4737 ProductService.java
+-a----        25-12-2025     18:19           1988 UserService.java
+    Directory: E:\grocery_fullstack_enhanced\springboot-groceries\src\main\java
+    \com\example\groceries\service\mapper
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----        05-01-2026     06:51            977 CategoryMapper.java
+-a----        05-01-2026     06:51            766 DashboardStatsMapper.java
+-a----        13-01-2026     19:39           4780 ProductMapper.java
+    Directory:
+    E:\grocery_fullstack_enhanced\springboot-groceries\src\main\resources
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----        30-12-2025     21:51                static
+-a----        13-01-2026     19:52            980 application.properties
+    Directory: E:\grocery_fullstack_enhanced\springboot-groceries\src\main\reso
+    urces\static
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----        13-01-2026     19:39                images
+    Directory: E:\grocery_fullstack_enhanced\springboot-groceries\src\main\reso
+    urces\static\images
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----        13-01-2026     19:39          46234 apples.webp
+-a----        05-01-2026     06:51          11828 banana.webp
+-a----        05-01-2026     06:51         839700 basmati.webp
+-a----        01-01-2026     13:45          35046 beans.webp
+-a----        01-01-2026     13:45          73010 biscuits.webp
+-a----        01-01-2026     13:45          20332 brinjal.webp
+-a----        01-01-2026     13:45          18338 butter.webp
+-a----        01-01-2026     13:45          30716 buttermilk.webp
+-a----        01-01-2026     13:45          44840 cabbage.webp
+-a----        01-01-2026     13:45          44070 carrot.webp
+-a----        01-01-2026     13:45          25164 cauliflower.webp
+-a----        05-01-2026     06:51          19584 chana_dal.webp
+-a----        01-01-2026     13:45          20154 chips.webp
+-a----        01-01-2026     13:45          30432 cookies.webp
+-a----        05-01-2026     06:51          13922 cooking_oil.webp
+-a----        01-01-2026     13:45          16154 cream.webp
+-a----        01-01-2026     13:45          25944 curd.webp
+-a----        01-01-2026     13:45          25626 ghee.webp
+-a----        01-01-2026     13:45          37478 grapes.webp
+-a----        01-01-2026     13:45          27032 guava.webp
+-a----        05-01-2026     06:51          16926 mango.webp
+-a----        05-01-2026     06:51          13680 milk.webp
+-a----        01-01-2026     13:45          53260 mixture.webp
+-a----        05-01-2026     06:51          86444 moong_dal.webp
+-a----        01-01-2026     13:45          54216 namkeen.webp
+-a----        01-01-2026     13:45          39968 noodles.webp
+-a----        05-01-2026     06:51        1336766 oil.webp
+-a----        01-01-2026     13:45          26970 onion.webp
+-a----        05-01-2026     06:51          35532 orange.webp
+-a----        01-01-2026     13:45           8486 paneer.webp
+-a----        01-01-2026     13:45          33362 papaya.webp
+-a----        05-01-2026     06:51          32126 pasta.webp
+-a----        01-01-2026     13:45          29670 peas.webp
+-a----        01-01-2026     13:45          68960 pineapple.webp
+-a----        05-01-2026     06:51          45878 pomegranate.webp
+-a----        01-01-2026     13:45          53520 popcorn.webp
+-a----        13-01-2026     19:39          31166 potatoes.webp
+-a----        01-01-2026     13:45          53508 rice.webp
+-a----        01-01-2026     13:45          22660 salt.webp
+-a----        01-01-2026     13:45          81268 spinach.webp
+-a----        05-01-2026     06:51          36058 sugar.webp
+-a----        13-01-2026     19:39          25598 tomoto.webp
+-a----        05-01-2026     06:51          19630 toor_dal.webp
+-a----        05-01-2026     06:51          89224 urad_dal.webp
+-a----        01-01-2026     13:45          23218 watermelon.webp
+-a----        05-01-2026     06:51          46770 wheat_flour.webp
+    Directory: E:\grocery_fullstack_enhanced\springboot-groceries\src\test
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----        25-12-2025     18:20                java
+d-----        25-12-2025     18:24                resources
+    Directory: E:\grocery_fullstack_enhanced\springboot-groceries\src\test\java
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----        25-12-2025     18:20                com
+    Directory:
+    E:\grocery_fullstack_enhanced\springboot-groceries\src\test\java\com
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----        25-12-2025     18:20                example
+    Directory: E:\grocery_fullstack_enhanced\springboot-groceries\src\test\java
+    \com\example
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----        05-01-2026     07:30                groceries
+    Directory: E:\grocery_fullstack_enhanced\springboot-groceries\src\test\java
+    \com\example\groceries
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----        10-01-2026     23:38                controller
+d-----        05-01-2026     22:32                model
+d-----        05-01-2026     22:48                service
+-a----        25-12-2025     18:20           2007 UserCreationTest.java
+    Directory: E:\grocery_fullstack_enhanced\springboot-groceries\src\test\java
+    \com\example\groceries\controller
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----        05-01-2026     07:36           2418 AdminOrderControllerTest.java
+-a----        05-01-2026     07:38           3776 OrderControllerTest.java
+    Directory: E:\grocery_fullstack_enhanced\springboot-groceries\src\test\java
+    \com\example\groceries\model
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----        05-01-2026     07:30            540 OrderStatusTest.java
+-a----        05-01-2026     07:34           2076 OrderStatusValidatorTest.java
+-a----        05-01-2026     22:32           1511 ProductVariantPriceTest.java
+    Directory: E:\grocery_fullstack_enhanced\springboot-groceries\src\test\java
+    \com\example\groceries\service
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----        05-01-2026     22:37                mapper
+-a----        05-01-2026     22:48           8334 CartServiceTest.java
+-a----        05-01-2026     22:46           7874 OrderServiceTest.java
+-a----        05-01-2026     22:37           3821 ProductServiceTest.java
+    Directory: E:\grocery_fullstack_enhanced\springboot-groceries\src\test\java
+    \com\example\groceries\service\mapper
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----        05-01-2026     22:37           2701 ProductMapperTest.java
+    Directory:
+    E:\grocery_fullstack_enhanced\springboot-groceries\src\test\resources
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----        25-12-2025     18:24            290 application.properties
+    Directory: E:\grocery_fullstack_enhanced\springboot-groceries\target
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----        13-01-2026     19:55                classes
+d-----        17-12-2025     20:14                generated-sources
+d-----        25-12-2025     18:20                generated-test-sources
+d-----        17-12-2025     20:14                maven-archiver
+d-----        17-12-2025     20:14                maven-status
+d-----        25-12-2025     18:24                surefire-reports
+d-----        05-01-2026     22:45                test-classes
+-a----        17-12-2025     20:14       48853423 groceries-0.0.1-SNAPSHOT.jar
+-a----        17-12-2025     20:14          17860 groceries-0.0.1-SNAPSHOT.jar.
+                                                  original
+    Directory:
+    E:\grocery_fullstack_enhanced\springboot-groceries\target\classes
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----        11-01-2026     08:46                com
+d-----        11-01-2026     08:46                static
+-a----        13-01-2026     19:55            980 application.properties
+    Directory:
+    E:\grocery_fullstack_enhanced\springboot-groceries\target\classes\com
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----        11-01-2026     08:46                example
+    Directory: E:\grocery_fullstack_enhanced\springboot-groceries\target\classe
+    s\com\example
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----        11-01-2026     09:05                groceries
+    Directory: E:\grocery_fullstack_enhanced\springboot-groceries\target\classe
+    s\com\example\groceries
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----        18-01-2026     18:46                config
+d-----        13-01-2026     19:41                controller
+d-----        11-01-2026     08:46                model
+d-----        13-01-2026     19:41                repository
+d-----        11-01-2026     09:05                security
+d-----        13-01-2026     19:41                service
+-a----        11-01-2026     09:01            922 GroceryApplication.class
+    Directory: E:\grocery_fullstack_enhanced\springboot-groceries\target\classe
+    s\com\example\groceries\config
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----        11-01-2026     08:46           1678 CategoryInitializer.class
+-a----        11-01-2026     08:46           4443 GroceryInitializer.class
+-a----        18-01-2026     18:46           8463 SecurityConfig.class
+-a----        11-01-2026     08:46           2420 UserInitializer.class
+-a----        13-01-2026     19:55           1227 WebConfig.class
+    Directory: E:\grocery_fullstack_enhanced\springboot-groceries\target\classe
+    s\com\example\groceries\controller
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----        13-01-2026     19:41                dto
+-a----        11-01-2026     08:46           1335 AdminDashboardController.clas
+                                                  s
+-a----        11-01-2026     08:46           1940 AdminOrderController.class
+-a----        13-01-2026     19:41           4533 AuthController.class
+-a----        11-01-2026     08:46           3432 CartController.class
+-a----        11-01-2026     08:46           3576 CategoryController.class
+-a----        11-01-2026     08:46           3184 GlobalExceptionHandler.class
+-a----        11-01-2026     08:46           3555 OrderController.class
+-a----        13-01-2026     19:41           3809 ProductController.class
+-a----        11-01-2026     08:46           2438 UserController.class
+    Directory: E:\grocery_fullstack_enhanced\springboot-groceries\target\classe
+    s\com\example\groceries\controller\dto
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----        11-01-2026     08:46           1974 CartSummaryResponse$CartSumma
+                                                  ryResponseBuilder.class
+-a----        11-01-2026     08:46           2964 CartSummaryResponse.class
+-a----        11-01-2026     08:46           3413 CategoryDTO.class
+-a----        11-01-2026     08:46           2220 CreateOrderRequest$CreateOrde
+                                                  rRequestBuilder.class
+-a----        11-01-2026     08:46           3286 CreateOrderRequest.class
+-a----        11-01-2026     08:46           4857 DashboardStatsDTO.class
+-a----        11-01-2026     08:46           4684 GroupedProductDTO.class
+-a----        11-01-2026     08:46            824 LoginRequest.class
+-a----        11-01-2026     08:46           1820 OrderItemRequest$OrderItemReq
+                                                  uestBuilder.class
+-a----        11-01-2026     08:46           2804 OrderItemRequest.class
+-a----        11-01-2026     08:46           5735 ProductDetailDTO.class
+-a----        11-01-2026     08:46            356 ProductListView.class
+-a----        11-01-2026     08:46           5624 ProductMasterDTO.class
+-a----        11-01-2026     08:46           5188 ProductVariantDTO.class
+-a----        11-01-2026     08:46           2692 RegisterRequest.class
+-a----        13-01-2026     19:41           6192 UserProductDTO.class
+-a----        11-01-2026     08:46           3179 UserResponseDTO.class
+    Directory: E:\grocery_fullstack_enhanced\springboot-groceries\target\classe
+    s\com\example\groceries\model
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----        11-01-2026     08:46           2113 Cart.class
+-a----        11-01-2026     08:46           2298 CartItem.class
+-a----        11-01-2026     08:46           1736 Category.class
+-a----        11-01-2026     08:46           1555 DashboardStats.class
+-a----        11-01-2026     08:46           1897 Grocery.class
+-a----        11-01-2026     08:46           2372 GroceryCategory.class
+-a----        11-01-2026     08:46           4217 Order.class
+-a----        11-01-2026     08:46           3880 OrderItem.class
+-a----        11-01-2026     08:46           1468 OrderStatus.class
+-a----        11-01-2026     08:46           2544 OrderStatusValidator.class
+-a----        11-01-2026     08:46           4214 ProductMaster.class
+-a----        11-01-2026     08:46           4118 ProductVariant.class
+-a----        11-01-2026     08:46           1146 Role.class
+-a----        11-01-2026     08:46           2934 User.class
+    Directory: E:\grocery_fullstack_enhanced\springboot-groceries\target\classe
+    s\com\example\groceries\repository
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----        11-01-2026     08:46            363 CartItemRepository.class
+-a----        11-01-2026     08:46            740 CartRepository.class
+-a----        11-01-2026     08:46            449 CategoryRepository.class
+-a----        11-01-2026     08:46            360 GroceryRepository.class
+-a----        11-01-2026     08:46            639 OrderItemRepository.class
+-a----        11-01-2026     08:46            535 OrderRepository.class
+-a----        11-01-2026     08:46           1474 ProductListingRepository.clas
+                                                  s
+-a----        11-01-2026     08:46           1272 ProductMasterRepository.class
+-a----        13-01-2026     19:41           1398 ProductVariantRepository.clas
+                                                  s
+-a----        11-01-2026     08:46            693 UserRepository.class
+    Directory: E:\grocery_fullstack_enhanced\springboot-groceries\target\classe
+    s\com\example\groceries\security
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----        11-01-2026     09:05           3118 CustomUserDetailsService.clas
+                                                  s
+    Directory: E:\grocery_fullstack_enhanced\springboot-groceries\target\classe
+    s\com\example\groceries\service
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----        13-01-2026     19:41                mapper
+-a----        11-01-2026     08:46           1823 AdminStatsService.class
+-a----        11-01-2026     08:46          11501 CartService.class
+-a----        11-01-2026     08:46           1704 CategoryService.class
+-a----        11-01-2026     08:46           1493 DashboardService.class
+-a----        11-01-2026     08:46           9058 OrderService.class
+-a----        13-01-2026     19:41           9773 ProductService.class
+-a----        11-01-2026     08:46           2502 UserService.class
+    Directory: E:\grocery_fullstack_enhanced\springboot-groceries\target\classe
+    s\com\example\groceries\service\mapper
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----        11-01-2026     08:46           1721 CategoryMapper.class
+-a----        11-01-2026     08:46           1315 DashboardStatsMapper.class
+-a----        13-01-2026     19:41           6489 ProductMapper.class
+    Directory:
+    E:\grocery_fullstack_enhanced\springboot-groceries\target\classes\static
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----        13-01-2026     19:41                images
+    Directory: E:\grocery_fullstack_enhanced\springboot-groceries\target\classe
+    s\static\images
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----        13-01-2026     19:39          46234 apples.webp
+-a----        05-01-2026     06:51          11828 banana.webp
+-a----        05-01-2026     06:51         839700 basmati.webp
+-a----        01-01-2026     13:45          35046 beans.webp
+-a----        01-01-2026     13:45          73010 biscuits.webp
+-a----        01-01-2026     13:45          20332 brinjal.webp
+-a----        01-01-2026     13:45          18338 butter.webp
+-a----        01-01-2026     13:45          30716 buttermilk.webp
+-a----        01-01-2026     13:45          44840 cabbage.webp
+-a----        01-01-2026     13:45          44070 carrot.webp
+-a----        01-01-2026     13:45          25164 cauliflower.webp
+-a----        05-01-2026     06:51          19584 chana_dal.webp
+-a----        01-01-2026     13:45          20154 chips.webp
+-a----        01-01-2026     13:45          30432 cookies.webp
+-a----        05-01-2026     06:51          13922 cooking_oil.webp
+-a----        01-01-2026     13:45          16154 cream.webp
+-a----        01-01-2026     13:45          25944 curd.webp
+-a----        01-01-2026     13:45          25626 ghee.webp
+-a----        01-01-2026     13:45          37478 grapes.webp
+-a----        01-01-2026     13:45          27032 guava.webp
+-a----        05-01-2026     06:51          16926 mango.webp
+-a----        05-01-2026     06:51          13680 milk.webp
+-a----        01-01-2026     13:45          53260 mixture.webp
+-a----        05-01-2026     06:51          86444 moong_dal.webp
+-a----        01-01-2026     13:45          54216 namkeen.webp
+-a----        01-01-2026     13:45          39968 noodles.webp
+-a----        05-01-2026     06:51        1336766 oil.webp
+-a----        01-01-2026     13:45          26970 onion.webp
+-a----        05-01-2026     06:51          35532 orange.webp
+-a----        01-01-2026     13:45           8486 paneer.webp
+-a----        01-01-2026     13:45          33362 papaya.webp
+-a----        05-01-2026     06:51          32126 pasta.webp
+-a----        01-01-2026     13:45          29670 peas.webp
+-a----        01-01-2026     13:45          68960 pineapple.webp
+-a----        05-01-2026     06:51          45878 pomegranate.webp
+-a----        01-01-2026     13:45          53520 popcorn.webp
+-a----        13-01-2026     19:39          31166 potatoes.webp
+-a----        01-01-2026     13:45          53508 rice.webp
+-a----        01-01-2026     13:45          22660 salt.webp
+-a----        01-01-2026     13:45          81268 spinach.webp
+-a----        05-01-2026     06:51          36058 sugar.webp
+-a----        13-01-2026     19:39          25598 tomoto.webp
+-a----        05-01-2026     06:51          19630 toor_dal.webp
+-a----        05-01-2026     06:51          89224 urad_dal.webp
+-a----        01-01-2026     13:45          23218 watermelon.webp
+-a----        05-01-2026     06:51          46770 wheat_flour.webp
+    Directory:
+    E:\grocery_fullstack_enhanced\springboot-groceries\target\generated-sources
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----        17-12-2025     20:14                annotations
+    Directory: E:\grocery_fullstack_enhanced\springboot-groceries\target\genera
+    ted-test-sources
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----        25-12-2025     18:20                test-annotations
+    Directory:
+    E:\grocery_fullstack_enhanced\springboot-groceries\target\maven-archiver
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----        17-12-2025     20:14             67 pom.properties
+    Directory:
+    E:\grocery_fullstack_enhanced\springboot-groceries\target\maven-status
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----        25-12-2025     18:20                maven-compiler-plugin
+    Directory: E:\grocery_fullstack_enhanced\springboot-groceries\target\maven-
+    status\maven-compiler-plugin
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----        17-12-2025     20:14                compile
+d-----        25-12-2025     18:20                testCompile
+    Directory: E:\grocery_fullstack_enhanced\springboot-groceries\target\maven-
+    status\maven-compiler-plugin\compile
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----        17-12-2025     20:14                default-compile
+    Directory: E:\grocery_fullstack_enhanced\springboot-groceries\target\maven-
+    status\maven-compiler-plugin\compile\default-compile
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----        25-12-2025     18:20            791 createdFiles.lst
+-a----        25-12-2025     18:24           4099 inputFiles.lst
+    Directory: E:\grocery_fullstack_enhanced\springboot-groceries\target\maven-
+    status\maven-compiler-plugin\testCompile
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----        25-12-2025     18:20                default-testCompile
+    Directory: E:\grocery_fullstack_enhanced\springboot-groceries\target\maven-
+    status\maven-compiler-plugin\testCompile\default-testCompile
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----        25-12-2025     18:24             45 createdFiles.lst
+-a----        25-12-2025     18:24            109 inputFiles.lst
+    Directory:
+    E:\grocery_fullstack_enhanced\springboot-groceries\target\surefire-reports
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----        25-12-2025     18:20            276 2025-12-25T18-20-56_193.dumps
+                                                  tream
+-a----        25-12-2025     18:24            276 2025-12-25T18-24-21_688.dumps
+                                                  tream
+-a----        25-12-2025     18:24            330 com.example.groceries.UserCre
+                                                  ationTest.txt
+-a----        25-12-2025     18:24          31143 TEST-com.example.groceries.Us
+                                                  erCreationTest.xml
+    Directory:
+    E:\grocery_fullstack_enhanced\springboot-groceries\target\test-classes
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----        05-01-2026     22:45                com
+-a----        25-12-2025     18:24            290 application.properties
+    Directory:
+    E:\grocery_fullstack_enhanced\springboot-groceries\target\test-classes\com
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----        05-01-2026     22:45                example
+    Directory: E:\grocery_fullstack_enhanced\springboot-groceries\target\test-c
+    lasses\com\example
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----        05-01-2026     22:45                groceries
+    Directory: E:\grocery_fullstack_enhanced\springboot-groceries\target\test-c
+    lasses\com\example\groceries
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----        10-01-2026     23:37                controller
+d-----        05-01-2026     22:45                model
+d-----        05-01-2026     22:49                service
+-a----        05-01-2026     22:45           2497 UserCreationTest.class
+    Directory: E:\grocery_fullstack_enhanced\springboot-groceries\target\test-c
+    lasses\com\example\groceries\controller
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----        05-01-2026     22:45           4434 AdminOrderControllerTest.clas
+                                                  s
+-a----        10-01-2026     23:37           4941 LoginSecurityTest.class
+-a----        05-01-2026     22:45           6634 OrderControllerTest.class
+    Directory: E:\grocery_fullstack_enhanced\springboot-groceries\target\test-c
+    lasses\com\example\groceries\model
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----        05-01-2026     22:45            998 OrderStatusTest.class
+-a----        05-01-2026     22:45           4426 OrderStatusValidatorTest.clas
+                                                  s
+-a----        05-01-2026     22:45           1650 ProductVariantPriceTest.class
+    Directory: E:\grocery_fullstack_enhanced\springboot-groceries\target\test-c
+    lasses\com\example\groceries\service
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----        05-01-2026     22:45                mapper
+-a----        05-01-2026     22:49          10591 CartServiceTest.class
+-a----        05-01-2026     22:46          11325 OrderServiceTest.class
+-a----        05-01-2026     22:45           5511 ProductServiceTest.class
+    Directory: E:\grocery_fullstack_enhanced\springboot-groceries\target\test-c
+    lasses\com\example\groceries\service\mapper
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----        05-01-2026     22:45           4289 ProductMapperTest.class

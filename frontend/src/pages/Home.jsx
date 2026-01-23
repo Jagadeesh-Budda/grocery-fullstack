@@ -47,6 +47,8 @@ const Home = () => {
     }
   }, [inView, hasMore, loadMore]);
 
+  const fallbackImage = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300' viewBox='0 0 400 300'%3E%3Crect width='400' height='300' fill='%23f1f5f9'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='14' fill='%2394a3b8'%3ENo Image Available%3C/text%3E%3C/svg%3E";
+
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-IN', {
       style: 'currency',
@@ -69,7 +71,7 @@ const Home = () => {
             const rawImg = displayVariant.imageUrl || "";
             const fullImgUrl = rawImg
                 ? (rawImg.startsWith("http") ? rawImg : `http://localhost:8080${rawImg.startsWith("/") ? "" : "/"}${rawImg}`)
-                : "/brand-placeholder.png";
+                : fallbackImage;
 
             return (
                 <div key={product.id} className="product-card">
@@ -78,6 +80,11 @@ const Home = () => {
                         src={fullImgUrl}
                         alt={product.name}
                         loading="lazy"
+                        onError={(e) => {
+                          if (e.target.src !== fallbackImage) {
+                            e.target.src = fallbackImage;
+                          }
+                        }}
                     />
                   </div>
 

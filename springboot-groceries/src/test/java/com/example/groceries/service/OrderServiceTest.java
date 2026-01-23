@@ -43,7 +43,6 @@ class OrderServiceTest {
     @BeforeEach
     void setUp() {
         user = new User();
-        // user.setId(1L); // User doesn't have setId but has getId. Wait, let's check User.java again.
         user.setUsername("testuser");
 
         productMaster = new ProductMaster();
@@ -121,7 +120,8 @@ class OrderServiceTest {
 
         Order order = new Order();
         order.setId(1L);
-        order.setStatus(OrderStatus.CREATED);
+        // FIX: Start with PENDING to allow transition to CONFIRMED
+        order.setStatus(OrderStatus.PENDING);
         order.addOrderItem(item);
 
         when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
@@ -147,7 +147,8 @@ class OrderServiceTest {
 
         Order order = new Order();
         order.setId(1L);
-        order.setStatus(OrderStatus.CREATED);
+        // FIX: Start with PENDING to avoid status validation error before stock check
+        order.setStatus(OrderStatus.PENDING);
         order.addOrderItem(item);
 
         when(orderRepository.findById(1L)).thenReturn(Optional.of(order));

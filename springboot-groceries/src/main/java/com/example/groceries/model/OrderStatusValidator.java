@@ -11,16 +11,28 @@ public class OrderStatusValidator {
             new EnumMap<>(OrderStatus.class);
 
     static {
-        // Order just created
+        // Order created
         ALLOWED_TRANSITIONS.put(
                 OrderStatus.CREATED,
+                EnumSet.of(OrderStatus.PENDING, OrderStatus.CANCELLED)
+        );
+
+        // Awaiting payment / confirmation
+        ALLOWED_TRANSITIONS.put(
+                OrderStatus.PENDING,
                 EnumSet.of(OrderStatus.CONFIRMED, OrderStatus.CANCELLED)
         );
 
-        // Payment / confirmation done
+        // Order confirmed
         ALLOWED_TRANSITIONS.put(
                 OrderStatus.CONFIRMED,
-                EnumSet.of(OrderStatus.SHIPPED, OrderStatus.CANCELLED)
+                EnumSet.of(OrderStatus.PACKED, OrderStatus.CANCELLED)
+        );
+
+        // Order packed
+        ALLOWED_TRANSITIONS.put(
+                OrderStatus.PACKED,
+                EnumSet.of(OrderStatus.SHIPPED)
         );
 
         // Order shipped
@@ -29,7 +41,7 @@ public class OrderStatusValidator {
                 EnumSet.of(OrderStatus.DELIVERED)
         );
 
-        // Final states – no transitions allowed
+        // Final states
         ALLOWED_TRANSITIONS.put(
                 OrderStatus.DELIVERED,
                 EnumSet.noneOf(OrderStatus.class)

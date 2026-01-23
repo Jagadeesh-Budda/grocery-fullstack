@@ -1,183 +1,137 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
-import api from "../api/axios";
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import api from "../services/groceryApi";
 import { useAuth } from "./AuthContext";
 
 const CartContext = createContext(null);
+const GUEST_CART_KEY = "guest_cart_v1";
 
 export const CartProvider = ({ children }) => {
   const { user } = useAuth();
-  const [cartItems, setCartItems] = useState([]);
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // Fetch cart if user is logged in
-  const loadCart = async () => {
-    if (user && user.id) {
-      try {
-        const res = await api.get(`/cart/${user.id}`);
-        // Map backend Cart object to cartItems array
-        const items = res.data.items.map(item => ({
-          id: item.productVariant.id, // using variantId as id
-          variantId: item.productVariant.id,
-          productId: item.productVariant.productMaster.id,
-          productName: item.productVariant.productMaster.name,
-          variantName: item.productVariant.variantName,
-          price: item.productVariant.price,
-          quantity: item.quantity,
-          imageUrl: item.productVariant.imageUrl
-        }));
-        setCartItems(items);
-      } catch (err) {
-        console.error("Failed to load cart", err);
-      }
-    } else {
-      // Keep local cart for guests
-    }
-  };
-
+  // ---------- INITIAL LOAD ----------
   useEffect(() => {
-    loadCart();
-  }, [user]);
-
-  const addToCart = async (product) => {
-    // Determine variantId and other props based on common product structures
-    const variantId = product.variantId || product.id;
-    const name = product.productName || product.name;
-    const variantName = product.variantName || "";
-    const price = product.price;
-    const imageUrl = product.imageUrl || product.image;
-
-    if (user && user.id) {
+    const initCart = async () => {
+      setLoading(true);
       try {
-        await api.post(`/api/cart/${user.id}/add`, null, {
-          params: { variantId: variantId, quantity: 1 }
-        });
-        loadCart();
-      } catch (err) {
-        console.error("Failed to add to cart", err);
+        if (user?.id) {
+          // merge guest cart ONCE
+          const guest = localStorage.getItem(GUEST_CART_KEY);
+          if (guest) {
+            const guestItems = JSON.parse(guest).map(i => ({
+              productVariant: { id: i.variantId },
+              quantity: i.quantity
+            }));
+            await api.post(`/cart/${user.id}/merge`, guestItems);
+            localStorage.removeItem(GUEST_CART_KEY);
+          }
+
+          const res = await api.get(`/cart/${user.id}`);
+          setItems(normalize(res.data || []));
+        } else {
+          const guest = localStorage.getItem(GUEST_CART_KEY);
+          setItems(guest ? JSON.parse(guest) : []);
+        }
+      } catch (e) {
+        console.error("Cart init failed", e);
+        setItems([]);
+      } finally {
+        setLoading(false);
       }
-      return;
+    };
+
+    initCart();
+  }, [user?.id]);
+
+  // ---------- PERSIST GUEST CART ----------
+  useEffect(() => {
+    if (!user?.id) {
+      localStorage.setItem(GUEST_CART_KEY, JSON.stringify(items));
     }
+  }, [items, user?.id]);
 
-    // Guest cart logic (local only)
-    setCartItems((prev) => {
-      const existing = prev.find((item) => item.id === variantId);
+  // ---------- ACTIONS ----------
+  const addItem = async ({ variantId, productName, variantName, price, imageUrl }, qty = 1) => {
+    if (!variantId) return;
 
-      if (existing) {
-        return prev.map((item) =>
-            item.id === variantId
-                ? { ...item, quantity: item.quantity + 1 }
-                : item
-        );
-      }
-
-      return [
-        ...prev,
-        {
-          id: variantId,
-          variantId: variantId,
-          productName: name,
-          variantName: variantName,
-          price: price,
-          quantity: 1,
-          imageUrl: imageUrl
-        },
-      ];
-    });
-  };
-
-  const increment = async (id) => {
-    if (user && user.id) {
-      try {
-        await api.put(`/api/cart/${user.id}/update`, null, {
-          params: { variantId: id, delta: 1 }
-        });
-        loadCart();
-      } catch (err) {
-        console.error("Failed to increment", err);
-      }
-      return;
+    if (user?.id) {
+      await api.post(`/cart/${user.id}/add`, null, {
+        params: { variantId, quantity: qty },
+      });
+      const res = await api.get(`/cart/${user.id}`);
+      setItems(normalize(res.data || []));
+    } else {
+      setItems((prev) => upsert(prev, variantId, qty, {
+        variantId, productName, variantName, price, imageUrl
+      }));
     }
-
-    setCartItems((prev) =>
-        prev.map((item) =>
-            item.id === id ? { ...item, quantity: item.quantity + 1 } : item
-        )
-    );
   };
 
-  const decrement = async (id) => {
-    if (user && user.id) {
-      try {
-        await api.put(`/api/cart/${user.id}/update`, null, {
-          params: { variantId: id, delta: -1 }
-        });
-        loadCart();
-      } catch (err) {
-        console.error("Failed to decrement", err);
-      }
-      return;
+  const updateItem = async (variantId, qty) => {
+    if (qty <= 0) return removeItem(variantId);
+
+    if (user?.id) {
+      const currentItem = items.find(i => i.variantId === variantId);
+      const delta = qty - (currentItem?.quantity || 0);
+      if (delta === 0) return;
+
+      await api.put(`/cart/${user.id}/update`, null, {
+        params: { variantId, delta },
+      });
+      const res = await api.get(`/cart/${user.id}`);
+      setItems(normalize(res.data || []));
+    } else {
+      setItems((prev) =>
+          prev.map((i) => i.variantId === variantId ? { ...i, quantity: qty } : i)
+      );
     }
-
-    setCartItems((prev) =>
-        prev
-            .map((item) =>
-                item.id === id
-                    ? { ...item, quantity: item.quantity - 1 }
-                    : item
-            )
-            .filter((item) => item.quantity > 0)
-    );
   };
 
-  const clearCart = () => {
-    setCartItems([]);
+  const removeItem = async (variantId) => {
+    if (user?.id) {
+      // Backend doesn't have a direct /remove, but we can use /update with a large negative delta
+      // or check if backend has /remove. Looking at CartController, there is NO /remove.
+      const currentItem = items.find(i => i.variantId === variantId);
+      if (currentItem) {
+        await api.put(`/cart/${user.id}/update`, null, {
+          params: { variantId, delta: -currentItem.quantity },
+        });
+      }
+      const res = await api.get(`/cart/${user.id}`);
+      setItems(normalize(res.data || []));
+    } else {
+      setItems((prev) => prev.filter((i) => i.variantId !== variantId));
+    }
   };
 
-  const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+  const clearCart = async () => {
+    if (user?.id) await api.delete(`/cart/${user.id}/clear`);
+    setItems([]);
+  };
 
-  const total = cartItems.reduce(
-      (sum, item) => sum + item.price * item.quantity,
-      0
+  // ---------- DERIVED ----------
+  const itemCount = useMemo(
+      () => items.reduce((s, i) => s + i.quantity, 0),
+      [items]
+  );
+
+  const subtotal = useMemo(
+      () => items.reduce((s, i) => s + i.price * i.quantity, 0),
+      [items]
   );
 
   return (
       <CartContext.Provider
           value={{
-            cartItems,
-            totalItems,
-            totalPrice: total,
-            addToCart,
-            increment,
-            decrement,
-            updateQuantity: (id, qty) => {
-              const item = cartItems.find(i => i.id === id);
-              if (item) {
-                const delta = qty - item.quantity;
-                if (delta !== 0) {
-                  if (delta > 0) increment(id);
-                  else decrement(id);
-                }
-              }
-            },
-            removeFromCart: (id) => {
-              const item = cartItems.find(i => i.id === id);
-              if (item) {
-                // If we want to fully remove, we might need a separate endpoint or call decrement until 0
-                // For now, let's just use decrement logic if backend doesn't have a direct remove
-                // Actually decrement in backend with large negative delta might work if it supports it
-                // But the backend CartController has updateQuantity(delta).
-                // Let's call it with -item.quantity to remove.
-                if (user && user.id) {
-                    api.put(`/api/cart/${user.id}/update`, null, {
-                        params: { variantId: id, delta: -item.quantity }
-                    }).then(() => loadCart());
-                } else {
-                    setCartItems(prev => prev.filter(i => i.id !== id));
-                }
-              }
-            },
+            items,
+            loading,
+            itemCount,
+            subtotal,
+            addItem,
+            updateItem,
+            removeItem,
             clearCart,
-            total,
-            refreshCart: loadCart
           }}
       >
         {children}
@@ -185,10 +139,27 @@ export const CartProvider = ({ children }) => {
   );
 };
 
-export const useCart = () => {
-  const context = useContext(CartContext);
-  if (!context) {
-    throw new Error("useCart must be used inside a CartProvider");
+// ---------- HELPERS ----------
+const normalize = (data) =>
+    data.map((i) => ({
+      variantId: i.variantId,
+      productName: i.productName,
+      variantName: i.variantName,
+      price: Number(i.price),
+      quantity: Number(i.quantity),
+      imageUrl: i.imageUrl,
+    }));
+
+const upsert = (list, variantId, qty, payload) => {
+  const existing = list.find((i) => i.variantId === variantId);
+  if (existing) {
+    return list.map((i) =>
+        i.variantId === variantId
+            ? { ...i, quantity: i.quantity + qty }
+            : i
+    );
   }
-  return context;
+  return [...list, { ...payload, quantity: qty }];
 };
+
+export const useCart = () => useContext(CartContext);

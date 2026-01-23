@@ -88,14 +88,14 @@ public class ProductService {
     /* =========================
        GROUPED PRODUCTS (ADMIN / USER)
        ========================= */
-    public Page<GroupedProductDTO> getGroupedProducts(Pageable pageable) {
-        Page<ProductMaster> page = productMasterRepository.findAll(pageable);
-        return page.map(productMapper::toGroupedDTO);
+    public Page<GroupedProductDTO> getGroupedProducts(String categoryName, Pageable pageable) {
+        return productMasterRepository.findGroupedProducts(
+                (categoryName == null || categoryName.isBlank()) ? null : categoryName,
+                pageable
+        );
     }
-    public Page<ProductVariantDTO> getAllVariantsForAdmin(Pageable pageable) {
-        return productVariantRepository.findAll(pageable)
-                .map(productMapper::toVariantDTO);
-    }
+
+
 
     /* =========================
        ADMIN SAVE

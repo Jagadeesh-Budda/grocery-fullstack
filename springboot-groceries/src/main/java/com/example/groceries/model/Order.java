@@ -3,6 +3,8 @@ package com.example.groceries.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -22,25 +24,30 @@ public class Order {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @NotNull
+    @ManyToOne(fetch = FetchType.EAGER, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Column(name = "total_amount", nullable = false)
+    @NotNull
+    @DecimalMin(value = "0.0", inclusive = false)
+    @Column(name = "total_amount", nullable = false, precision = 10, scale = 2)
     private BigDecimal totalAmount;
 
+    @NotNull
     @Enumerated(EnumType.STRING)
-    @Column(name = "status")
-    private OrderStatus status;
+    @Column(name = "status", nullable = false)
+    private OrderStatus status = OrderStatus.CREATED;
 
-    @Column(name = "created_at")
-    private LocalDateTime createdAt;
+    @NotNull
+    @Column(name = "created_at", nullable = false)
+    private LocalDateTime createdAt = LocalDateTime.now();
 
     @OneToMany(
             mappedBy = "order",
             cascade = CascadeType.ALL,
             orphanRemoval = true,
-    fetch = FetchType.EAGER
+            fetch = FetchType.EAGER
     )
     @JsonManagedReference
     private List<OrderItem> orderItems = new ArrayList<>();

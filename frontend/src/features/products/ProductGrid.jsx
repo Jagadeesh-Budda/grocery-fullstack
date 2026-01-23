@@ -3,8 +3,8 @@ import ProductCard from "./ProductCard";
 import { useCart } from "../../context/CartContext";
 import { fetchGroceries } from "../../services/groceryApi";
 
-export default function ProductGrid() {
-    const { addToCart } = useCart();
+export default function ProductGrid({ category = "" }) {
+    const { addItem } = useCart();
 
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -13,10 +13,10 @@ export default function ProductGrid() {
     const [hasMore, setHasMore] = useState(true);
     const loaderRef = useRef(null);
 
-    const loadProducts = useCallback(async (pageNum) => {
+    const loadProducts = useCallback(async (pageNum, currentCategory) => {
         try {
             setLoading(true);
-            const data = await fetchGroceries(pageNum, 20);
+            const data = await fetchGroceries(pageNum, 20, currentCategory);
             const newProducts = data.content || [];
             
             setProducts(prev => pageNum === 0 ? newProducts : [...prev, ...newProducts]);
@@ -36,8 +36,16 @@ export default function ProductGrid() {
     }, []);
 
     useEffect(() => {
-        loadProducts(page);
-    }, [page, loadProducts]);
+        setPage(0);
+        setProducts([]);
+        loadProducts(0, category);
+    }, [category, loadProducts]);
+
+    useEffect(() => {
+        if (page > 0) {
+            loadProducts(page, category);
+        }
+    }, [page, loadProducts, category]);
 
     useEffect(() => {
         const observer = new IntersectionObserver(
@@ -91,21 +99,12 @@ export default function ProductGrid() {
                     auto-rows-fr
                 "
             >
-                {products.map((product, index) => {
-                    const displayVariant = product.variants?.[0] || {};
-                    return (
-                        <ProductCard
-                            key={`${product.variantId || product.id}-${index}`}
-                            product={{
-                                ...product,
-                                price: product.displayPrice || displayVariant.price,
-                                unit: displayVariant.unit || product.unit,
-                                image: displayVariant.imageUrl || product.image
-                            }}
-                            onAdd={() => addToCart(product)}
-                        />
-                    );
-                })}
+                {products.map((product, index) => (
+                    <ProductCard
+                        key={`${product.id}-${index}`}
+                        product={product}
+                    />
+                ))}
             </div>
 
             {/* Infinite Scroll Loader Trigger */}

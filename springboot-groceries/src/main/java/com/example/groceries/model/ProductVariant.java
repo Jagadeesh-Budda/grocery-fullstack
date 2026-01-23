@@ -3,8 +3,14 @@ package com.example.groceries.model;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
+import jakarta.validation.constraints.DecimalMin;
 
 @Entity
 @Table(name = "product_variants")
@@ -19,32 +25,50 @@ public class ProductVariant {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "name")
+    @NotBlank
+    @Column(name = "name", nullable = false)
     private String variantName;
 
+    @NotNull
+    @DecimalMin(value = "0.0", inclusive = false)
+    @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal mrp;
 
-    @Column(name = "discount_percent")
-    private Integer discountPercent;
+    @NotNull
+    @Min(0)
+    @Max(100)
+    @Column(name = "discount_percent", nullable = false)
+    private Integer discountPercent = 0;
 
+    @NotBlank
+    @Column(nullable = false)
     private String unit;
 
-    @Column(name = "image_url")
+    @NotBlank
+    @Column(name = "image_url", nullable = false)
     private String imageUrl;
 
-    private Integer stock;
+    @NotNull
+    @Min(0)
+    @Column(nullable = false)
+    private Integer stock = 0;
 
-    public BigDecimal getPrice() {
-        if (mrp == null) return BigDecimal.ZERO;
-        if (discountPercent == null || discountPercent <= 0) return mrp;
-        
-        BigDecimal discountAmount = mrp.multiply(new BigDecimal(discountPercent))
-                .divide(new BigDecimal(100), 2, java.math.RoundingMode.HALF_UP);
-        return mrp.subtract(discountAmount);
-    }
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "product_master_id", nullable = false) // Matches your DB foreign key
+    @NotNull
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "product_master_id", nullable = false)
     @JsonBackReference
     private ProductMaster productMaster;
-}
+
+    public BigDecimal getPrice() {
+        // 1. Safely handle the null by assigning to a local variable
+        int discount = (discountPercent != null) ? discountPercent : 0;
+
+        // 2. Use the local variable 'discount' here, NOT 'discountPercent'
+        BigDecimal discountAmount = mrp
+                .multiply(BigDecimal.valueOf(discount))
+                .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+
+        return mrp.subtract(discountAmount);
+    }
+    }
+

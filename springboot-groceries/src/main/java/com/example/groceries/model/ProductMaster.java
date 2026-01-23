@@ -2,7 +2,11 @@ package com.example.groceries.model;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
+
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -12,28 +16,46 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ProductMaster {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @NotBlank
+    @Column(nullable = false)
     private String name;
+
+    @NotBlank
+    @Column(nullable = false, length = 1000)
     private String description;
 
-    @Column(name = "image_url")
+    @NotBlank
+    @Column(name = "image_url", nullable = false)
     private String imageUrl;
 
+    @NotNull
     @ElementCollection
-    @CollectionTable(name = "product_images", joinColumns = @JoinColumn(name = "product_id"))
-    @Column(name = "image_url")
-    private List<String> images;
+    @CollectionTable(
+            name = "product_images",
+            joinColumns = @JoinColumn(name = "product_id", nullable = false)
+    )
+    @Column(name = "image_url", nullable = false)
+    private List<String> images = new ArrayList<>();
 
-    private Boolean active;
+    @NotNull
+    @Column(nullable = false)
+    private Boolean active = true;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "category_id")
-    private Category category; // This fixes "Cannot resolve method getCategory"
+    @NotNull
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "category_id", nullable = false)
+    private Category category;
 
-    @OneToMany(mappedBy = "productMaster")
+    @OneToMany(
+            mappedBy = "productMaster",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
     @JsonManagedReference
-    private List<ProductVariant> variants;
+    private List<ProductVariant> variants = new ArrayList<>();
 }

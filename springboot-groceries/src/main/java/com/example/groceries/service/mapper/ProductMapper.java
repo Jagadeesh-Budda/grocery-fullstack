@@ -85,7 +85,7 @@ public class ProductMapper {
     /* =========================
        MASTER → GROUPED DTO
        ========================= */
-    public GroupedProductDTO toGroupedDTO(ProductMaster product) {
+    /*public GroupedProductDTO toGroupedDTO(ProductMaster product) {
 
         // ✅ CORE FIX: calculate display price for listing
         BigDecimal displayPrice = product.getVariants() == null
@@ -113,7 +113,7 @@ public class ProductMapper {
         dto.setDisplayPrice(displayPrice);
 
         return dto;
-    }
+    }*/
 
     /* =========================
        VARIANT DTO → ENTITY

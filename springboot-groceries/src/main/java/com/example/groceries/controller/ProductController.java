@@ -49,11 +49,12 @@ public class ProductController {
        ========================= */
     @GetMapping("/grouped")
     public ResponseEntity<Page<GroupedProductDTO>> getGroupedProducts(
+            @RequestParam(required = false) String category,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
 
         return ResponseEntity.ok(
-                productService.getGroupedProducts(PageRequest.of(page, size))
+                productService.getGroupedProducts(category, PageRequest.of(page, size))
         );
     }
 

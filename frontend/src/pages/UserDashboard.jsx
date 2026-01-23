@@ -1,19 +1,39 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useOutletContext } from "react-router-dom";
 
 import ProductGrid from "../features/products/ProductGrid";
 import ShoppingCart from "../components/ShoppingCart";
 import RecipeList from "../features/recipes/RecipeList";
 import { useCart } from "../context/CartContext";
+import { useAuth } from "../context/AuthContext";
 
 export default function UserDashboard() {
   const navigate = useNavigate();
+  const { activeCategory } = useOutletContext();
+  const { user } = useAuth();
 
   const {
-    cartItems,
-    increment,
-    decrement,
+    items: cartItems,
+    updateItem,
   } = useCart();
+
+  const increment = (id) => {
+    const item = cartItems.find(i => i.variantId === id);
+    if (item) updateItem(id, item.quantity + 1);
+  };
+
+  const decrement = (id) => {
+    const item = cartItems.find(i => i.variantId === id);
+    if (item && item.quantity > 1) updateItem(id, item.quantity - 1);
+  };
+
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour >= 5 && hour < 12) return "Good Morning";
+    if (hour >= 12 && hour < 17) return "Good Afternoon";
+    if (hour >= 17 && hour < 22) return "Good Evening";
+    return "Hello";
+  };
 
   return (
       <div className="flex gap-6">
@@ -22,10 +42,10 @@ export default function UserDashboard() {
           {/* Greeting */}
           <div className="rounded-2xl bg-gradient-to-r from-emerald-50 to-emerald-100 p-6">
             <h1 className="text-2xl font-bold text-gray-900">
-              Good evening, Arjun 👋
+              {getGreeting()}{user ? `, ${user.username}` : ""} 👋
             </h1>
             <p className="text-sm text-gray-600">
-              Time for breakfast? Here's what's running low!
+              {user ? "Time for breakfast? Here's what's running low!" : "Welcome! Discover our fresh collection."}
             </p>
           </div>
 
@@ -78,51 +98,13 @@ export default function UserDashboard() {
             </div>
           </div>
 
-          {/* Categories */}
-          <div>
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-gray-900">
-                Categories
-              </h2>
-              <button
-                  type="button"
-                  onClick={() => navigate("/categories")}
-                  className="text-sm font-medium text-emerald-600"
-              >
-                See all →
-              </button>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 lg:grid-cols-8">
-              {[
-                "Vegetables",
-                "Fruits",
-                "Dairy",
-                "Grains & Pasta",
-                "Meat & Poultry",
-                "Seafood",
-                "Eggs",
-                "Beverages",
-              ].map((cat) => (
-                  <div
-                      key={cat}
-                      onClick={() => navigate(`/products?category=${cat}`)}
-                      className="cursor-pointer rounded-xl bg-white p-4 text-center shadow-sm hover:shadow-md"
-                  >
-                    <p className="text-sm font-medium text-gray-800">
-                      {cat}
-                    </p>
-                  </div>
-              ))}
-            </div>
-          </div>
-
+         
           {/* Products */}
           <div>
             <h2 className="mb-4 text-lg font-semibold text-gray-900">
-              Popular near you
+              {activeCategory ? `Category: ${activeCategory}` : "Popular near you"}
             </h2>
-            <ProductGrid />
+            <ProductGrid category={activeCategory} />
           </div>
         </div>
 

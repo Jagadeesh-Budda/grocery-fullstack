@@ -11,8 +11,6 @@ import lombok.Setter;
 @Table(name = "cart_items")
 @Getter
 @Setter
-@NotNull
-@Min(value = 1, message = "Quantity must be greater than 0")
 public class CartItem {
 
     @Id
@@ -20,14 +18,31 @@ public class CartItem {
     private Long id;
 
     @JsonBackReference
-    @ManyToOne(fetch = FetchType.LAZY)
+    @NotNull
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "cart_id", nullable = false)
     private Cart cart;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @NotNull
+    @ManyToOne(fetch = FetchType.EAGER, optional = false)
     @JoinColumn(name = "product_variant_id", nullable = false)
     private ProductVariant productVariant;
 
+    @NotNull
+    @Min(value = 1, message = "Quantity must be at least 1")
     @Column(nullable = false)
     private Integer quantity;
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof CartItem)) return false;
+        CartItem other = (CartItem) o;
+        return id != null && id.equals(other.getId());
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
+    }
 }

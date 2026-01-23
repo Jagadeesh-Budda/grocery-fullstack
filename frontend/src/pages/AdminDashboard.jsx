@@ -15,21 +15,39 @@ export default function AdminDashboard() {
   });
 
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
-    fetchAdminDashboard()
-      .then((data) => {
-        setStats({
-          totalSales: data.totalSales ?? 0,
-          totalIncome: data.totalIncome ?? 0,
-          totalVisitors: data.totalVisitors ?? 0,
-          salesGrowthPercent: data.salesGrowthPercent ? `+${data.salesGrowthPercent}%` : "+0%",
-          incomeGrowth: "+12.5%", // These could come from your API later
-          visitorGrowth: "-2.4%",
-        });
-      })
-      .catch((err) => console.error("Dashboard load failed", err))
-      .finally(() => setLoading(false));
+    let isMounted = true;
+    
+    const loadDashboard = async () => {
+      setLoading(true);
+      setError(false);
+      try {
+        const data = await fetchAdminDashboard();
+        if (isMounted && data) {
+          setStats({
+            totalSales: data.totalSales ?? 0,
+            totalIncome: data.totalIncome ?? 0,
+            totalVisitors: data.totalVisitors ?? 0,
+            salesGrowthPercent: data.salesGrowthPercent ? `+${data.salesGrowthPercent}%` : "+0%",
+            incomeGrowth: "+12.5%",
+            visitorGrowth: "-2.4%",
+          });
+        }
+      } catch (err) {
+        if (isMounted) {
+          setError(true);
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadDashboard();
+    return () => { isMounted = false; };
   }, []);
 
   // Professional Skeleton Loader
@@ -39,6 +57,21 @@ export default function AdminDashboard() {
         {[1, 2, 3].map((i) => (
           <div key={i} className="h-32 bg-gray-200 rounded-xl3"></div>
         ))}
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-red-50 border border-red-100 rounded-xl3 p-8 text-center">
+        <h2 className="text-lg font-bold text-red-800">Dashboard Unavailable</h2>
+        <p className="text-sm text-red-600 mt-2">We're having trouble connecting to the backend. Please try again later.</p>
+        <button 
+          onClick={() => window.location.reload()} 
+          className="mt-4 px-4 py-2 bg-red-600 text-white text-sm font-bold rounded-lg hover:bg-red-700 transition-colors"
+        >
+          Retry
+        </button>
       </div>
     );
   }

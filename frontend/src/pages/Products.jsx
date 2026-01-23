@@ -56,24 +56,12 @@ export default function Products() {
       <div className="products-page">
         <h2 className="text-2xl font-bold mb-6">Our Groceries</h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
-          {products.map((product) => {
-            // ✅ ACCESS THE FIRST VARIANT FOR DISPLAY
-            const firstVariant = product.variants?.[0] || {};
-
-            return (
-                <ProductCard
-                    key={product.id} // Use Master ID
-                    product={{
-                      name: product.name,
-                      // Use displayPrice from GroupedProductDTO or fallback to variant price
-                      price: product.displayPrice || firstVariant.price || 0,
-                      unit: firstVariant.unit || "Pack",
-                      image: firstVariant.imageUrl
-                    }}
-                    onAdd={() => console.log('Adding variant:', firstVariant.id)}
-                />
-            );
-          })}
+          {products.map((product) => (
+            <ProductCard
+              key={product.id}
+              product={product}
+            />
+          ))}
         </div>
 
         {/* Infinite scroll trigger */}

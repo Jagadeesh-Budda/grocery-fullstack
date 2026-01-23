@@ -1,48 +1,58 @@
 package com.example.groceries.controller;
 
+import com.example.groceries.controller.dto.CartItemRequest;
+import com.example.groceries.controller.dto.CartItemResponse;
 import com.example.groceries.controller.dto.CartSummaryResponse;
-import com.example.groceries.model.Cart;
-import com.example.groceries.model.Order;
 import com.example.groceries.service.CartService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/cart")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:5173", allowCredentials = "true")
 public class CartController {
 
     private final CartService cartService;
 
     @GetMapping("/{userId}")
-    public ResponseEntity<Cart> getCart(@PathVariable Long userId) {
-        return ResponseEntity.ok(cartService.getOrCreateCart(userId));
+    public ResponseEntity<List<CartItemResponse>> getCart(@PathVariable Long userId) {
+        return ResponseEntity.ok(cartService.getCartItems(userId));
     }
 
     @PostMapping("/{userId}/add")
-    public ResponseEntity<Cart> addItem(@PathVariable Long userId, 
-                                        @RequestParam Long variantId, 
-                                        @RequestParam(defaultValue = "1") Integer quantity) {
-        return ResponseEntity.ok(cartService.addItemToCart(userId, variantId, quantity));
+    public ResponseEntity<List<CartItemResponse>> addItem(
+            @PathVariable Long userId,
+            @RequestParam Long variantId,
+            @RequestParam(defaultValue = "1") Integer quantity) {
+        return ResponseEntity.ok(
+                cartService.addItemAndReturn(userId, variantId, quantity)
+        );
     }
 
     @PutMapping("/{userId}/update")
-    public ResponseEntity<Cart> updateQuantity(@PathVariable Long userId, 
-                                               @RequestParam Long variantId, 
-                                               @RequestParam Integer delta) {
-        return ResponseEntity.ok(cartService.updateQuantity(userId, variantId, delta));
+    public ResponseEntity<List<CartItemResponse>> updateQuantity(
+            @PathVariable Long userId,
+            @RequestParam Long variantId,
+            @RequestParam Integer delta) {
+        return ResponseEntity.ok(
+                cartService.updateQuantityAndReturn(userId, variantId, delta)
+        );
+    }
+
+    @PostMapping("/{userId}/merge")
+    public ResponseEntity<List<CartItemResponse>> mergeCart(
+            @PathVariable Long userId,
+            @RequestBody List<CartItemRequest> items) {
+        return ResponseEntity.ok(
+                cartService.mergeAndReturn(userId, items)
+        );
     }
 
     @GetMapping("/{userId}/summary")
-    public ResponseEntity<CartSummaryResponse> getSummary(@PathVariable Long userId) {
-        return ResponseEntity.ok(cartService.getCartSummary(userId));
-    }
-
-    @PostMapping("/{userId}/checkout")
-    public ResponseEntity<Long> checkout(@PathVariable Long userId) {
-        Order order = cartService.checkout(userId);
-        return ResponseEntity.ok(order.getId());
+    public ResponseEntity<CartSummaryResponse> summary(@PathVariable Long userId) {
+        return ResponseEntity.ok(cartService.getSummary(userId));
     }
 }
