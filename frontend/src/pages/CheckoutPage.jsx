@@ -5,7 +5,12 @@ import { ShoppingBag, CheckCircle, ArrowLeft } from 'lucide-react';
 import './CheckoutPage.css';
 
 const CheckoutPage = () => {
-  const { cartItems, totalPrice, clearCart } = useCart();
+  const {
+    cartItems,
+    subtotal: totalAmount,
+    clearCart,
+    loading,
+  } = useCart();
   const navigate = useNavigate();
 
   const API_BASE = "http://localhost:8080";
@@ -18,12 +23,26 @@ const CheckoutPage = () => {
   };
 
   const handlePlaceOrder = () => {
-    alert("Order placed successfully! Thank you for shopping with groceRythm.");
+    console.log("[CheckoutPage] Place Order clicked", {
+      cartItemsLength: Array.isArray(cartItems) ? cartItems.length : null,
+      totalAmount,
+    });
+    alert("Order placed successfully! Thank you for shopping with FreshCartFlow");
     clearCart();
     navigate('/groceries');
   };
 
-  if (cartItems.length === 0) {
+  if (loading) {
+    return (
+      <div className="checkout-empty-state">
+        <p className="animate-pulse text-emerald-600 font-semibold">
+          Loading checkout...
+        </p>
+      </div>
+    );
+  }
+
+  if (!Array.isArray(cartItems) || cartItems.length === 0) {
     return (
       <div className="checkout-empty-state">
         <div className="empty-icon-wrap">
@@ -91,7 +110,7 @@ const CheckoutPage = () => {
             <div className="summary-details">
               <div className="summary-row">
                 <span>Subtotal</span>
-                <span>{formatCurrency(totalPrice)}</span>
+                <span>{formatCurrency(totalAmount)}</span>
               </div>
               <div className="summary-row">
                 <span>Delivery Charges</span>
@@ -100,14 +119,14 @@ const CheckoutPage = () => {
               <div className="summary-divider"></div>
               <div className="summary-row total">
                 <span>Total Amount</span>
-                <span className="total-value">{formatCurrency(totalPrice)}</span>
+                <span className="total-value">{formatCurrency(totalAmount)}</span>
               </div>
             </div>
             <button className="place-order-btn" onClick={handlePlaceOrder}>
               Place Order
             </button>
             <p className="order-notice">
-              By placing your order, you agree to groceRythm's terms and conditions.
+              By placing your order, you agree to FreshCartFlow terms and conditions.
             </p>
           </div>
         </div>

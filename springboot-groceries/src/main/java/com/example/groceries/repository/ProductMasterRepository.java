@@ -6,33 +6,32 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface ProductMasterRepository extends JpaRepository<ProductMaster, Long> {
 
-    /* ======================
-       EXISTING (KEEP AS-IS)
-       ====================== */
+    /* =========================
+       USED BY ProductService
+       ========================= */
 
     List<ProductMaster> findByCategoryId(Long categoryId);
 
-    @Query(
-            value = "SELECT DISTINCT pm FROM ProductMaster pm LEFT JOIN FETCH pm.variants",
-            countQuery = "SELECT count(DISTINCT pm) FROM ProductMaster pm"
-    )
-    Page<ProductMaster> findAllWithVariants(Pageable pageable);
+    @Query("""
+        SELECT DISTINCT pm
+        FROM ProductMaster pm
+        LEFT JOIN FETCH pm.variants
+        WHERE pm.id = :id
+    """)
+    Optional<ProductMaster> findByIdWithVariants(@Param("id") Long id);
 
-    @Query("SELECT pm FROM ProductMaster pm WHERE pm.active = true")
-    Page<ProductMaster> findActiveProducts(Pageable pageable);
-
-    Page<ProductMaster> findByCategoryNameIgnoreCase(String categoryName, Pageable pageable);
-
-    /* ======================
-       ✅ SHOPPING LIST (NEW)
-       ====================== */
+    /* =========================
+       GROUPED PRODUCTS (FINAL FIX)
+       ========================= */
 
     @Query(
             value = """
@@ -45,20 +44,19 @@ public interface ProductMasterRepository extends JpaRepository<ProductMaster, Lo
             FROM ProductMaster pm
             JOIN pm.variants v
             WHERE pm.active = true
-            AND (:category IS NULL OR LOWER(pm.category.name) = LOWER(:category))
+              AND (:category IS NULL OR LOWER(pm.category.name) = :category)
             GROUP BY pm.id, pm.name, pm.imageUrl
+            ORDER BY pm.name ASC
         """,
             countQuery = """
             SELECT COUNT(DISTINCT pm.id)
             FROM ProductMaster pm
-            JOIN pm.variants v
             WHERE pm.active = true
-            AND (:category IS NULL OR LOWER(pm.category.name) = LOWER(:category))
+              AND (:category IS NULL OR LOWER(pm.category.name) = :category)
         """
     )
     Page<GroupedProductDTO> findGroupedProducts(
-            @org.springframework.data.repository.query.Param("category") String category,
+            @Param("category") String category,
             Pageable pageable
     );
-
 }

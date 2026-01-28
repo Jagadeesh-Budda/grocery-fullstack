@@ -59,7 +59,7 @@ const Home = () => {
   return (
       <div className="home-container">
         <div className="hero-compact">
-          <strong>groceRythm</strong> — Fresh groceries delivered daily
+          <strong><FreshCartFlow></FreshCartFlow></strong> — Fresh groceries delivered daily
         </div>
 
         <div className="product-grid">

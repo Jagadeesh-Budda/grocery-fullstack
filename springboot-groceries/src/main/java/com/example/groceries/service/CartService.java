@@ -148,6 +148,11 @@ public class CartService {
         return toResponse(mergeCart(userId, items));
     }
 
+    public void clearCartByUserId(Long userId) {
+        cartRepository.deleteByUserId(userId);
+    }
+
+
     /* ======================
        SUMMARY
        ====================== */
@@ -193,5 +198,6 @@ public class CartService {
 
         }
         return response;
+
     }
 }

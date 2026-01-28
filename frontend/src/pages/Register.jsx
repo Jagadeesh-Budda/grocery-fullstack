@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { User, Mail, Lock, ArrowRight, CheckCircle2, ShoppingCart } from "lucide-react";
+import { User, Mail, Lock, ArrowRight } from "lucide-react";
 import api from "../api/axios";
+import freshProduceImage from "../assets/login/fresh-produce.webp";
 
 export default function Register() {
   const navigate = useNavigate();
@@ -28,29 +29,16 @@ export default function Register() {
     <div className="min-h-screen bg-[#F3F4F6] flex items-center justify-center p-6">
       <div className="max-w-5xl w-full bg-white rounded-[2.5rem] shadow-[0_50px_100px_rgba(59,30,84,0.12)] overflow-hidden flex flex-col md:flex-row min-h-[600px]">
         
-        {/* Left Side: Branding (Matches groceRythm Login) */}
-        <div className="md:w-1/2 bg-[#3B1E54] p-12 text-white flex flex-col justify-between relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-[#D4BDAC]/10 rounded-full blur-3xl"></div>
-          
-          <div className="relative z-10">
-            <div className="flex items-center gap-3 mb-12">
-              <div className="w-12 h-12 bg-[#D4BDAC] rounded-2xl flex items-center justify-center text-[#3B1E54] shadow-lg">
-                <ShoppingCart size={24} strokeWidth={2.5} />
-              </div>
-              <span className="text-2xl font-black tracking-tighter ">groceRythm</span>
-            </div>
-
-            <h2 className="text-4xl font-bold leading-tight mb-6">
-              Join the <br /> 
-              <span className="text-[#D4BDAC] italic font-serif">groceRythm.</span>
-            </h2>
-            <ul className="space-y-4">
-              {[ "Hand-picked organic selection", "Artisan logistics & tracking", "Exclusive morning arrivals" ].map((text, i) => (
-                <li key={i} className="flex items-center gap-3 text-white/70 font-medium">
-                  <CheckCircle2 size={18} className="text-[#D4BDAC]" /> {text}
-                </li>
-              ))}
-            </ul>
+        {/* Left Side: Branding (Matches FreshCartFlow Login) */}
+        <div
+          className="hidden md:block md:w-1/2 relative bg-cover bg-center"
+          style={{ backgroundImage: `url(${freshProduceImage})` }}
+        >
+          <div className="absolute inset-0 bg-black/50" />
+          <div className="relative z-10 h-full w-full flex items-center justify-center p-10">
+            <h1 className="text-white text-4xl xl:text-5xl font-extrabold tracking-tight text-center">
+              Your Fresh Journey Begins
+            </h1>
           </div>
         </div>
 

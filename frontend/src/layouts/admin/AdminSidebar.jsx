@@ -1,4 +1,4 @@
-// src/components/AdminSidebar.jsx (Refactored for groceRythm)
+// src/components/AdminSidebar.jsx (Refactored for FreshCartFlow)
 import React from 'react';
 import { Home, Grid, ShoppingCart, Settings, LogOut, Package } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -18,7 +18,7 @@ export default function AdminSidebar({ active = 'dashboard', onLogout = () => {}
     // Gromuse Style: Softer shadow and more padding
     <aside className="w-72 h-screen bg-[#F8F9FA] border-r border-gray-100 p-6 flex flex-col justify-between">
       <div>
-        {/* Updated Logo: groceRythm style */}
+        {/* Updated Logo: FreshCartFlow style */}
       
 <div className="flex items-center gap-3 mb-8 px-2">
   <div className="w-9 h-9 rounded-xl bg-grocery-primary flex items-center justify-center text-white shadow-lg shadow-green-100">

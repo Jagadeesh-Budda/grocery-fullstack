@@ -57,6 +57,26 @@ const CartPage = () => {
     }
   };
 
+  const handleCheckout = () => {
+    // Evidence for click binding + runtime state at click time
+    console.log("[CartPage] Proceed to Checkout clicked", {
+      loading,
+      itemCount,
+      cartItemsLength: Array.isArray(cartItems) ? cartItems.length : null,
+      totalAmount,
+    });
+
+    if (loading) return;
+
+    if (!Array.isArray(cartItems) || cartItems.length === 0) {
+      console.warn("[CartPage] Checkout blocked: cart is empty/invalid");
+      return;
+    }
+
+    // Cart is routed under /groceries/*, so checkout must be nested as well.
+    navigate("/groceries/checkout");
+  };
+
   if (loading) {
     return (
         <div className="cart-page-loading">
@@ -187,7 +207,7 @@ const CartPage = () => {
               <button
                   className="checkout-btn"
                   disabled={loading}
-                  onClick={() => navigate('/checkout')}
+                  onClick={handleCheckout}
               >
                 Proceed to Checkout
               </button>

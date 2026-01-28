@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import freshProduceImage from "../assets/login/fresh-produce.webp";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -29,14 +30,12 @@ export default function Login() {
 
   return (
     <div className="min-h-screen bg-grocery-bg">
-      <div className="mx-auto grid lg:grid-cols-2 min-h-screen">
+      <div className="mx-auto grid md:grid-cols-2 min-h-screen">
         {/* Left visual column - hidden on mobile */}
-        <div className="hidden lg:block relative">
-          <img
-            src="https://images.unsplash.com/photo-1516685018646-549df79c0f33?q=80&w=1200&auto=format&fit=crop"
-            alt="Fresh produce assortment"
-            className="absolute inset-0 h-full w-full object-cover"
-          />
+        <div
+          className="hidden md:block relative bg-cover bg-center"
+          style={{ backgroundImage: `url(${freshProduceImage})` }}
+        >
           <div className="absolute inset-0 bg-black/50" />
           <div className="relative z-10 h-full w-full flex items-center justify-center p-10">
             <h1 className="text-white text-4xl xl:text-5xl font-extrabold tracking-tight">

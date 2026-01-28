@@ -47,8 +47,7 @@ public class ProductMapper {
                         ? master.getCategory().getName()
                         : "Uncategorized",
                 master.getImageUrl(),
-                master.getImages(),
-                master.getVariants() == null
+                                master.getVariants() == null
                         ? List.of()
                         : master.getVariants()
                         .stream()

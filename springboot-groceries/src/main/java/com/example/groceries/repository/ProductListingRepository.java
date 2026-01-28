@@ -16,20 +16,26 @@ public interface ProductListingRepository extends JpaRepository<ProductMaster, L
     // Updated to query product_variants directly to show all 2500+ items
     @Query(
             value = """
-            SELECT
-              pm.id    AS productId,
-              pm.name  AS productName,
-              c.name   AS category,
-              pv.id    AS variantId,
-              pv.name  AS variantName,
-              pv.price AS price
-            FROM product_variants pv
-            JOIN product_masters pm ON pm.id = pv.product_master_id
-            JOIN category c ON c.id = pm.category_id
+        WITH paged_products AS (
+            SELECT pm.id
+            FROM product_masters pm
             WHERE pm.active = true
-            ORDER BY pm.name ASC, pv.price ASC
+            ORDER BY pm.name ASC
             LIMIT :size OFFSET :offset
-        """,
+        )
+        SELECT
+          pm.id    AS productId,
+          pm.name  AS productName,
+          c.name   AS category,
+          pv.id    AS variantId,
+          pv.name  AS variantName,
+          pv.price AS price
+        FROM paged_products pp
+        JOIN product_masters pm ON pm.id = pp.id
+        JOIN product_variants pv ON pv.product_master_id = pm.id
+        JOIN category c ON c.id = pm.category_id
+        ORDER BY pm.name ASC, pv.price ASC
+    """,
             nativeQuery = true
     )
     List<ProductListView> findProducts(

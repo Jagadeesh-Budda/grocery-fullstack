@@ -1,9 +1,9 @@
-import React, { useEffect, useState, useCallback, useRef } from "react";
+import React, { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import ProductCard from "./ProductCard";
 import { useCart } from "../../context/CartContext";
 import { fetchGroceries } from "../../services/groceryApi";
 
-export default function ProductGrid({ category = "" }) {
+export default function ProductGrid({ category = "", searchTerm = "" }) {
     const { addItem } = useCart();
 
     const [products, setProducts] = useState([]);
@@ -12,6 +12,24 @@ export default function ProductGrid({ category = "" }) {
     const [page, setPage] = useState(0);
     const [hasMore, setHasMore] = useState(true);
     const loaderRef = useRef(null);
+
+    const search = searchTerm.trim().toLowerCase();
+
+    const filteredProducts = useMemo(() => {
+        if (!search) return products;
+        return products.filter((p) => {
+            const name = (p?.name ?? "").toString().toLowerCase();
+            const categoryName = (
+                p?.category?.name ??
+                p?.categoryName ??
+                p?.category ??
+                ""
+            )
+                .toString()
+                .toLowerCase();
+            return name.includes(search) || categoryName.includes(search);
+        });
+    }, [products, search]);
 
     const loadProducts = useCallback(async (pageNum, currentCategory) => {
         try {
@@ -99,13 +117,19 @@ export default function ProductGrid({ category = "" }) {
                     auto-rows-fr
                 "
             >
-                {products.map((product, index) => (
+                {filteredProducts.map((product, index) => (
                     <ProductCard
                         key={`${product.id}-${index}`}
                         product={product}
                     />
                 ))}
             </div>
+
+            {search && filteredProducts.length === 0 && (
+                <div className="py-6 text-center text-sm text-gray-500">
+                    No products match your search
+                </div>
+            )}
 
             {/* Infinite Scroll Loader Trigger */}
             <div ref={loaderRef} className="py-8 text-center">

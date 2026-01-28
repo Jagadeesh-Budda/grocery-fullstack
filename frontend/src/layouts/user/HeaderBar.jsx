@@ -1,15 +1,34 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import toast from "react-hot-toast";
 import { useCart } from "../../context/CartContext";
 import { useAuth } from "../../context/AuthContext";
 import { ShoppingCart, Bell, Search, User, ChevronDown, LogOut, Menu } from "lucide-react";
 import "./HeaderBar.css";
+import {
+  getStoredCity,
+  getStoredTimeZone,
+  reverseGeocodeLocation,
+  lookupTimeZone,
+  setStoredLocation,
+  deriveRegionFromIndianState,
+  getStoredRegion,
+} from "../../utils/locationTime";
 
-export default function HeaderBar({ onToggleSidebar, sidebarCollapsed }) {
+export default function HeaderBar({
+  onToggleSidebar,
+  sidebarCollapsed,
+  searchTerm = "",
+  onSearchTermChange = () => {},
+}) {
   const navigate = useNavigate();
-  const { totalItems } = useCart();
+  const {itemCount}= useCart();
   const { user, logout } = useAuth();
   const [open, setOpen] = useState(false);
+  const [city, setCity] = useState(() => getStoredCity());
+  const [timeZone, setTimeZone] = useState(() => getStoredTimeZone());
+  const [region, setRegion] = useState(() => getStoredRegion());
+  const [isLocating, setIsLocating] = useState(false);
 
   const username = user?.username || "Guest";
   const avatarLetter = username.charAt(0).toUpperCase();
@@ -17,6 +36,74 @@ export default function HeaderBar({ onToggleSidebar, sidebarCollapsed }) {
   const handleLogout = async () => {
     await logout();
     navigate("/login");
+  };
+
+  const handleDetectLocation = () => {
+    if (!navigator?.geolocation || isLocating) {
+      if (!navigator?.geolocation) {
+        toast.error("Geolocation is not supported in this browser");
+      }
+      return;
+    }
+
+    setIsLocating(true);
+
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        try {
+          const lat = pos?.coords?.latitude;
+          const lon = pos?.coords?.longitude;
+
+          if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
+            toast.error("Couldn't detect location. Using selected city.");
+            return;
+          }
+
+          const [cityResult, tzResult] = await Promise.allSettled([
+            reverseGeocodeLocation(lat, lon),
+            lookupTimeZone(lat, lon),
+          ]);
+
+          const geo =
+            cityResult.status === "fulfilled" ? cityResult.value : null;
+          const nextCity = geo?.city ?? null;
+          const nextState = geo?.state ?? null;
+          const nextTz =
+            tzResult.status === "fulfilled" ? tzResult.value : null;
+
+          const nextRegion = nextState
+            ? deriveRegionFromIndianState(nextState)
+            : null;
+
+          if (!nextCity && !nextTz && !nextRegion) {
+            toast.error("Couldn't detect location. Using selected city.");
+            return;
+          }
+
+          if (nextCity) setCity(nextCity);
+          if (nextTz) setTimeZone(nextTz);
+          if (nextRegion) setRegion(nextRegion);
+          setStoredLocation({
+            city: nextCity || city,
+            timeZone: nextTz || timeZone,
+            region: nextRegion || region,
+          });
+        } catch {
+          toast.error("Couldn't detect location. Using selected city.");
+        } finally {
+          setIsLocating(false);
+        }
+      },
+      (err) => {
+        if (err?.code === 1) {
+          toast.error("Location access denied. Using selected city.");
+        } else {
+          toast.error("Couldn't detect location. Using selected city.");
+        }
+        setIsLocating(false);
+      },
+      { enableHighAccuracy: false, timeout: 8000, maximumAge: 60_000 }
+    );
   };
 
   return (
@@ -34,7 +121,7 @@ export default function HeaderBar({ onToggleSidebar, sidebarCollapsed }) {
               <Menu size={20} />
             </button>
             <Link to="/" className="text-2xl font-bold tracking-tight">
-              <span className="text-grocery-primary">Bloom</span>
+              <span className="text-grocery-primary">FreshCartFlow</span>
             </Link>
           </div>
 
@@ -48,15 +135,30 @@ export default function HeaderBar({ onToggleSidebar, sidebarCollapsed }) {
                 type="text"
                 className="block w-full bg-slate-50 border border-slate-100 rounded-full py-2.5 pl-12 pr-4 text-[14px] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:bg-white transition-all"
                 placeholder="Search for fruits, vegetables, etc.."
+                value={searchTerm}
+                onChange={(e) => onSearchTermChange(e.target.value)}
               />
             </div>
             
             {/* Location Picker */}
-            <div className="flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-700 rounded-full cursor-pointer hover:bg-emerald-100 transition-colors border border-emerald-100">
-              <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
-              <span className="text-[13px] font-bold">Mumbai</span>
+            <button
+              type="button"
+              onClick={handleDetectLocation}
+              disabled={isLocating}
+              title={timeZone}
+              className="flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-700 rounded-full cursor-pointer hover:bg-emerald-100 transition-colors border border-emerald-100 disabled:opacity-70"
+            >
+              <span
+                className={
+                  "w-2 h-2 bg-emerald-500 rounded-full " +
+                  (isLocating ? "animate-ping" : "animate-pulse")
+                }
+              ></span>
+              <span className="text-[13px] font-bold">
+                {isLocating ? "Detecting..." : city}
+              </span>
               <ChevronDown size={14} />
-            </div>
+            </button>
           </div>
 
           {/* RIGHT: Actions */}
@@ -73,11 +175,19 @@ export default function HeaderBar({ onToggleSidebar, sidebarCollapsed }) {
               className="p-2 text-gray-500 hover:bg-gray-100 rounded-full transition-colors relative"
             >
               <ShoppingCart size={22} />
-              {totalItems > 0 && (
-                <span className="absolute -top-1 -right-1 flex items-center justify-center min-w-[20px] h-5 px-1 bg-grocery-primary text-white text-[10px] font-bold rounded-full border-2 border-white">
-                  {totalItems}
+              {itemCount > 0 && (
+                <span
+                  key={itemCount}   // 🔥 important: re-triggers animation
+                  className="cart-badge absolute -top-1 -right-1
+                             flex items-center justify-center
+                             min-w-[20px] h-5 px-1
+                             bg-grocery-primary text-white
+                             text-[10px] font-bold
+                             rounded-full border-2 border-white"
+                >
+                  {itemCount}
                 </span>
-              )}
+                            )}
             </Link>
 
             {/* User Dropdown */}

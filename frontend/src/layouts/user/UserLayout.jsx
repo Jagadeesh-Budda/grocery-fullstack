@@ -11,6 +11,7 @@ export default function MainLayout() {
   });
 
   const [activeCategory, setActiveCategory] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     localStorage.setItem("sidebarCollapsed", JSON.stringify(sidebarCollapsed));
@@ -20,7 +21,12 @@ export default function MainLayout() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      <HeaderBar onToggleSidebar={toggleSidebar} sidebarCollapsed={sidebarCollapsed} /> 
+      <HeaderBar
+        onToggleSidebar={toggleSidebar}
+        sidebarCollapsed={sidebarCollapsed}
+        searchTerm={searchTerm}
+        onSearchTermChange={setSearchTerm}
+      /> 
       
       <div className="flex flex-1 relative">
         <Sidebar 
@@ -36,7 +42,14 @@ export default function MainLayout() {
           `}
         >
           <div className="max-w-[1600px] mx-auto w-full">
-            <Outlet context={{ activeCategory, setActiveCategory }} />
+            <Outlet
+              context={{
+                activeCategory,
+                setActiveCategory,
+                searchTerm,
+                setSearchTerm,
+              }}
+            />
           </div>
         </main>
       </div>

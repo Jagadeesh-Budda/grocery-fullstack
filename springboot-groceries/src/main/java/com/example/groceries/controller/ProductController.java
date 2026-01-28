@@ -58,6 +58,7 @@ public class ProductController {
         );
     }
 
+
     @GetMapping("/discount")
     public ResponseEntity<Page<UserProductDTO>> getProductsByDiscount(
             @RequestParam Integer threshold,

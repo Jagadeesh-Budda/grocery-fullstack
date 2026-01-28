@@ -14,6 +14,5 @@ public class ProductDetailDTO {
     private String description;
     private String category;
     private String imageUrl;
-    private List<String> images;
     private List<ProductVariantDTO> variants;
 }

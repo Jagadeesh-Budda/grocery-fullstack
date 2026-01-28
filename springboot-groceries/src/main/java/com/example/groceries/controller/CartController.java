@@ -55,4 +55,10 @@ public class CartController {
     public ResponseEntity<CartSummaryResponse> summary(@PathVariable Long userId) {
         return ResponseEntity.ok(cartService.getSummary(userId));
     }
+    @DeleteMapping("/{userId}/clear")
+    public ResponseEntity<Void> clearCart(@PathVariable Long userId) {
+        cartService.clearCartByUserId(userId);
+        return ResponseEntity.noContent().build();
+    }
+
 }

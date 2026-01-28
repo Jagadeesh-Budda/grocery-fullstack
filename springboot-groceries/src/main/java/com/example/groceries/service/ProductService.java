@@ -49,10 +49,12 @@ public class ProductService {
     }
 
     public ProductDetailDTO getProductDetail(Long id) {
-        ProductMaster product = productMasterRepository.findById(id)
+        ProductMaster product = productMasterRepository.findByIdWithVariants(id)
                 .orElseThrow(() -> new RuntimeException("Product not found"));
+
         return productMapper.toDetailDTO(product);
     }
+
 
     public List<UserProductDTO> getRecommendations(Long productId, Long userId) {
         ProductMaster product = productMasterRepository.findById(productId)
@@ -89,11 +91,17 @@ public class ProductService {
        GROUPED PRODUCTS (ADMIN / USER)
        ========================= */
     public Page<GroupedProductDTO> getGroupedProducts(String categoryName, Pageable pageable) {
+        String normalizedCategory =
+                (categoryName == null || categoryName.isBlank())
+                        ? null
+                        : categoryName.toLowerCase();
+
         return productMasterRepository.findGroupedProducts(
-                (categoryName == null || categoryName.isBlank()) ? null : categoryName,
+                normalizedCategory,
                 pageable
         );
     }
+
 
 
 

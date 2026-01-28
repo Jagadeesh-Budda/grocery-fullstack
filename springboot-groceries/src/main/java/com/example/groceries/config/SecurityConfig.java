@@ -76,7 +76,7 @@ public class SecurityConfig {
                                 "/categories/**",
                                 "/api/categories/**",
                                 "/api/images/**",
-                                "/images/",
+                                "/images/**",
                                 "/api/user/me"
                         ).permitAll()
 
