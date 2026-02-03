@@ -1,6 +1,5 @@
 package com.example.groceries.service.mapper;
 
-import com.example.groceries.controller.dto.GroupedProductDTO;
 import com.example.groceries.controller.dto.ProductDetailDTO;
 import com.example.groceries.controller.dto.ProductVariantDTO;
 import com.example.groceries.controller.dto.UserProductDTO;
@@ -8,9 +7,7 @@ import com.example.groceries.model.ProductMaster;
 import com.example.groceries.model.ProductVariant;
 import org.springframework.stereotype.Component;
 
-import java.math.BigDecimal;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Component
@@ -64,6 +61,10 @@ public class ProductMapper {
 
         ProductMaster master = variant.getProductMaster();
 
+        // Frontend needs a non-zero stock value to avoid rendering glitches when stock hasn't been set yet.
+        // We treat only null as "missing"; real 0 means out-of-stock.
+        Integer stock = variant.getStock() != null ? variant.getStock() : 1;
+
         return new UserProductDTO(
                 master.getId(),
                 variant.getId(),
@@ -72,6 +73,7 @@ public class ProductMapper {
                         ? master.getCategory().getName()
                         : "Uncategorized",
                 variant.getUnit(),
+                stock,
                 variant.getMrp(),
                 variant.getDiscountPercent(),
                 variant.getPrice(), // 🔥 correct selling price

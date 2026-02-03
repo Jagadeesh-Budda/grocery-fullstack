@@ -29,7 +29,7 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen bg-grocery-bg">
+    <div className="min-h-screen bg-transparent">
       <div className="mx-auto grid md:grid-cols-2 min-h-screen">
         {/* Left visual column - hidden on mobile */}
         <div

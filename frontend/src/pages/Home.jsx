@@ -3,6 +3,7 @@ import { useInView } from "react-intersection-observer";
 import { useCart } from "../context/CartContext";
 import "./Home.css";
 import { getUserProductsPaged } from "../services/userapi";
+import { getLowStockBadgeText, getStockLabel, normalizeStock } from "../utils/stockUi";
 
 const Home = () => {
   const { addToCart, cartItems } = useCart();
@@ -67,6 +68,19 @@ const Home = () => {
             // ✅ Since products are grouped, we use the first variant for display
             const displayVariant = product.variants?.[0] || {};
 
+            const displayStock = normalizeStock(
+              displayVariant.stock ??
+                displayVariant.stockCount ??
+                displayVariant.stockQty ??
+                displayVariant.stockQuantity ??
+                displayVariant.availableStock ??
+                displayVariant.availableQuantity ??
+                displayVariant.quantityAvailable
+            );
+            const isOutOfStock = displayStock === 0;
+            const lowStockBadgeText = getLowStockBadgeText(displayStock);
+            const stockLabel = getStockLabel(displayStock);
+
             // Construct image URL based on your WebConfig mapping
             const rawImg = displayVariant.imageUrl || "";
             const fullImgUrl = rawImg
@@ -94,22 +108,48 @@ const Home = () => {
                       {product.categoryName || "Grocery"} • {displayVariant.unit || "Pack"}
                     </p>
 
+                    <div className="mt-1">
+                      {lowStockBadgeText ? (
+                        <span
+                          className={
+                            "inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold ring-1 " +
+                            (isOutOfStock
+                              ? "bg-red-50 text-red-700 ring-red-100"
+                              : "bg-orange-50 text-orange-700 ring-orange-100")
+                          }
+                        >
+                          {lowStockBadgeText}
+                        </span>
+                      ) : (
+                        <span className="text-[12px] font-medium text-slate-500">
+                          {stockLabel}
+                        </span>
+                      )}
+                    </div>
+
                     <div className="price-row">
                   <span className="price">
                     {formatCurrency(product.displayPrice || displayVariant.price)}
                   </span>
 
                       <button
-                          className="add-btn"
-                          onClick={() => addToCart(
+                          className={
+                            "add-btn " +
+                            (isOutOfStock ? "opacity-50 cursor-not-allowed" : "")
+                          }
+                          disabled={isOutOfStock}
+                          onClick={() =>
+                            !isOutOfStock &&
+                            addToCart(
                               { id: product.id, name: product.name },
                               {
                                 variantId: displayVariant.id,
                                 variantName: displayVariant.name || displayVariant.unit,
                                 price: displayVariant.price,
-                                imageUrl: displayVariant.imageUrl
+                                imageUrl: displayVariant.imageUrl,
                               }
-                          )}
+                            )
+                          }
                       >
                         {getCartQuantity(displayVariant.id) > 0
                             ? `+ ${getCartQuantity(displayVariant.id)}`

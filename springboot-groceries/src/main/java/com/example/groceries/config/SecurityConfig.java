@@ -77,7 +77,8 @@ public class SecurityConfig {
                                 "/api/categories/**",
                                 "/api/images/**",
                                 "/images/**",
-                                "/api/user/me"
+                                "/api/user/me",
+                                "/api/home-dashboard/**"
                         ).permitAll()
 
                         // 3. ANY OTHER request must be authenticated (ONLY ONCE and MUST BE LAST)

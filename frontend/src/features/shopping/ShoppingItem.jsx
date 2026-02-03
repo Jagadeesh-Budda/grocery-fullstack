@@ -17,7 +17,7 @@ export default function ShoppingItem({ item, onDelete, onUpdate }) {
   }
 
   return (
-    <div className="bg-white rounded-lg p-3 shadow-sm flex gap-3">
+    <div className="bg-white/60 backdrop-blur-xl rounded-[2rem] p-5 border border-white/30 shadow-[0_20px_50px_rgba(0,0,0,0.05)] flex gap-3 transition-shadow duration-200">
       <div className="flex-1">
         <div className="flex items-start justify-between gap-2">
           <div>

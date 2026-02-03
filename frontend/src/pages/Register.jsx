@@ -26,7 +26,7 @@ export default function Register() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F3F4F6] flex items-center justify-center p-6">
+    <div className="min-h-screen bg-transparent flex items-center justify-center p-6">
       <div className="max-w-5xl w-full bg-white rounded-[2.5rem] shadow-[0_50px_100px_rgba(59,30,84,0.12)] overflow-hidden flex flex-col md:flex-row min-h-[600px]">
         
         {/* Left Side: Branding (Matches FreshCartFlow Login) */}

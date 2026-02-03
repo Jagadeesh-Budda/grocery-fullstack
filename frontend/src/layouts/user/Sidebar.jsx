@@ -39,7 +39,7 @@ export default function Sidebar({
     <aside 
       className={`
         fixed left-0 top-16 bottom-0 z-40 hidden lg:flex flex-col
-        bg-emerald-50/70 backdrop-blur-[6px] border-r border-emerald-900/5 shadow-[inset_-1px_0_0_rgba(0,0,0,0.02)]
+        bg-[rgba(255,255,255,0.10)] backdrop-blur-[15px] backdrop-saturate-[160%] border-r border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.08)]
         transition-all duration-300 ease-in-out
         ${collapsed ? "w-[72px]" : "w-[240px]"}
       `}
@@ -61,7 +61,7 @@ export default function Sidebar({
         {/* Categories Section */}
         <div className="mb-6">
           {!collapsed && (
-            <h3 className="px-3 text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">
+            <h3 className="px-3 text-[11px] font-bold text-white/50 uppercase tracking-wider mb-2">
               Categories
             </h3>
           )}
@@ -96,7 +96,7 @@ export default function Sidebar({
       </div>
 
       {/* Bottom Section */}
-      <div className="p-3 border-t border-black/5">
+      <div className="p-3 border-t border-white/30">
         <div className="space-y-1">
           {sidebarConfig.bottom.map((item) => (
             <SidebarItem

@@ -1,3 +1,0 @@
-ALTER TABLE categories
-ALTER COLUMN name TYPE VARCHAR(255)
-USING name::text;

@@ -17,10 +17,10 @@ export default function SidebarItem({
         w-full flex items-center transition-all duration-200 group
         ${collapsed ? "justify-center px-0" : "px-3"}
         ${variant === "logout" 
-          ? "text-red-500 hover:bg-red-50" 
+          ? "text-red-400 hover:bg-red-500/20" 
           : active 
-            ? "bg-emerald-500 text-white font-bold shadow-lg shadow-emerald-200" 
-            : "text-slate-500 hover:bg-emerald-50 hover:text-emerald-600"
+            ? "bg-emerald-500/80 text-white font-bold shadow-lg shadow-emerald-500/20" 
+            : "text-white/70 hover:bg-white/10 hover:text-white"
         }
         py-3 rounded-2xl
       `}

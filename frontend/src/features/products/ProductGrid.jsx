@@ -1,11 +1,9 @@
 import React, { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import ProductCard from "./ProductCard";
-import { useCart } from "../../context/CartContext";
 import { fetchGroceries } from "../../services/groceryApi";
+import ProductSkeletonGrid from "../../components/ProductSkeletonGrid";
 
-export default function ProductGrid({ category = "", searchTerm = "" }) {
-    const { addItem } = useCart();
-
+export default function ProductGrid({ category = "", searchTerm = "", filterCategory = "", limit = 0 }) {
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
@@ -14,10 +12,28 @@ export default function ProductGrid({ category = "", searchTerm = "" }) {
     const loaderRef = useRef(null);
 
     const search = searchTerm.trim().toLowerCase();
+    const clientFilter = filterCategory.trim().toLowerCase();
 
     const filteredProducts = useMemo(() => {
-        if (!search) return products;
-        return products.filter((p) => {
+        let result = products;
+
+        if (clientFilter && clientFilter !== "all") {
+            result = result.filter((p) => {
+                const c = (
+                    p?.category?.name ??
+                    p?.categoryName ??
+                    p?.category ??
+                    ""
+                )
+                    .toString()
+                    .toLowerCase();
+                return c.includes(clientFilter);
+            });
+        }
+
+        if (!search) return result;
+
+        return result.filter((p) => {
             const name = (p?.name ?? "").toString().toLowerCase();
             const categoryName = (
                 p?.category?.name ??
@@ -29,7 +45,13 @@ export default function ProductGrid({ category = "", searchTerm = "" }) {
                 .toLowerCase();
             return name.includes(search) || categoryName.includes(search);
         });
-    }, [products, search]);
+    }, [products, search, clientFilter]);
+
+    // Apply limit if specified
+    const displayProducts = useMemo(() => {
+        if (limit > 0) return filteredProducts.slice(0, limit);
+        return filteredProducts;
+    }, [filteredProducts, limit]);
 
     const loadProducts = useCallback(async (pageNum, currentCategory) => {
         try {
@@ -104,35 +126,38 @@ export default function ProductGrid({ category = "", searchTerm = "" }) {
     }
 
     return (
-        <div className="space-y-8">
+        <div className="space-y-8" aria-busy={loading ? "true" : "false"}>
+            {loading && products.length === 0 && (
+                <div className="pb-2">
+                    <ProductSkeletonGrid count={12} />
+                </div>
+            )}
+
             <div
-                className="
-                    grid
-                    grid-cols-2
-                    gap-6
-                    sm:grid-cols-3
-                    md:grid-cols-4
-                    lg:grid-cols-5
-                    items-stretch
-                    auto-rows-fr
-                "
+                className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 items-stretch auto-rows-fr"
             >
-                {filteredProducts.map((product, index) => (
+                {displayProducts.map((product, index) => (
                     <ProductCard
-                        key={`${product.id}-${index}`}
+                        key={
+                            product?.variantId ??
+                            product?.productVariantId ??
+                            product?.id ??
+                            `${product?.name ?? "product"}-${index}`
+                        }
                         product={product}
                     />
                 ))}
             </div>
 
-            {search && filteredProducts.length === 0 && (
+            {search && displayProducts.length === 0 && (
                 <div className="py-6 text-center text-sm text-gray-500">
                     No products match your search
                 </div>
             )}
 
-            {/* Infinite Scroll Loader Trigger */}
-            <div ref={loaderRef} className="py-8 text-center">
+            {/* Infinite Scroll Loader Trigger - hide when limit is applied */}
+            {limit === 0 && (
+              <div ref={loaderRef} className="py-8 text-center">
                 {loading && (
                     <div className="text-sm text-gray-500 animate-pulse">
                         Loading more products...
@@ -143,7 +168,8 @@ export default function ProductGrid({ category = "", searchTerm = "" }) {
                         You've reached the end
                     </div>
                 )}
-            </div>
+              </div>
+            )}
         </div>
     );
 }

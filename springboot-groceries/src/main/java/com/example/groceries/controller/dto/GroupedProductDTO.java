@@ -14,6 +14,10 @@ public class GroupedProductDTO {
     private String name;
     private String imageUrl;
 
+    private Integer stock;
+    private String unit;
+    private String category;
+
     // MIN price across variants
     private BigDecimal startingPrice;
 }

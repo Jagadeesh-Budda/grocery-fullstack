@@ -63,7 +63,7 @@ export default function RecipeList({ searchTerm = "" }) {
     });
 
     return (
-        <div className="rounded-2xl bg-white p-4 shadow-sm">
+        <div className="rounded-2xl bg-white/55 backdrop-blur-xl p-4 ring-1 ring-white/30 shadow-[0_20px_50px_rgba(0,0,0,0.05)]">
             <h3 className="mb-3 text-sm font-semibold text-gray-800">
                 {heading}
             </h3>

@@ -22,7 +22,7 @@ const AdminLayout = ({ title = "Admin Dashboard", activeTab = 'dashboard' }) => 
   };
 
   return (
-      <div className="flex h-screen bg-grocery-bg overflow-hidden">
+      <div className="flex h-screen overflow-hidden">
         {/* AdminSidebar with logout */}
         <AdminSidebar active={activeTab} onLogout={handleLogout} />
 

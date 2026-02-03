@@ -14,7 +14,7 @@ const Card = ({
 }) => {
   return (
     <div 
-      className={`bg-white rounded-xl3 border border-gray-100 shadow-card hover:shadow-glass transition-all duration-300 p-6 ${className}`}
+      className={`bg-white/60 backdrop-blur-xl rounded-[2rem] border border-white/30 shadow-[0_20px_50px_rgba(0,0,0,0.05)] transition-shadow duration-200 p-8 ${className}`}
       {...rest}
     >
       {/* 1. Header Area: Title & Icon */}
@@ -24,7 +24,7 @@ const Card = ({
           {subtitle && <p className="text-xs text-gray-400 mt-1">{subtitle}</p>}
         </div>
         {Icon && (
-          <div className="p-2.5 bg-grocery-bg rounded-xl text-grocery-primary">
+          <div className="p-2.5 bg-grocery-bg rounded-[2rem] text-grocery-primary">
             <Icon size={20} />
           </div>
         )}
@@ -38,7 +38,7 @@ const Card = ({
         
         {/* Trend Indicator (e.g., +12.5%) */}
         {trend && (
-          <span className={`text-xs font-bold px-2 py-1 rounded-lg ${
+          <span className={`text-xs font-bold px-2 py-1 rounded-[2rem] ${
             trend.startsWith('+') ? 'bg-grocery-success text-grocery-successText' : 'bg-grocery-danger text-grocery-dangerText'
           }`}>
             {trend}

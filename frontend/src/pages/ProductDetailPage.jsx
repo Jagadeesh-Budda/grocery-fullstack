@@ -4,6 +4,121 @@ import { useCart } from "../context/CartContext";
 import api from "../services/groceryApi";
 import { IMAGE_BASE_URL } from "../api/urls";
 
+function formatInr(amount) {
+  const n = Number(amount);
+  if (!Number.isFinite(n)) return "—";
+  try {
+    return new Intl.NumberFormat("en-IN", {
+      style: "currency",
+      currency: "INR",
+      maximumFractionDigits: 2,
+    }).format(n);
+  } catch {
+    return `₹${n}`;
+  }
+}
+
+function formatUnitLabel(raw) {
+  const s = (raw ?? "").toString().trim();
+  if (!s || s.toLowerCase() === "variant") return "unit";
+
+  const normalized = s
+    .replace(/\s+/g, " ")
+    .replace(/^(\d+(?:\.\d+)?)(kg|g|gm|l|ml)\b/i, "$1 $2")
+    .replace(/\bgm\b/i, "g")
+    .replace(/\bpcs\b/i, "unit")
+    .replace(/\bpc\b/i, "unit")
+    .replace(/\bpacket\b/i, "unit")
+    .replace(/\bpack\b/i, "unit")
+    .trim();
+
+  if (normalized.toLowerCase() === "unit") return "unit";
+  return normalized;
+}
+
+function resolveDefaultUnitFromCategory(category) {
+  const c = (category ?? "").toString().trim().toLowerCase();
+  if (
+    c.includes("veget") ||
+    c.includes("fruit") ||
+    c.includes("grain") ||
+    c.includes("pulse")
+  ) {
+    return "kg";
+  }
+  if (c.includes("dairy")) return "unit";
+  return "unit";
+}
+
+function pickCategoryEmoji(category) {
+  const c = (category ?? "").toString().toLowerCase();
+  if (c.includes("veget")) return "🥦";
+  if (c.includes("fruit")) return "🍎";
+  if (c.includes("dairy") || c.includes("milk")) return "🥛";
+  if (c.includes("grain") || c.includes("wheat") || c.includes("rice")) return "🌾";
+  if (c.includes("pulse") || c.includes("lentil")) return "🫘";
+  if (c.includes("spice")) return "🧂";
+  if (c.includes("oil")) return "🫒";
+  return "🛒";
+}
+
+function ProductDetailSkeleton() {
+  return (
+    <div className="max-w-6xl mx-auto px-4 py-10" aria-busy="true" aria-label="Loading product">
+      <div className="mb-6 flex items-center gap-3">
+        <div className="h-4 w-16 rounded bg-slate-200" />
+        <div className="h-4 w-px bg-slate-200" />
+        <div className="h-5 w-56 rounded bg-slate-200" />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+        <section className="rounded-[2rem] bg-white border border-slate-100 shadow-[0_20px_50px_rgba(0,0,0,0.05)] p-8">
+          <div className="aspect-[4/3] w-full rounded-[2rem] bg-slate-100" />
+          <div className="mt-4 flex items-center justify-between">
+            <div className="h-3 w-40 rounded bg-slate-200" />
+            <div className="h-3 w-24 rounded bg-slate-200" />
+          </div>
+        </section>
+
+        <section className="rounded-[2rem] bg-white border border-slate-100 shadow-[0_20px_50px_rgba(0,0,0,0.05)] p-8 md:p-10">
+          <div className="flex items-start justify-between gap-4">
+            <div className="min-w-0 flex-1">
+              <div className="h-8 w-3/4 rounded bg-slate-200" />
+              <div className="mt-3 h-4 w-full rounded bg-slate-100" />
+              <div className="mt-2 h-4 w-5/6 rounded bg-slate-100" />
+            </div>
+            <div className="h-7 w-20 rounded-full bg-slate-100" />
+          </div>
+
+          <div className="mt-6">
+            <div className="h-9 w-44 rounded bg-slate-200" />
+            <div className="mt-6">
+              <div className="h-4 w-28 rounded bg-slate-200" />
+              <div className="mt-3 flex flex-wrap gap-2">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <div key={i} className="h-10 w-24 rounded-full bg-slate-100" />
+                ))}
+              </div>
+            </div>
+
+            <div className="mt-6 flex items-center justify-between gap-4">
+              <div>
+                <div className="h-4 w-20 rounded bg-slate-200" />
+                <div className="mt-2 h-3 w-40 rounded bg-slate-100" />
+              </div>
+              <div className="h-11 w-40 rounded-full bg-slate-100" />
+            </div>
+
+            <div className="mt-6">
+              <div className="h-12 w-full rounded-[2rem] bg-slate-200" />
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+  );
+}
+
 const ProductDetailPage = () => {
   const { id: productId } = useParams();
   const navigate = useNavigate();
@@ -58,15 +173,11 @@ const ProductDetailPage = () => {
 
         setProduct({
           ...raw,
-          variants:
-            raw.variants ||
-            raw.productVariants ||
-            raw.variantDtos ||
-            [],
+          variants: raw.variants || raw.productVariants || raw.variantDtos || [],
         });
 
-                    setImageError(false);
-        setSelectedVariant(null); // 🔒 explicit user selection required
+        setImageError(false);
+        setSelectedVariant(null);
         setQuantity(1);
       } catch (err) {
         setError("Failed to load product details");
@@ -78,10 +189,13 @@ const ProductDetailPage = () => {
     fetchProduct();
   }, [productId]);
   useEffect(() => {
-  if (!selectedVariant && product?.variants?.length > 0) {
-    setSelectedVariant(product.variants[0]);
-  }
-}, [product, selectedVariant]);
+    if (!selectedVariant && product?.variants?.length > 0) {
+      const firstSelectable =
+        product.variants.find((v) => getVariantStock(v) !== 0) ||
+        product.variants[0];
+      setSelectedVariant(firstSelectable);
+    }
+  }, [product, selectedVariant]);
 
 
   // ---------- handlers ----------
@@ -122,7 +236,7 @@ const ProductDetailPage = () => {
 
   // ---------- UI states ----------
   if (loading) {
-    return <div className="p-6 text-center">Loading product…</div>;
+    return <ProductDetailSkeleton />;
   }
 
   if (error) {
@@ -133,7 +247,6 @@ const ProductDetailPage = () => {
 
   const stock = selectedVariant ? getVariantStock(selectedVariant) : null;
   const isOutOfStock = selectedVariant ? stock === 0 : false;
-  const isLowStock = selectedVariant ? typeof stock === "number" && stock > 0 && stock <= 5 : false;
   const isInStock = selectedVariant ? stock === null || stock > 0 : false;
 
   const discountPercent = getDiscountPercent(product, selectedVariant);
@@ -148,26 +261,22 @@ const ProductDetailPage = () => {
 
   // ---------- render ----------
   return (
-    <div className="max-w-6xl mx-auto px-4 py-6">
+    <div className="max-w-6xl mx-auto px-4 py-10">
       {/* Header */}
       <div className="mb-6 flex items-center gap-3">
         <button
           onClick={() => navigate(-1)}
           className="text-sm font-medium text-emerald-700 hover:text-emerald-800"
         >
-           Back
+          ← Back
         </button>
         <div className="h-4 w-px bg-gray-200" />
-        <h1 className="text-xl md:text-2xl font-semibold text-gray-900">
-          {product.name}
-        </h1>
+        <h1 className="text-xl md:text-2xl font-semibold text-gray-900">{product.name}</h1>
       </div>
-
-      {/* Main: 2-column (desktop-first), stacked on mobile */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
         {/* Left: Product Image Card */}
-        <section className="rounded-2xl bg-white shadow-sm ring-1 ring-gray-100 p-4">
-          <div className="aspect-[4/3] w-full rounded-xl bg-gray-50 flex items-center justify-center overflow-hidden">
+        <section className="rounded-[2rem] bg-white border border-slate-100 shadow-[0_20px_50px_rgba(0,0,0,0.05)] p-8">
+          <div className="aspect-[4/3] w-full rounded-[2rem] bg-gray-50/60 flex items-center justify-center overflow-hidden">
             {imageSrc && !imageError ? (
               <img
                 src={imageSrc}
@@ -176,15 +285,10 @@ const ProductDetailPage = () => {
                 onError={() => setImageError(true)}
               />
             ) : (
-              <div className="w-full h-full flex flex-col items-center justify-center px-6 text-center">
-                <div className="text-sm font-medium text-gray-900">
-                  {product.name}
-                </div>
-                <div className="mt-1 text-xs text-gray-500">
-                  {selectedVariant
-                    ? "Image unavailable"
-                    : "Select a variant to preview"}
-                </div>
+              <div className="w-full h-full grid place-items-center text-6xl" aria-label="Product image">
+                {pickCategoryEmoji(
+                  product?.category?.name ?? product?.categoryName ?? product?.category ?? ""
+                )}
               </div>
             )}
           </div>
@@ -196,14 +300,11 @@ const ProductDetailPage = () => {
                 ? `Variant: ${getVariantLabel(selectedVariant)}`
                 : "No variant selected"}
             </span>
-            {typeof stock === "number" && selectedVariant && (
-              <span className="font-medium text-gray-600">Stock: {stock}</span>
-            )}
           </div>
         </section>
 
         {/* Right: Product Info Card */}
-        <section className="rounded-2xl bg-white shadow-sm ring-1 ring-gray-100 p-5 md:p-6">
+        <section className="rounded-[2rem] bg-white border border-slate-100 shadow-[0_20px_50px_rgba(0,0,0,0.05)] p-8 md:p-10">
           {/* Title + badges */}
           <div className="flex items-start justify-between gap-4">
             <div>
@@ -228,18 +329,23 @@ const ProductDetailPage = () => {
           <div className="mt-5 flex flex-col gap-3">
             <div className="flex items-end justify-between gap-4">
               <div>
-                {selectedVariant ? (
-                  <div className="text-3xl font-extrabold text-emerald-600">
-                    	{selectedVariant.price}
-                  </div>
-                ) : (
+                {selectedVariant ? (() => {
+                  const rawUnit =
+                    selectedVariant?.unit ??
+                    product?.unit ??
+                    resolveDefaultUnitFromCategory(
+                      product?.category?.name ?? product?.categoryName ?? product?.category ?? ""
+                    );
+                  const unit = formatUnitLabel(rawUnit);
+                  return (
+                    <div className="text-3xl font-black text-emerald-700 leading-none">
+                      {formatInr(selectedVariant.price)}
+                      <span className="ml-2 text-sm font-medium text-slate-500">/ {unit}</span>
+                    </div>
+                  );
+                })() : (
                   <div className="text-sm text-gray-500">
                     Select a variant to see the price
-                  </div>
-                )}
-                {selectedVariant && (
-                  <div className="mt-1 text-xs text-gray-500">
-                    Price for {getVariantLabel(selectedVariant)}
                   </div>
                 )}
               </div>
@@ -250,10 +356,6 @@ const ProductDetailPage = () => {
                   {isOutOfStock ? (
                     <span className="inline-flex items-center rounded-full bg-red-50 px-3 py-1 text-xs font-semibold text-red-700 ring-1 ring-red-100">
                       Out of stock
-                    </span>
-                  ) : isLowStock ? (
-                    <span className="inline-flex items-center rounded-full bg-orange-50 px-3 py-1 text-xs font-semibold text-orange-700 ring-1 ring-orange-100">
-                      Low stock
                     </span>
                   ) : isInStock ? (
                     <span className="inline-flex items-center rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-100">
@@ -294,7 +396,12 @@ const ProductDetailPage = () => {
                           : "bg-white text-gray-800 ring-1 ring-gray-200 hover:ring-emerald-200 hover:text-emerald-700")
                     }
                   >
-                    {getVariantLabel(variant)}
+                    <span className="inline-flex items-center gap-2">
+                      <span>{getVariantLabel(variant)}</span>
+                      {isDisabled && (
+                        <span className="text-[11px] font-semibold text-gray-400">Sold out</span>
+                      )}
+                    </span>
                   </button>
                 );
               })}
@@ -327,7 +434,7 @@ const ProductDetailPage = () => {
                 }
                 aria-label="Decrease quantity"
               >
-                
+                
               </button>
               <span className="w-10 text-center text-sm font-semibold text-gray-900">
                 {quantity}
@@ -356,7 +463,7 @@ const ProductDetailPage = () => {
               disabled={!canAddToCart}
               onClick={handleAddToCart}
               className={
-                "w-full rounded-xl py-3.5 text-sm font-semibold text-white shadow-sm transition active:scale-[0.99] " +
+                "w-full rounded-[2rem] py-4 text-sm font-semibold text-white shadow-[0_20px_50px_rgba(0,0,0,0.05)] transition active:scale-[0.99] " +
                 (canAddToCart
                   ? "bg-emerald-600 hover:bg-emerald-700"
                   : "bg-gray-300 cursor-not-allowed")

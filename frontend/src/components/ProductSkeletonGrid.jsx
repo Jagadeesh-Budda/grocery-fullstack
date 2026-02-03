@@ -4,13 +4,6 @@ import PropTypes from 'prop-types';
 const ProductSkeletonGrid = ({ count = 8 }) => {
   const items = Array.from({ length: count });
 
-  const gridStyle = {
-    display: 'grid',
-    gap: 16,
-    gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
-    alignItems: 'start',
-  };
-
   return (
     <>
       <style>{`
@@ -92,7 +85,7 @@ const ProductSkeletonGrid = ({ count = 8 }) => {
         }
       `}</style>
 
-      <div style={gridStyle} aria-hidden="true">
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 items-stretch auto-rows-fr" aria-hidden="true">
         {items.map((_, i) => (
           <div className="psg-skeleton" key={i}>
             <div className="psg-image" />

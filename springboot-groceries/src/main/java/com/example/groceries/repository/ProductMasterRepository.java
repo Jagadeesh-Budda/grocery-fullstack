@@ -39,13 +39,16 @@ public interface ProductMasterRepository extends JpaRepository<ProductMaster, Lo
                 pm.id,
                 pm.name,
                 pm.imageUrl,
-                MIN(v.mrp)
+                                COALESCE(MAX(v.stock), 1),
+                                MIN(v.unit),
+                                COALESCE(pm.category.name, 'Uncategorized'),
+                                MIN(v.mrp)
             )
             FROM ProductMaster pm
             JOIN pm.variants v
             WHERE pm.active = true
               AND (:category IS NULL OR LOWER(pm.category.name) = :category)
-            GROUP BY pm.id, pm.name, pm.imageUrl
+                        GROUP BY pm.id, pm.name, pm.imageUrl, pm.category.name
             ORDER BY pm.name ASC
         """,
             countQuery = """
