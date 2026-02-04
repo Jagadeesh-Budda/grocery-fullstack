@@ -1,8 +1,10 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { User, Mail, Lock, ArrowRight } from "lucide-react";
+import toast from "react-hot-toast";
 import api from "../api/axios";
 import freshProduceImage from "../assets/login/fresh-produce.webp";
+import { getApiErrorMessage, normalizeApiError } from "../api/apiError";
 
 export default function Register() {
   const navigate = useNavigate();
@@ -17,10 +19,11 @@ export default function Register() {
     try {
       await api.post("/auth/register", formData);
 
-      alert("Registration successful! Welcome to the circle.");
+      toast.success("Registration successful. Please sign in.");
       navigate("/login"); 
     } catch (err) {
-      alert(err.response?.data || "Registration failed. Please try again.");
+      const normalized = normalizeApiError(err);
+      toast.error(getApiErrorMessage(normalized));
       setLoading(false);
     }
   };

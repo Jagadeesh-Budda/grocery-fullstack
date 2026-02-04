@@ -15,6 +15,8 @@ import CategoriesPage from "./pages/CategoriesPage";
 import CartPage from "./pages/CartPage";
 import CheckoutPage from "./pages/CheckoutPage";
 import ProductDetailPage from "./pages/ProductDetailPage";
+import OrderSuccess from "./pages/OrderSuccess";
+import OrdersPage from "./pages/OrdersPage";
 
 import "./styles/theme.css";
 import "./styles/cards.css";
@@ -37,6 +39,14 @@ export default function App() {
         <Route path="/" element={<Navigate to="/groceries" replace />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+
+        <Route path="/orders" element={<MainLayout />}>
+          <Route index element={<OrdersPage />} />
+        </Route>
+
+        <Route path="/order-success" element={<MainLayout />}>
+          <Route index element={<OrderSuccess />} />
+        </Route>
 
         {/* User Routes */}
         <Route path="/groceries" element={<MainLayout />}>

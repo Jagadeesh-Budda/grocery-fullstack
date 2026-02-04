@@ -73,11 +73,11 @@ VALUES
 ((SELECT id FROM categories WHERE slug = 'meat-seafood'), 'Prawns', 'prawns', 'products/meat-seafood/prawns.webp', 'Cleaned prawns for curries.', true),
 ((SELECT id FROM categories WHERE slug = 'meat-seafood'), 'Eggs (Boiled)', 'eggs-boiled', 'products/meat-seafood/eggs-boiled.webp', 'Ready-to-eat boiled eggs.', true),
 ((SELECT id FROM categories WHERE slug = 'meat-seafood'), 'Chicken Sausages', 'chicken-sausages', 'products/meat-seafood/chicken-sausages.webp', 'Ready-to-cook chicken sausages.', true),
-((SELECT id FROM products WHERE slug = 'meat-seafood'), 'Chicken Nuggets', 'chicken-nuggets', 'products/meat-seafood/chicken-nuggets.webp', 'Frozen chicken nuggets.', true),
+((SELECT id FROM categories WHERE slug = 'meat-seafood'), 'Chicken Nuggets', 'chicken-nuggets', 'products/meat-seafood/chicken-nuggets.webp', 'Frozen chicken nuggets.', true),
 ((SELECT id FROM categories WHERE slug = 'meat-seafood'), 'Fish Fingers', 'fish-fingers', 'products/meat-seafood/fish-fingers.webp', 'Frozen fish fingers.', true),
 ((SELECT id FROM categories WHERE slug = 'meat-seafood'), 'Chicken Wings', 'chicken-wings', 'products/meat-seafood/chicken-wings.webp', 'Fresh chicken wings.', true),
 ((SELECT id FROM categories WHERE slug = 'meat-seafood'), 'Chicken Drumsticks', 'chicken-drumsticks', 'products/meat-seafood/chicken-drumsticks.webp', 'Fresh chicken drumsticks.', true),
-((SELECT id FROM products WHERE slug = 'meat-seafood'), 'Mutton Keema', 'mutton-keema', 'products/meat-seafood/mutton-keema.webp', 'Fresh mutton mince.', true),
+((SELECT id FROM categories WHERE slug = 'meat-seafood'), 'Mutton Keema', 'mutton-keema', 'products/meat-seafood/mutton-keema.webp', 'Fresh mutton mince.', true),
 ((SELECT id FROM categories WHERE slug = 'meat-seafood'), 'Salmon Fillet', 'salmon-fillet', 'products/meat-seafood/salmon-fillet.webp', 'Fresh salmon fillet.', true),
 
 ((SELECT id FROM categories WHERE slug = 'rice-atta-pulses'), 'Basmati Rice', 'basmati-rice', 'products/rice-atta-pulses/basmati-rice.webp', 'Aromatic basmati rice for biryani.', true),

@@ -3,7 +3,7 @@ import { useNavigate, Link, NavLink } from "react-router-dom";
 import toast from "react-hot-toast";
 import { useCart } from "../../context/CartContext";
 import { useAuth } from "../../context/AuthContext";
-import { ShoppingCart, Bell, Search, User, ChevronDown, LogOut, Menu } from "lucide-react";
+import { ShoppingCart, Bell, Search, User, ChevronDown, LogOut, Menu, ShoppingBag } from "lucide-react";
 import "./HeaderBar.css";
 import {
   getStoredCity,
@@ -252,6 +252,17 @@ export default function HeaderBar({
                   >
                     <User size={16} />
                     Profile
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setOpen(false);
+                      navigate("/orders");
+                    }}
+                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors"
+                  >
+                    <ShoppingBag size={16} />
+                    Orders
                   </button>
                   
                   <button

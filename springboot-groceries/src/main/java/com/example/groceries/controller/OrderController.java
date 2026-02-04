@@ -1,13 +1,19 @@
 package com.example.groceries.controller;
 
-import com.example.groceries.controller.dto.CreateOrderRequest;
+import com.example.groceries.controller.dto.OrderCreateResponse;
+import com.example.groceries.controller.dto.OrderSummaryResponse;
 import com.example.groceries.model.Order;
 import com.example.groceries.model.OrderStatus;
+import com.example.groceries.service.OrderCreateService;
 import com.example.groceries.service.OrderService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.servlet.http.HttpSession;
+
+import java.util.Objects;
 import java.util.List;
 
 @RestController
@@ -17,26 +23,58 @@ import java.util.List;
 public class OrderController {
 
     private final OrderService orderService;
+    private final OrderCreateService orderCreateService;
 
     @PostMapping
-    public ResponseEntity<Long> createOrder(@RequestBody CreateOrderRequest request) {
-        Order order = orderService.createOrder(request);
-        return ResponseEntity.ok(order.getId());
+    public ResponseEntity<OrderCreateResponse> createOrder(HttpSession session) {
+        // Assumption: userId is stored in server-side session post-login.
+        Long userId = (Long) session.getAttribute("userId");
+        if (userId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        return ResponseEntity.ok(orderCreateService.createOrderSafely(userId));
     }
 
-    @GetMapping("/user/{userId}")
-    public ResponseEntity<List<Order>> getOrdersByUser(@PathVariable Long userId) {
-        return ResponseEntity.ok(orderService.getOrdersByUser(userId));
+    @GetMapping("/me")
+    public ResponseEntity<List<OrderSummaryResponse>> getMyOrders(HttpSession session) {
+        Long userId = (Long) session.getAttribute("userId");
+        if (userId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        List<OrderSummaryResponse> orders = orderService.getOrdersByUser(userId)
+                .stream()
+                .filter(Objects::nonNull)
+                .map(OrderController::toOrderSummaryResponse)
+                .toList();
+
+        return ResponseEntity.ok(orders);
     }
 
     @PutMapping("/{orderId}/status")
-    public ResponseEntity<Order> updateOrderStatus(@PathVariable Long orderId, @RequestParam OrderStatus status) {
-        return ResponseEntity.ok(orderService.updateOrderStatus(orderId, status));
+    public ResponseEntity<OrderSummaryResponse> updateOrderStatus(@PathVariable Long orderId, @RequestParam OrderStatus status) {
+        Order updated = orderService.updateOrderStatus(orderId, status);
+        return ResponseEntity.ok(toOrderSummaryResponse(updated));
     }
 
     @PostMapping("/{orderId}/cancel")
-    public ResponseEntity<Order> cancelOrder(@PathVariable Long orderId) {
-        return ResponseEntity.ok(orderService.cancelOrder(orderId));
+    public ResponseEntity<OrderSummaryResponse> cancelOrder(@PathVariable Long orderId) {
+        Order cancelled = orderService.cancelOrder(orderId);
+        return ResponseEntity.ok(toOrderSummaryResponse(cancelled));
+    }
+
+    private static OrderSummaryResponse toOrderSummaryResponse(Order order) {
+        if (order == null) {
+            return null;
+        }
+
+        return OrderSummaryResponse.builder()
+                .orderId(order.getId())
+                .totalAmount(order.getTotalAmount())
+                .status(order.getStatus())
+                .createdAt(order.getCreatedAt())
+                .build();
     }
 
     @GetMapping

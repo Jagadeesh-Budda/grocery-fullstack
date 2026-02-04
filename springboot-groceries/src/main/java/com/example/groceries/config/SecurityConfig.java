@@ -17,6 +17,8 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import jakarta.servlet.http.HttpServletResponse;
+
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
@@ -81,8 +83,27 @@ public class SecurityConfig {
                                 "/api/home-dashboard/**"
                         ).permitAll()
 
+                        // Admin APIs: must be authenticated AND have ADMIN role.
+                        // Assumption: roles are stored as Spring authorities with ROLE_ prefix (e.g. ROLE_ADMIN).
+                        // TODO(security): when expanding roles/permissions, revisit admin authorization rules.
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+
+                        // Orders APIs: must be authenticated (session-based).
+                        .requestMatchers("/api/orders/**").authenticated()
+
                         // 3. ANY OTHER request must be authenticated (ONLY ONCE and MUST BE LAST)
                         .anyRequest().authenticated()
+                )
+                // Ensure API clients get correct status codes.
+                // - 401 for unauthenticated
+                // - 403 for authenticated but insufficient role
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint((request, response, authException) ->
+                                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized")
+                        )
+                        .accessDeniedHandler((request, response, accessDeniedException) ->
+                                response.sendError(HttpServletResponse.SC_FORBIDDEN, "Forbidden")
+                        )
                 )
                 .authenticationProvider(authenticationProvider());
 

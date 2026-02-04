@@ -1,5 +1,6 @@
 package com.example.groceries.controller;
 
+import com.example.groceries.exception.OrderCreateException;
 import com.example.groceries.exception.ResourceNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -12,6 +13,18 @@ import java.util.Map;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler(OrderCreateException.class)
+    public ResponseEntity<Map<String, Object>> handleOrderCreateException(OrderCreateException ex) {
+        HttpStatus status = switch (ex.getCode()) {
+            case EMPTY_CART -> HttpStatus.BAD_REQUEST;
+            case OUT_OF_STOCK, PRICE_MISMATCH -> HttpStatus.CONFLICT;
+        };
+
+        Map<String, Object> body = baseErrorBody(status, ex.getMessage());
+        body.put("code", ex.getCode().name());
+        return new ResponseEntity<>(body, status);
+    }
 
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<Map<String, Object>> handleResourceNotFoundException(ResourceNotFoundException ex) {
@@ -34,11 +47,16 @@ public class GlobalExceptionHandler {
     }
 
     private ResponseEntity<Map<String, Object>> createErrorResponse(HttpStatus status, String message) {
+        Map<String, Object> body = baseErrorBody(status, message);
+        return new ResponseEntity<>(body, status);
+    }
+
+    private Map<String, Object> baseErrorBody(HttpStatus status, String message) {
         Map<String, Object> body = new HashMap<>();
         body.put("timestamp", LocalDateTime.now());
         body.put("status", status.value());
         body.put("error", status.getReasonPhrase());
         body.put("message", message);
-        return new ResponseEntity<>(body, status);
+        return body;
     }
 }

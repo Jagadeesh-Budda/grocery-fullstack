@@ -9,6 +9,7 @@ import React, {
 import toast from "react-hot-toast";
 import api from "../api/axios";
 import { useAuth } from "./AuthContext";
+import { getApiErrorMessage, normalizeApiError } from "../api/apiError";
 
 const CartContext = createContext();
 
@@ -57,8 +58,13 @@ export const CartProvider = ({ children }) => {
           params: { variantId, delta: pending.delta },
         });
       } catch (e) {
-        toast.error("Failed to update cart");
-        console.error(e);
+        const normalized = normalizeApiError(e);
+        if (normalized.status === 401) {
+          window.location.assign("/login");
+          return;
+        }
+        toast.error(getApiErrorMessage(normalized));
+        console.error(normalized.raw ?? e);
       }
     }, QTY_DEBOUNCE_MS);
 
@@ -149,7 +155,13 @@ export const CartProvider = ({ children }) => {
           sessionStorage.setItem(cacheKey, JSON.stringify(normalized));
           sessionStorage.setItem(initKey, "1");
         } catch (e) {
-          console.error("Failed to load cart", e);
+          const normalized = normalizeApiError(e);
+          if (normalized.status === 401) {
+            window.location.assign("/login");
+            return;
+          }
+          toast.error(getApiErrorMessage(normalized));
+          console.error("Failed to load cart", normalized.raw ?? e);
         } finally {
           setLoading(false);
         }
@@ -229,8 +241,13 @@ export const CartProvider = ({ children }) => {
           params: { variantId: payload.variantId, quantity: qty },
         });
       } catch (e) {
-        toast.error("Failed to sync cart");
-        console.error(e);
+        const normalized = normalizeApiError(e);
+        if (normalized.status === 401) {
+          window.location.assign("/login");
+          return;
+        }
+        toast.error(getApiErrorMessage(normalized));
+        console.error(normalized.raw ?? e);
       }
     }
   };
@@ -391,8 +408,13 @@ export const CartProvider = ({ children }) => {
           params: { variantId, delta: -9999 },
         });
       } catch (e) {
-        toast.error("Failed to remove item");
-        console.error(e);
+        const normalized = normalizeApiError(e);
+        if (normalized.status === 401) {
+          window.location.assign("/login");
+          return;
+        }
+        toast.error(getApiErrorMessage(normalized));
+        console.error(normalized.raw ?? e);
       }
     }, UNDO_TIMEOUT_MS);
 
@@ -431,8 +453,13 @@ export const CartProvider = ({ children }) => {
       try {
         await api.delete(`/cart/${user.id}/clear`);
       } catch (e) {
-        toast.error("Failed to clear cart on server");
-        console.error(e);
+        const normalized = normalizeApiError(e);
+        if (normalized.status === 401) {
+          window.location.assign("/login");
+          return;
+        }
+        toast.error(getApiErrorMessage(normalized));
+        console.error(normalized.raw ?? e);
       }
     }
   };
