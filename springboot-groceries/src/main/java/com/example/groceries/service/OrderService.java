@@ -4,6 +4,7 @@ import com.example.groceries.controller.dto.CreateOrderRequest;
 import com.example.groceries.controller.dto.OrderItemRequest;
 import com.example.groceries.model.*;
 import com.example.groceries.repository.*;
+import com.example.groceries.audit.AdminAuditMutation;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +22,7 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final UserRepository userRepository;
     private final ProductVariantRepository productVariantRepository;
+    private final InventoryTransactionService inventoryTransactionService;
 
     @Transactional
     public Order createOrder(CreateOrderRequest request) {
@@ -41,6 +43,8 @@ public class OrderService {
         order.setUser(user);
         order.setStatus(OrderStatus.CREATED);
         order.setCreatedAt(LocalDateTime.now());
+        order.setSubtotalAmount(BigDecimal.ZERO);
+        order.setDiscountAmount(BigDecimal.ZERO);
         order.setTotalAmount(BigDecimal.ZERO);
 
         // Save order before OrderItem creation as requested
@@ -75,6 +79,8 @@ public class OrderService {
             total = total.add(itemTotal);
         }
 
+        order.setSubtotalAmount(total);
+        order.setDiscountAmount(BigDecimal.ZERO);
         order.setTotalAmount(total);
         Order savedOrder = orderRepository.save(order);
         log.info("Order created: orderId={}, status={}", savedOrder.getId(), savedOrder.getStatus());
@@ -86,6 +92,13 @@ public class OrderService {
     }
 
     @Transactional
+        @AdminAuditMutation(
+            entity = "Order",
+            entityClass = Order.class,
+            entityIdBefore = "#orderId",
+            entityIdAfter = "#orderId",
+            operation = AdminAuditMutation.Operation.UPDATE
+        )
     public Order updateOrderStatus(Long orderId, OrderStatus newStatus) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Order not found"));
@@ -146,8 +159,23 @@ public class OrderService {
                 if (variant.getStock() < item.getQuantity()) {
                     throw new IllegalStateException("Insufficient stock for product: " + variant.getVariantName());
                 }
-                variant.setStock(variant.getStock() - item.getQuantity());
+                int before = variant.getStock();
+                int after = before - item.getQuantity();
+                variant.setStock(after);
                 productVariantRepository.save(variant);
+
+                Long variantId = variant.getId();
+                if (variantId != null) {
+                    inventoryTransactionService.record(
+                            InventoryTransactionType.ORDER_CONFIRMED,
+                            variantId,
+                            order.getId(),
+                            -item.getQuantity(),
+                            before,
+                            after,
+                            null
+                    );
+                }
             }
         }
     }
@@ -156,8 +184,23 @@ public class OrderService {
         for (OrderItem item : order.getOrderItems()) {
             ProductVariant variant = item.getVariant();
             if (variant.getStock() != null) {
-                variant.setStock(variant.getStock() + item.getQuantity());
+                int before = variant.getStock();
+                int after = before + item.getQuantity();
+                variant.setStock(after);
                 productVariantRepository.save(variant);
+
+                Long variantId = variant.getId();
+                if (variantId != null) {
+                    inventoryTransactionService.record(
+                            InventoryTransactionType.ORDER_CANCELLED,
+                            variantId,
+                            order.getId(),
+                            item.getQuantity(),
+                            before,
+                            after,
+                            null
+                    );
+                }
             }
         }
     }

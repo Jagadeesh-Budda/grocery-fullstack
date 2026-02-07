@@ -3,6 +3,7 @@ package com.example.groceries.controller;
 import com.example.groceries.model.Order;
 import com.example.groceries.model.OrderStatus;
 import com.example.groceries.model.User;
+import com.example.groceries.service.AdminOrderService;
 import com.example.groceries.service.OrderService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
@@ -30,6 +31,9 @@ class AdminOrderControllerTest {
 
     @MockBean
     private OrderService orderService;
+
+    @MockBean
+    private AdminOrderService adminOrderService;
 
     @Autowired
     private ObjectMapper objectMapper;

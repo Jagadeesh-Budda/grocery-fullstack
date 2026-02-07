@@ -41,6 +41,11 @@ public class User {
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String password;
 
+    @NotNull
+    @Column(name = "is_active", nullable = false)
+    private Boolean isActive = true;
+
+
     /**
      * @deprecated Use UserService to create users.
      * This constructor enforces non-null role & email.
@@ -51,5 +56,6 @@ public class User {
         this.password = password;
         this.email = email;
         this.role = role;
+        this.isActive = true;
     }
 }

@@ -40,7 +40,7 @@ class HomeDashboardRepositoryTest {
         Category c = new Category();
         c.setName(name);
         c.setImageUrl("img");
-        c.setActive(true);
+        c.setIs_active(true);
         em.persist(c);
         return c;
     }
@@ -51,12 +51,12 @@ class HomeDashboardRepositoryTest {
         pm.setDescription("desc");
         pm.setImageUrl("img");
         pm.setImages(List.of("img"));
-        pm.setActive(active);
+        pm.setIs_active(active);
         pm.setCategory(c);
         em.persist(pm);
 
         // low_stock_threshold is a schema column added via migration; entity doesn't map it.
-        em.createNativeQuery("UPDATE product_masters SET low_stock_threshold = ? WHERE id = ?")
+        em.createNativeQuery("UPDATE products SET low_stock_threshold = ? WHERE id = ?")
                 .setParameter(1, lowStockThreshold)
                 .setParameter(2, pm.getId())
                 .executeUpdate();

@@ -30,7 +30,7 @@ public class OrderItem {
 
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "variant_id", nullable = false)
+    @JoinColumn(name = "product_variant_id", nullable = false)
     private ProductVariant variant;
 
     @NotNull

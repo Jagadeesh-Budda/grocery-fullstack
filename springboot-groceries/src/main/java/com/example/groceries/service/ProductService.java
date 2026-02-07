@@ -80,7 +80,7 @@ public class ProductService {
         return sameCategoryProducts.stream()
                 .filter(pm -> !pm.getId().equals(productId))
                 .filter(pm -> !finalProductsInCart.contains(pm.getId()))
-                .filter(pm -> pm.getActive() != null && pm.getActive())
+                .filter(pm -> pm.getIs_active() != null && pm.getIs_active())
                 .flatMap(pm -> pm.getVariants().stream())
                 .limit(5)
                 .map(productMapper::toUserProductDTO)

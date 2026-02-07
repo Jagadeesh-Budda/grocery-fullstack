@@ -23,6 +23,7 @@ public class OrderCreateService {
     private final UserRepository userRepository;
     private final ProductVariantRepository productVariantRepository;
     private final OrderRepository orderRepository;
+    private final CouponService couponService;
 
     /**
      * Creates an order ONLY from server-side cart + variant data.
@@ -30,6 +31,11 @@ public class OrderCreateService {
      */
     @Transactional
     public OrderCreateResponse createOrderSafely(Long userId) {
+        return createOrderSafely(userId, null);
+    }
+
+    @Transactional
+    public OrderCreateResponse createOrderSafely(Long userId, String couponCode) {
         if (userId == null) {
             throw new IllegalArgumentException("User ID is required");
         }
@@ -52,9 +58,11 @@ public class OrderCreateService {
         order.setUser(user);
         order.setStatus(OrderStatus.CREATED);
         order.setCreatedAt(LocalDateTime.now());
+        order.setSubtotalAmount(BigDecimal.ZERO);
+        order.setDiscountAmount(BigDecimal.ZERO);
         order.setTotalAmount(BigDecimal.ZERO);
 
-        BigDecimal total = BigDecimal.ZERO;
+        BigDecimal subtotal = BigDecimal.ZERO;
 
         for (CartItem cartItem : cart.getItems()) {
             Long variantId = cartItem.getProductVariant() != null ? cartItem.getProductVariant().getId() : null;
@@ -92,9 +100,23 @@ public class OrderCreateService {
             orderItem.setSubtotal(lineTotal);
             order.addOrderItem(orderItem);
 
-            total = total.add(lineTotal);
+            subtotal = subtotal.add(lineTotal);
         }
 
+        order.setSubtotalAmount(subtotal);
+
+        BigDecimal discountAmount = BigDecimal.ZERO;
+        if (couponCode != null && !couponCode.isBlank()) {
+            CouponService.CouponApplication applied = couponService.applyAndConsume(couponCode, subtotal);
+            order.setCoupon(applied.coupon());
+            discountAmount = applied.discountAmount() != null ? applied.discountAmount() : BigDecimal.ZERO;
+        }
+
+        order.setDiscountAmount(discountAmount);
+        BigDecimal total = subtotal.subtract(discountAmount);
+        if (total.compareTo(BigDecimal.ZERO) < 0) {
+            total = BigDecimal.ZERO;
+        }
         order.setTotalAmount(total);
 
         // Important: DO NOT reduce stock here. Stock reduction happens only when status becomes CONFIRMED.
@@ -102,7 +124,10 @@ public class OrderCreateService {
 
         return OrderCreateResponse.builder()
                 .orderId(saved.getId())
+            .subtotalAmount(saved.getSubtotalAmount())
+            .discountAmount(saved.getDiscountAmount())
                 .totalAmount(saved.getTotalAmount())
+            .couponCode(saved.getCoupon() != null ? saved.getCoupon().getCode() : null)
                 .status(saved.getStatus())
                 .build();
     }

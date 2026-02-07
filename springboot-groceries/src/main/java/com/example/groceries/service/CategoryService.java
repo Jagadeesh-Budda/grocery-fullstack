@@ -2,6 +2,7 @@ package com.example.groceries.service;
 
 import com.example.groceries.model.Category;
 import com.example.groceries.repository.CategoryRepository;
+import com.example.groceries.audit.AdminAuditMutation;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -23,10 +24,24 @@ public class CategoryService {
         return categoryRepository.findById(id).orElse(null);
     }
 
+    @AdminAuditMutation(
+            entity = "Category",
+            entityClass = Category.class,
+            entityIdBefore = "#category.id",
+            entityIdAfter = "#result.id",
+            operation = AdminAuditMutation.Operation.UPDATE
+    )
     public Category saveCategory(Category category) {
         return categoryRepository.save(category);
     }
 
+    @AdminAuditMutation(
+            entity = "Category",
+            entityClass = Category.class,
+            entityIdBefore = "#id",
+            entityIdAfter = "#id",
+            operation = AdminAuditMutation.Operation.DELETE
+    )
     public void deleteCategory(Long id) {
         categoryRepository.deleteById(id);
     }

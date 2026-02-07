@@ -4,6 +4,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -15,4 +17,10 @@ public class DashboardStatsDTO {
     private long totalProducts;
     private long totalCategories;
     private long totalUsers;
+
+    // Real admin aggregates
+    private long totalOrders;
+    private long todayOrders;
+    private BigDecimal totalRevenue = BigDecimal.ZERO;
+    private long lowStockCount;
 }

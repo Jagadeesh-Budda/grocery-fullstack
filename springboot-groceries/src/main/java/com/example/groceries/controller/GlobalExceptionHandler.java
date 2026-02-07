@@ -2,8 +2,10 @@ package com.example.groceries.controller;
 
 import com.example.groceries.exception.OrderCreateException;
 import com.example.groceries.exception.ResourceNotFoundException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -13,6 +15,26 @@ import java.util.Map;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<Map<String, Object>> handleMethodArgumentNotValid(MethodArgumentNotValidException ex) {
+        HttpStatus status = HttpStatus.BAD_REQUEST;
+        Map<String, Object> body = baseErrorBody(status, "Validation failed");
+        Map<String, String> fieldErrors = new HashMap<>();
+        ex.getBindingResult().getFieldErrors().forEach(err -> fieldErrors.put(err.getField(), err.getDefaultMessage()));
+        body.put("fieldErrors", fieldErrors);
+        return new ResponseEntity<>(body, status);
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<Map<String, Object>> handleDataIntegrityViolation(DataIntegrityViolationException ex) {
+        // Most common for admin product edits: unique constraint on products.slug
+        String message = ex.getMostSpecificCause() != null ? ex.getMostSpecificCause().getMessage() : ex.getMessage();
+        if (message != null && message.toLowerCase().contains("uq_products_slug")) {
+            return createErrorResponse(HttpStatus.CONFLICT, "slug already exists");
+        }
+        return createErrorResponse(HttpStatus.CONFLICT, "Data constraint violation");
+    }
 
     @ExceptionHandler(OrderCreateException.class)
     public ResponseEntity<Map<String, Object>> handleOrderCreateException(OrderCreateException ex) {

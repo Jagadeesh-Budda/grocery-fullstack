@@ -67,18 +67,10 @@ class OrderControllerTest {
     }
 
     @Test
-    void updateOrderStatus_ShouldReturnUpdatedOrder() throws Exception {
-        Order updatedOrder = new Order();
-        updatedOrder.setId(1L);
-        updatedOrder.setStatus(OrderStatus.CONFIRMED);
-
-        Mockito.when(orderService.updateOrderStatus(1L, OrderStatus.CONFIRMED))
-                .thenReturn(updatedOrder);
-
+    void updateOrderStatus_PublicEndpointShouldNotExist() throws Exception {
         mockMvc.perform(put("/api/orders/1/status")
                         .param("status", "CONFIRMED"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status", is("CONFIRMED")));
+                .andExpect(status().isNotFound());
     }
 
     @Test

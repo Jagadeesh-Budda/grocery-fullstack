@@ -30,9 +30,23 @@ public class Order {
     private User user;
 
     @NotNull
-    @DecimalMin(value = "0.0", inclusive = false)
+    @DecimalMin(value = "0.0", inclusive = true)
     @Column(name = "total_amount", nullable = false, precision = 10, scale = 2)
     private BigDecimal totalAmount;
+
+    @NotNull
+    @DecimalMin(value = "0.0", inclusive = true)
+    @Column(name = "subtotal_amount", nullable = false, precision = 10, scale = 2)
+    private BigDecimal subtotalAmount;
+
+    @NotNull
+    @DecimalMin(value = "0.0", inclusive = true)
+    @Column(name = "discount_amount", nullable = false, precision = 10, scale = 2)
+    private BigDecimal discountAmount = BigDecimal.ZERO;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "coupon_id")
+    private Coupon coupon;
 
     @NotNull
     @Enumerated(EnumType.STRING)
@@ -51,6 +65,22 @@ public class Order {
     )
     @JsonManagedReference
     private List<OrderItem> orderItems = new ArrayList<>();
+
+    @PrePersist
+    @PreUpdate
+    private void ensureAmountBreakdown() {
+        if (discountAmount == null) {
+            discountAmount = BigDecimal.ZERO;
+        }
+
+        if (subtotalAmount == null) {
+            subtotalAmount = (totalAmount != null) ? totalAmount : BigDecimal.ZERO;
+        }
+
+        if (totalAmount == null) {
+            totalAmount = subtotalAmount.subtract(discountAmount);
+        }
+    }
 
     // ✅ REQUIRED helper
     public void addOrderItem(OrderItem item) {

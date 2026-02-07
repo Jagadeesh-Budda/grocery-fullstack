@@ -1,12 +1,13 @@
 // src/components/AdminSidebar.jsx (Refactored for FreshCartFlow)
 import React from 'react';
-import { Home, Grid, ShoppingCart, Settings, LogOut, Package } from 'lucide-react';
+import { Home, Grid, ShoppingCart, Settings, LogOut, Package, AlertTriangle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const items = [
   { key: 'dashboard', label: 'Dashboard', icon: Home, href: '/admin' },
   { key: 'categories', label: 'Categories', icon: Grid, href: '/admin/categories' },
   { key: 'products', label: 'Products', icon: Package, href: '/admin/products' },
+  { key: 'inventory', label: 'Inventory', icon: AlertTriangle, href: '/admin/inventory' },
   { key: 'orders', label: 'Orders', icon: ShoppingCart, href: '/admin/orders' },
   { key: 'settings', label: 'Settings', icon: Settings, href: '/admin/settings' },
 ];
@@ -25,7 +26,7 @@ export default function AdminSidebar({ active = 'dashboard', onLogout = () => {}
     <ShoppingCart size={20} strokeWidth={2.5} />
   </div>
             <div className="font-extrabold text-xl text-gray-900 tracking-tight">
-            groce<span className="text-[#28a745]">Rythm</span>
+            FreshCartFlow<span className="text-[#28a745]"></span>
           </div>
         </div>
 

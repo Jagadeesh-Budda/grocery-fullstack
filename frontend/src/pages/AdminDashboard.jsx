@@ -1,10 +1,38 @@
 import React, { useEffect, useState } from "react";
-import { fetchAdminDashboard } from "../services/adminapi";
+import { useNavigate } from "react-router-dom";
+import { fetchAdminDashboard, getAdminOrders } from "../services/adminapi";
 import { DollarSign, ShoppingBag, Users, TrendingUp } from 'lucide-react';
 import Card from "../common/Card"; 
 import Badge from "../common/Badge";// Ensure this path to your new Card is correct
 
+function statusVariant(status) {
+  switch (status) {
+    case "DELIVERED":
+      return "success";
+    case "SHIPPED":
+    case "CONFIRMED":
+      return "info";
+    case "PACKED":
+    case "CREATED":
+    case "PENDING":
+      return "warning";
+    case "CANCELLED":
+      return "danger";
+    default:
+      return "default";
+  }
+}
+
+function formatMoney(amount) {
+  if (amount == null) return "—";
+  const value = typeof amount === "number" ? amount : Number(amount);
+  if (Number.isNaN(value)) return String(amount);
+  return value.toLocaleString(undefined, { style: "currency", currency: "INR" });
+}
+
 export default function AdminDashboard() {
+  const navigate = useNavigate();
+
   const [stats, setStats] = useState({
     totalSales: 0,
     totalIncome: 0,
@@ -14,15 +42,27 @@ export default function AdminDashboard() {
     visitorGrowth: "+0%",
   });
 
-  const [loading, setLoading] = useState(true);
+  const [recentOrders, setRecentOrders] = useState([]);
+
+  const [statsLoading, setStatsLoading] = useState(true);
+  const [ordersLoading, setOrdersLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [ordersError, setOrdersError] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
     
     const loadDashboard = async () => {
-      setLoading(true);
       setError(false);
+      setOrdersError(false);
+      setStatsLoading(true);
+      setOrdersLoading(true);
+      try {
+      } finally {
+        // Individual requests manage their own loading flags.
+      }
+
+      // Stats should render as soon as available.
       try {
         const data = await fetchAdminDashboard();
         if (isMounted && data) {
@@ -36,13 +76,21 @@ export default function AdminDashboard() {
           });
         }
       } catch (err) {
-        if (isMounted) {
-          setError(true);
-        }
+        if (isMounted) setError(true);
       } finally {
+        if (isMounted) setStatsLoading(false);
+      }
+
+      // Recent orders should not block stats rendering.
+      try {
+        const ordersPage = await getAdminOrders({ page: 0, size: 5 });
         if (isMounted) {
-          setLoading(false);
+          setRecentOrders(ordersPage?.content ?? []);
         }
+      } catch (err) {
+        if (isMounted) setOrdersError(true);
+      } finally {
+        if (isMounted) setOrdersLoading(false);
       }
     };
 
@@ -51,7 +99,7 @@ export default function AdminDashboard() {
   }, []);
 
   // Professional Skeleton Loader
-  if (loading) {
+  if (statsLoading) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-pulse">
         {[1, 2, 3].map((i) => (
@@ -75,12 +123,6 @@ export default function AdminDashboard() {
       </div>
     );
   }
-const orders = [
-  { id: "#ORD-7721", customer: "Rahul Sharma", status: "success", statusText: "Paid", amount: "₹1,240" },
-  { id: "#ORD-7722", customer: "Anjali Gupta", status: "warning", statusText: "Pending", amount: "₹850" },
-  { id: "#ORD-7723", customer: "Vivek Kumar", status: "danger", statusText: "Cancelled", amount: "₹420" },
-  { id: "#ORD-7724", customer: "Priya Singh", status: "success", statusText: "Paid", amount: "₹2,100" },
-];
   return (
     <div className="space-y-8">
       {/* 1. Stats Grid */}
@@ -118,7 +160,12 @@ const orders = [
 <div className="bg-white rounded-xl3 border border-gray-100 shadow-card overflow-hidden mt-8">
   <div className="p-6 border-b border-gray-50 flex justify-between items-center">
     <h2 className="text-lg font-bold text-grocery-heading">Recent Orders</h2>
-    <button className="text-sm font-semibold text-grocery-primary hover:underline">View All</button>
+    <button
+      onClick={() => navigate("/admin/orders")}
+      className="text-sm font-semibold text-grocery-primary hover:underline"
+    >
+      View All
+    </button>
   </div>
   
 <div className="overflow-x-auto">
@@ -133,16 +180,51 @@ const orders = [
     </thead>
     {/* Clean, single tbody starts here */}
     <tbody className="divide-y divide-gray-50 text-sm">
-      {orders.map((order) => (
-        <tr key={order.id} className="hover:bg-gray-50/50 transition-colors">
-          <td className="px-6 py-4 font-medium text-grocery-heading">{order.id}</td>
-          <td className="px-6 py-4 text-grocery-body">{order.customer}</td>
-          <td className="px-6 py-4">
-            <Badge variant={order.status}>{order.statusText}</Badge>
+      {ordersLoading ? (
+        [...Array(5)].map((_, idx) => (
+          <tr key={idx} className="animate-pulse">
+            <td className="px-6 py-4">
+              <div className="h-4 w-20 bg-gray-200 rounded" />
+            </td>
+            <td className="px-6 py-4">
+              <div className="h-4 w-48 bg-gray-200 rounded" />
+            </td>
+            <td className="px-6 py-4">
+              <div className="h-5 w-24 bg-gray-200 rounded" />
+            </td>
+            <td className="px-6 py-4">
+              <div className="h-4 w-24 bg-gray-200 rounded" />
+            </td>
+          </tr>
+        ))
+      ) : ordersError ? (
+        <tr>
+          <td className="px-6 py-6 text-grocery-body" colSpan={4}>
+            Failed to load recent orders.
           </td>
-          <td className="px-6 py-4 font-bold text-grocery-heading">{order.amount}</td>
         </tr>
-      ))}
+      ) : recentOrders.length === 0 ? (
+        <tr>
+          <td className="px-6 py-6 text-grocery-body" colSpan={4}>
+            No recent orders.
+          </td>
+        </tr>
+      ) : (
+        recentOrders.map((order) => (
+          <tr
+            key={order.orderId}
+            className="hover:bg-gray-50/50 transition-colors cursor-pointer"
+            onClick={() => navigate(`/admin/orders/${order.orderId}`)}
+          >
+            <td className="px-6 py-4 font-medium text-grocery-heading">#{order.orderId}</td>
+            <td className="px-6 py-4 text-grocery-body">{order.userEmail || "—"}</td>
+            <td className="px-6 py-4">
+              <Badge variant={statusVariant(order.status)}>{order.status}</Badge>
+            </td>
+            <td className="px-6 py-4 font-bold text-grocery-heading">{formatMoney(order.totalAmount)}</td>
+          </tr>
+        ))
+      )}
     </tbody>
   </table>
 </div>

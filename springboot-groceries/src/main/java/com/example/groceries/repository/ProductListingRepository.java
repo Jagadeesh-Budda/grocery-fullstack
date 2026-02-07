@@ -18,8 +18,8 @@ public interface ProductListingRepository extends JpaRepository<ProductMaster, L
             value = """
         WITH paged_products AS (
             SELECT pm.id
-            FROM product_masters pm
-            WHERE pm.active = true
+                        FROM products pm
+                        WHERE pm.is_active = true
             ORDER BY pm.name ASC
             LIMIT :size OFFSET :offset
         )
@@ -28,12 +28,12 @@ public interface ProductListingRepository extends JpaRepository<ProductMaster, L
           pm.name  AS productName,
           c.name   AS category,
           pv.id    AS variantId,
-          pv.name  AS variantName,
-          pv.price AS price
+                    pv.sku   AS variantName,
+                    pv.price AS price
         FROM paged_products pp
-        JOIN product_masters pm ON pm.id = pp.id
+                JOIN products pm ON pm.id = pp.id
         JOIN product_variants pv ON pv.product_master_id = pm.id
-        JOIN category c ON c.id = pm.category_id
+                JOIN categories c ON c.id = pm.category_id
         ORDER BY pm.name ASC, pv.price ASC
     """,
             nativeQuery = true
@@ -48,8 +48,8 @@ public interface ProductListingRepository extends JpaRepository<ProductMaster, L
             value = """
         SELECT COUNT(*)
         FROM product_variants pv
-        JOIN product_masters pm ON pm.id = pv.product_master_id
-        WHERE pm.active = true
+        JOIN products pm ON pm.id = pv.product_master_id
+        WHERE pm.is_active = true
     """,
             nativeQuery = true
     )

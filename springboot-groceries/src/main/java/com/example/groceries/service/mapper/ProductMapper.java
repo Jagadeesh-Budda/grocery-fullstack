@@ -22,6 +22,7 @@ public class ProductMapper {
         return new ProductVariantDTO(
                 variant.getId(),
                 variant.getVariantName(),
+                                variant.getUnit(),
                 variant.getMrp(),
                 variant.getDiscountPercent(),
                 variant.getPrice(), // 🔥 already calculated price
@@ -125,6 +126,7 @@ public class ProductMapper {
         ProductVariant variant = new ProductVariant();
         variant.setId(dto.getVariantId());
         variant.setVariantName(dto.getVariantName());
+                variant.setUnit(dto.getUnit());
         variant.setMrp(dto.getMrp());
         variant.setDiscountPercent(dto.getDiscountPercent());
         variant.setImageUrl(dto.getImageUrl());

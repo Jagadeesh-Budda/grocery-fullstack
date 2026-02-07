@@ -11,6 +11,7 @@ import lombok.NoArgsConstructor;
 public class ProductVariantDTO {
     private Long variantId;
     private String variantName;
+    private String unit;
     private BigDecimal mrp;
     private Integer discountPercent;
     private BigDecimal price;

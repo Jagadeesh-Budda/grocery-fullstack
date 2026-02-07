@@ -14,6 +14,9 @@ import java.math.BigDecimal;
 @Builder
 public class OrderCreateResponse {
     private Long orderId;
+    private BigDecimal subtotalAmount;
+    private BigDecimal discountAmount;
     private BigDecimal totalAmount;
+    private String couponCode;
     private OrderStatus status;
 }

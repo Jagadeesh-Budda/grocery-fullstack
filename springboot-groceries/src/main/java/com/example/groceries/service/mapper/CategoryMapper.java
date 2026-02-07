@@ -14,7 +14,7 @@ public class CategoryMapper {
         dto.setId(category.getId());
         dto.setName(category.getName());
         dto.setImageUrl(category.getImageUrl());
-        dto.setActive(category.getActive());
+        dto.setActive(category.getIs_active());
         return dto;
     }
 
@@ -25,7 +25,7 @@ public class CategoryMapper {
         category.setId(dto.getId());
         category.setName(dto.getName());
         category.setImageUrl(dto.getImageUrl());
-        category.setActive(dto.getActive() != null ? dto.getActive() : true);
+        category.setIs_active(dto.getActive() != null ? dto.getActive() : true);
         return category;
     }
 }

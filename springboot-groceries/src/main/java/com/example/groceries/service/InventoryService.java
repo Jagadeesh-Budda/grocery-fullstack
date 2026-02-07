@@ -3,6 +3,7 @@ package com.example.groceries.service;
 import com.example.groceries.controller.dto.InventoryAdjustRequest;
 import com.example.groceries.controller.dto.InventoryResponse;
 import com.example.groceries.exception.ResourceNotFoundException;
+import com.example.groceries.audit.AdminAuditMutation;
 import com.example.groceries.model.ProductVariant;
 import com.example.groceries.repository.ProductVariantRepository;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class InventoryService {
 
     private final ProductVariantRepository productVariantRepository;
+    private final InventoryTransactionService inventoryTransactionService;
 
     @Transactional(readOnly = true)
     public InventoryResponse getVariantInventory(Long variantId) {
@@ -22,6 +24,13 @@ public class InventoryService {
     }
 
     @Transactional
+    @AdminAuditMutation(
+            entity = "ProductVariant",
+            entityClass = ProductVariant.class,
+            entityIdBefore = "#variantId",
+            entityIdAfter = "#variantId",
+            operation = AdminAuditMutation.Operation.UPDATE
+    )
     public InventoryResponse adjustVariantInventory(Long variantId, InventoryAdjustRequest request) {
         if (request == null || request.getDelta() == null) {
             throw new IllegalArgumentException("delta is required");
@@ -42,6 +51,16 @@ public class InventoryService {
 
         variant.setStock((int) newStockLong);
         ProductVariant saved = productVariantRepository.save(variant);
+
+        inventoryTransactionService.record(
+            com.example.groceries.model.InventoryTransactionType.ADMIN_ADJUSTMENT,
+            saved.getId(),
+            null,
+            request.getDelta(),
+            currentStock,
+            saved.getStock() != null ? saved.getStock() : 0,
+            null
+        );
         return new InventoryResponse(saved.getId(), saved.getStock());
     }
 

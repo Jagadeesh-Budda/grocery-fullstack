@@ -26,12 +26,12 @@ public class ProductVariant {
     private Long id;
 
     @NotBlank
-    @Column(name = "name", nullable = false)
+    @Column(name = "sku", nullable = false)
     private String variantName;
 
     @NotNull
     @DecimalMin(value = "0.0", inclusive = false)
-    @Column(nullable = false, precision = 10, scale = 2)
+    @Column(name = "price", nullable = false, precision = 10, scale = 2)
     private BigDecimal mrp;
 
     @NotNull

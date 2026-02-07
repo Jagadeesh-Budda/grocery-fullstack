@@ -3,7 +3,6 @@ package com.example.groceries.controller;
 import com.example.groceries.controller.dto.OrderCreateResponse;
 import com.example.groceries.controller.dto.OrderSummaryResponse;
 import com.example.groceries.model.Order;
-import com.example.groceries.model.OrderStatus;
 import com.example.groceries.service.OrderCreateService;
 import com.example.groceries.service.OrderService;
 import lombok.RequiredArgsConstructor;
@@ -26,14 +25,21 @@ public class OrderController {
     private final OrderCreateService orderCreateService;
 
     @PostMapping
-    public ResponseEntity<OrderCreateResponse> createOrder(HttpSession session) {
+    public ResponseEntity<OrderCreateResponse> createOrder(
+            HttpSession session,
+            @RequestParam(name = "couponCode", required = false) String couponCode
+    ) {
         // Assumption: userId is stored in server-side session post-login.
         Long userId = (Long) session.getAttribute("userId");
         if (userId == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
-        return ResponseEntity.ok(orderCreateService.createOrderSafely(userId));
+        if (couponCode == null || couponCode.isBlank()) {
+            return ResponseEntity.ok(orderCreateService.createOrderSafely(userId));
+        }
+
+        return ResponseEntity.ok(orderCreateService.createOrderSafely(userId, couponCode));
     }
 
     @GetMapping("/me")
@@ -50,12 +56,6 @@ public class OrderController {
                 .toList();
 
         return ResponseEntity.ok(orders);
-    }
-
-    @PutMapping("/{orderId}/status")
-    public ResponseEntity<OrderSummaryResponse> updateOrderStatus(@PathVariable Long orderId, @RequestParam OrderStatus status) {
-        Order updated = orderService.updateOrderStatus(orderId, status);
-        return ResponseEntity.ok(toOrderSummaryResponse(updated));
     }
 
     @PostMapping("/{orderId}/cancel")

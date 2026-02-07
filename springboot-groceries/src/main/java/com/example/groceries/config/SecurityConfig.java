@@ -4,6 +4,7 @@ import com.example.groceries.security.CustomUserDetailsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -71,12 +72,14 @@ public class SecurityConfig {
                         // 1. Public Auth Endpoints
                         .requestMatchers("/api/auth/**").permitAll()
 
+                        // Categories are public READ-ONLY.
+                        // Any write attempts to these paths require authentication and will not be permitted by default rules.
+                        .requestMatchers(HttpMethod.GET, "/categories/**", "/api/categories/**").permitAll()
+
                         // 2. Public Data Endpoints (Consolidated)
                         .requestMatchers(
                                 "/products/**",
                                 "/api/products/**",
-                                "/categories/**",
-                                "/api/categories/**",
                                 "/api/images/**",
                                 "/images/**",
                                 "/api/user/me",
@@ -87,6 +90,10 @@ public class SecurityConfig {
                         // Assumption: roles are stored as Spring authorities with ROLE_ prefix (e.g. ROLE_ADMIN).
                         // TODO(security): when expanding roles/permissions, revisit admin authorization rules.
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
+
+                        // Defense-in-depth: order status mutation must be admin-only, even if a public mapping is added later.
+                        .requestMatchers(HttpMethod.PUT, "/api/orders/**/status").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, "/api/orders/**/status").hasRole("ADMIN")
 
                         // Orders APIs: must be authenticated (session-based).
                         .requestMatchers("/api/orders/**").authenticated()

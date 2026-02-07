@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/categories")
+@RequestMapping({"/categories", "/api/categories"})
 @RequiredArgsConstructor
 @CrossOrigin(origins = "http://localhost:5173", allowCredentials = "true")
 public class CategoryController {
@@ -20,29 +20,5 @@ public class CategoryController {
     @GetMapping
     public ResponseEntity<List<Category>> getAll() {
         return ResponseEntity.ok(categoryService.getAllCategories());
-    }
-
-    // ADMIN ONLY: Create
-    @PostMapping
-    public ResponseEntity<Category> create(@RequestBody Category category) {
-        return ResponseEntity.ok(categoryService.saveCategory(category));
-    }
-
-    // ADMIN ONLY: Update
-    @PutMapping("/{id}")
-    public ResponseEntity<Category> update(@PathVariable Long id, @RequestBody Category updated) {
-        Category category = categoryService.getCategoryById(id);
-        if (category == null) return ResponseEntity.notFound().build();
-
-        category.setName(updated.getName());
-        category.setImageUrl(updated.getImageUrl());
-        return ResponseEntity.ok(categoryService.saveCategory(category));
-    }
-
-    // ADMIN ONLY: Delete
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
-        categoryService.deleteCategory(id);
-        return ResponseEntity.noContent().build();
     }
 }

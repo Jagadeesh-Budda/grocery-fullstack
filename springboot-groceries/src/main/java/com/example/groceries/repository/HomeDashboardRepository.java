@@ -66,17 +66,17 @@ public interface HomeDashboardRepository extends JpaRepository<OrderItem, Long> 
     @Query(
             value = """
                 SELECT
-                    oi.variant_id AS productVariantId,
+                    oi.product_variant_id AS productVariantId,
                     COUNT(oi.id) AS orderCount,
                     MAX(o.created_at) AS lastOrderedAt
                 FROM order_items oi
                 JOIN orders o ON o.id = oi.order_id
-                JOIN product_variants v ON v.id = oi.variant_id
+                JOIN product_variants v ON v.id = oi.product_variant_id
                 WHERE o.user_id = :userId
                   AND o.status IN ('CONFIRMED','DELIVERED')
                   AND v.stock > 0
-                GROUP BY oi.variant_id
-                ORDER BY COUNT(oi.id) DESC, MAX(o.created_at) DESC, oi.variant_id ASC
+                GROUP BY oi.product_variant_id
+                ORDER BY COUNT(oi.id) DESC, MAX(o.created_at) DESC, oi.product_variant_id ASC
                 LIMIT 3
             """,
             nativeQuery = true
@@ -100,8 +100,8 @@ public interface HomeDashboardRepository extends JpaRepository<OrderItem, Long> 
                     v.stock AS stock,
                     pm.low_stock_threshold AS threshold
                 FROM product_variants v
-                JOIN product_masters pm ON pm.id = v.product_master_id
-                WHERE pm.active = true
+                JOIN products pm ON pm.id = v.product_master_id
+                WHERE pm.is_active = true
                   AND v.stock <= pm.low_stock_threshold
                 ORDER BY v.id ASC
             """,

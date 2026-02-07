@@ -4,11 +4,16 @@ import { Toaster } from "react-hot-toast";
 
 import Login from "./pages/Login";
 import AdminDashboard from "./pages/AdminDashboard";
-import Products from "./pages/Products";
+import AdminProducts from "./pages/AdminProducts";
+import AdminProductEdit from "./pages/AdminProductEdit";
+import AdminProductVariants from "./pages/AdminProductVariants";
 import MainLayout from "./layouts/user/UserLayout.jsx";
 import AdminLayout from "./layouts/admin/AdminLayout.jsx";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import AdminCategories from "./pages/AdminCategories";
+import AdminOrders from "./pages/AdminOrders";
+import AdminOrderDetail from "./pages/AdminOrderDetail";
+import AdminInventory from "./pages/AdminInventory";
 import Register from "./pages/Register";
 import UserDashboard from "./pages/UserDashboard";
 import CategoriesPage from "./pages/CategoriesPage";
@@ -61,8 +66,14 @@ export default function App() {
         <Route element={<ProtectedRoute allowedRoles={["ROLE_ADMIN"]} />}>
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<AdminDashboard />} />
-            <Route path="products" element={<Products />} />
+            <Route path="products" element={<AdminProducts />} />
+            <Route path="products/new" element={<AdminProductEdit />} />
+            <Route path="products/:id" element={<AdminProductEdit />} />
+            <Route path="products/:id/variants" element={<AdminProductVariants />} />
             <Route path="categories" element={<AdminCategories />} />
+            <Route path="inventory" element={<AdminInventory />} />
+            <Route path="orders" element={<AdminOrders />} />
+            <Route path="orders/:id" element={<AdminOrderDetail />} />
           </Route>
         </Route>
 

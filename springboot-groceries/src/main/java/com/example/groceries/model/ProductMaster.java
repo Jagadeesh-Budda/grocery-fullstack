@@ -2,8 +2,11 @@ package com.example.groceries.model;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import lombok.*;
 
 import java.util.ArrayList;
@@ -25,6 +28,13 @@ public class ProductMaster {
     @Column(nullable = false)
     private String name;
 
+    @Pattern(
+            regexp = "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+            message = "slug must be lowercase letters, numbers, and hyphens"
+    )
+    @Column(name = "slug", length = 255, unique = true)
+    private String slug;
+
     @NotBlank
     @Column(nullable = false, length = 1000)
     private String description;
@@ -44,7 +54,13 @@ public class ProductMaster {
 
     @NotNull
     @Column(nullable = false)
-    private Boolean active = true;
+    private Boolean is_active = true;
+
+        @NotNull
+        @Min(0)
+        @Max(100000)
+        @Column(name = "low_stock_threshold", nullable = false)
+        private Integer lowStockThreshold = 5;
 
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY, optional = false)

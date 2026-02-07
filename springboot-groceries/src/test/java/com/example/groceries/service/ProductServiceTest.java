@@ -40,23 +40,35 @@ class ProductServiceTest {
     private ProductMaster productMaster;
     private Category category;
 
+    static class TestProductMaster extends ProductMaster {
+        public void setIsActive(Boolean active) {
+            this.setIs_active(active);
+        }
+    }
+
+    static class TestCategory extends Category {
+        public void setIsActive(Boolean active) {
+            this.setIs_active(active);
+        }
+    }
+
     @BeforeEach
     void setUp() {
-        category = new Category();
+        category = new TestCategory();
         category.setId(1L);
         category.setName("Vegetables");
 
-        productMaster = new ProductMaster();
+        productMaster = new TestProductMaster();
         productMaster.setId(1L);
         productMaster.setName("Tomato");
         productMaster.setCategory(category);
-        productMaster.setActive(true);
+        ((TestProductMaster) productMaster).setIsActive(true);
         productMaster.setVariants(new ArrayList<>());
     }
 
     @Test
     void getProductDetail_ShouldReturnDetailDTO() {
-        when(productMasterRepository.findById(1L)).thenReturn(Optional.of(productMaster));
+        when(productMasterRepository.findByIdWithVariants(1L)).thenReturn(Optional.of(productMaster));
         ProductDetailDTO detailDTO = new ProductDetailDTO();
         detailDTO.setId(1L);
         when(productMapper.toDetailDTO(productMaster)).thenReturn(detailDTO);
@@ -65,24 +77,24 @@ class ProductServiceTest {
 
         assertNotNull(result);
         assertEquals(1L, result.getId());
-        verify(productMasterRepository).findById(1L);
+        verify(productMasterRepository).findByIdWithVariants(1L);
     }
 
     @Test
     void getRecommendations_ShouldExcludeCurrentProductAndCartItems() {
-        ProductMaster rec1 = new ProductMaster();
+        ProductMaster rec1 = new TestProductMaster();
         rec1.setId(2L);
         rec1.setCategory(category);
-        rec1.setActive(true);
+        ((TestProductMaster) rec1).setIsActive(true);
         ProductVariant v1 = new ProductVariant();
         v1.setId(10L);
         v1.setProductMaster(rec1);
         rec1.setVariants(List.of(v1));
 
-        ProductMaster rec2 = new ProductMaster();
+        ProductMaster rec2 = new TestProductMaster();
         rec2.setId(3L);
         rec2.setCategory(category);
-        rec2.setActive(true);
+        ((TestProductMaster) rec2).setIsActive(true);
         ProductVariant v2 = new ProductVariant();
         v2.setId(11L);
         v2.setProductMaster(rec2);
