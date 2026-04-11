@@ -1,17 +1,21 @@
 # Frontend Documentation
 
-This folder contains frontend-specific documentation for the Grocery Fullstack project.
+This folder contains the frontend-specific documentation for the Grocery Fullstack project.
 
-The frontend is built with **React**, **Vite**, **Tailwind CSS**, and **Axios**.
+The frontend is built with **React**, **Vite**, **Tailwind CSS**, **Axios**, and **React Router**.
 
 ## Contents
 
 - `overview.md` — frontend architecture and how the app is structured
-- `entrypoints-and-config.md` — important startup files and tool configuration
-- `pages.md` — page-level routes and screens
-- `components.md` — reusable UI components
-- `context.md` — React context and shared application state
-- `api-services.md` — API integration and service utilities
-- `routes-and-layouts.md` — routing and layout components
-- `styles-assets.md` — styles, assets, and UI theming
-- `testing-build.md` — frontend testing and build tooling
+- `entrypoints-and-config.md` — entrypoint files, build configuration, and runtime setup
+- `pages.md` — page-level views and screens for user and admin flows
+- `components.md` — reusable UI components and shared design building blocks
+- `context.md` — React Context state management for auth and cart
+- `api-services.md` — API client, endpoint wrappers, and error normalization
+- `routes-and-layouts.md` — client-side routing and layout composition
+- `styles-assets.md` — styling, Tailwind configuration, and static assets
+- `testing-build.md` — local development, build, and testing tooling
+
+## Generated docs site
+
+A static HTML version of this documentation is available under `docs/frontend/site/` after the generation step.

@@ -1,57 +1,72 @@
 # Frontend Components
 
-The `src/components/` and `src/common/` folders contain reusable UI components.
+The frontend uses reusable components to keep the UI consistent and maintainable.
 
 ## `src/components/`
 
 ### `ProductsGrid.jsx`
-- Renders a grid of product cards.
-- Useful for displaying product lists on homepage and category pages.
+- Likely renders product cards in a responsive grid.
+- Useful for product discovery screens such as the home and browse pages.
 
 ### `ProductSkeletonGrid.jsx`
-- Shows loading skeletons while product data loads.
-- Useful for improving perceived performance.
+- Displays loading skeletons while data is fetched.
+- Useful to keep users engaged before content appears.
 
 ### `ShoppingCart.jsx`
-- Displays a mini cart or cart summary.
-- Useful for letting users see current cart state without navigating away.
+- Renders a cart summary or floating mini-cart UI.
+- Useful for quickly displaying cart totals and item counts across pages.
 
 ### `EmptyState.jsx`
-- Renders placeholder content when no data exists.
-- Useful for improving UX when lists are empty.
+- Shows a placeholder screen when there is no content.
+- Useful for good UX on empty carts, no search results, or missing data.
 
 ### `Pagination.jsx`
-- Provides pagination controls.
+- Provides next/previous page controls.
 - Useful for browsing paged product lists.
 
 ### `ProductPrice.tsx`
-- Displays formatted price data.
-- Useful for consistent price rendering.
+- Formats the display price using a shared price resolver.
+
+Example:
+
+```tsx
+import { resolvePrice } from "../utils/priceResolver";
+
+export default function ProductPrice({ product, locale, currency }) {
+  const price = resolvePrice(product, { locale, currency });
+  return <span>{price.formatted ?? "—"}</span>;
+}
+```
+
+Why it matters:
+- price formatting is centralized,
+- every product price appears consistently,
+- display logic is separated from page markup.
 
 ### `SceneryBackground.jsx`
-- Likely renders decorative page backgrounds.
-- Useful for UI polish and brand styling.
+- Renders decorative backgrounds for the main user layout.
+- Useful for visual polish and atmosphere.
 
 ## `src/common/`
 
 ### `Button.jsx`
-- Shared button component.
-- Useful for consistent button styles and behavior.
+- Shared button wrapper for consistent appearance.
+- Useful to avoid repeating class names and interaction behaviors.
 
 ### `Card.jsx`
-- Reusable card wrapper.
-- Useful for consistent presentation of item cards.
+- Reusable card container for product and dashboard layouts.
+- Useful for standardizing spacing and elevation.
 
 ### `Badge.jsx`
-- Shows small labels or status tags.
-- Useful for product badges like “new” or “offer”.
+- Small label component for status badges.
+- Useful for showing stock, promotions, and category labels.
 
 ### `SearchBar.jsx`
-- Search input component.
-- Useful for filtering products or categories.
+- Input component for search and filtering.
+- Useful across product lists and dashboard screens.
 
 ## Why component folders matter
 
-- Components isolate reusable UI pieces from page logic.
-- Reuse improves consistency and reduces duplication.
-- Small components make the UI easier to test and maintain.
+- Components keep UI logic modular and reusable.
+- Smaller components are easier to test and refactor.
+- Shared components enforce design consistency across the app.

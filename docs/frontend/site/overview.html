@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Frontend Overview | Frontend Docs</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body data-page="overview">
+<div class="page-shell">
+  <aside class="sidebar">
+    <h2>Frontend docs</h2>
+    <input id="nav-search" class="nav-search" type="search" placeholder="Filter pages...">
+    <ul class="nav-list">
+      <li><a href="api-services.html" data-page="api-services">Frontend API and Services</a></li>
+<li><a href="components.html" data-page="components">Frontend Components</a></li>
+<li><a href="context.html" data-page="context">Frontend Context</a></li>
+<li><a href="entrypoints-and-config.html" data-page="entrypoints-and-config">Frontend Entrypoints and Configuration</a></li>
+<li><a href="index.html" data-page="index">Frontend Documentation</a></li>
+<li><a href="overview.html" data-page="overview">Frontend Overview</a></li>
+<li><a href="pages.html" data-page="pages">Frontend Pages</a></li>
+<li><a href="routes-and-layouts.html" data-page="routes-and-layouts">Frontend Routes and Layouts</a></li>
+<li><a href="styles-assets.html" data-page="styles-assets">Frontend Styles and Assets</a></li>
+<li><a href="testing-build.html" data-page="testing-build">Frontend Testing and Build</a></li>
+    </ul>
+    <div class="footer">Static docs generated from markdown.</div>
+  </aside>
+  <main class="main-content">
+    <div class="page-header">
+      <div>
+        <h1>Frontend Overview</h1>
+        <p class="page-description">The frontend lives in the `frontend/` folder and is a React application built with Vite. It is designed to serve both shopper and admin experiences using a shared design system and API integration layer.</p>
+      </div>
+    </div>
+    <article class="content-block">
+      <h1>Frontend Overview</h1>
+<p>The frontend lives in the <code>frontend/</code> folder and is a React application built with Vite. It is designed to serve both shopper and admin experiences using a shared design system and API integration layer.</p>
+<h2>Purpose</h2>
+<p>The frontend provides:</p>
+<ul>
+<li>a product discovery and shopping experience for customers,</li>
+<li>cart management, checkout, and order history,</li>
+<li>admin dashboards for product, category, inventory, and order management.</li>
+</ul>
+<p>It communicates with the Spring Boot backend through REST APIs and supports session-based auth using cookies.</p>
+<h2>Core technologies</h2>
+<ul>
+<li><strong>React</strong> for UI composition.</li>
+<li><strong>React Router v6</strong> for client-side routing.</li>
+<li><strong>Vite</strong> for fast development and build.</li>
+<li><strong>Tailwind CSS</strong> for utility-first styling.</li>
+<li><strong>Axios</strong> for HTTP requests with session credentials.</li>
+<li><strong>React Context</strong> for auth and cart state.</li>
+</ul>
+<h2>Main structure</h2>
+<ul>
+<li><code>frontend/src/main.jsx</code> — bootstraps the React app, wraps providers, and mounts the root component.</li>
+<li><code>frontend/src/App.jsx</code> — defines routes, public vs admin sections, and shared global UI like toast notifications.</li>
+<li><code>frontend/src/pages/</code> — page-level screens such as <code>Home</code>, <code>CartPage</code>, <code>CheckoutPage</code>, and admin pages.</li>
+<li><code>frontend/src/components/</code> — reusable UI pieces like <code>Card</code>, <code>Button</code>, and <code>ProductPrice</code>.</li>
+<li><code>frontend/src/common/</code> — shared UI elements used across screens.</li>
+<li><code>frontend/src/context/</code> — global state providers for auth and cart behavior.</li>
+<li><code>frontend/src/api/</code> — Axios configuration, API endpoints, and error normalization.</li>
+<li><code>frontend/src/services/</code> — higher-level service helpers and voice command parsing.</li>
+<li><code>frontend/src/layouts/</code> — layout shells for user and admin experiences.</li>
+<li><code>frontend/src/styles/</code> — theme and page-specific CSS.</li>
+</ul>
+<h2>Example entrypoint</h2>
+<p>In <code>src/main.jsx</code>, the app is wrapped with <code>BrowserRouter</code>, <code>AuthProvider</code>, and <code>CartProvider</code>:</p>
+<pre><code>
+ReactDOM.createRoot(document.getElementById(&quot;root&quot;)).render(
+  &lt;React.StrictMode&gt;
+    &lt;BrowserRouter&gt;
+      &lt;AuthProvider&gt;
+        &lt;CartProvider&gt;
+          &lt;App /&gt;
+        &lt;/CartProvider&gt;
+      &lt;/AuthProvider&gt;
+    &lt;/BrowserRouter&gt;
+  &lt;/React.StrictMode&gt;
+);
+</code></pre>
+<h2>Example route structure</h2>
+<p><code>src/App.jsx</code> defines user and admin routes. Admin routes are wrapped by <code>ProtectedRoute</code> and <code>AdminLayout</code>, while user pages use <code>MainLayout</code>:</p>
+<pre><code>
+&lt;Route path=&quot;/groceries&quot; element={&lt;MainLayout /&gt;}&gt;
+  &lt;Route index element={&lt;UserDashboard /&gt;} /&gt;
+  &lt;Route path=&quot;categories&quot; element={&lt;CategoriesPage /&gt;} /&gt;
+  &lt;Route path=&quot;cart&quot; element={&lt;CartPage /&gt;} /&gt;
+  &lt;Route path=&quot;checkout&quot; element={&lt;CheckoutPage /&gt;} /&gt;
+  &lt;Route path=&quot;products/:id&quot; element={&lt;ProductDetailPage /&gt;} /&gt;
+&lt;/Route&gt;
+
+&lt;Route element={&lt;ProtectedRoute allowedRoles={[&quot;ROLE_ADMIN&quot;]} /&gt;}&gt;
+  &lt;Route path=&quot;/admin&quot; element={&lt;AdminLayout /&gt;}&gt;
+    &lt;Route index element={&lt;AdminDashboard /&gt;} /&gt;
+    &lt;Route path=&quot;products&quot; element={&lt;AdminProducts /&gt;} /&gt;
+    &lt;Route path=&quot;products/new&quot; element={&lt;AdminProductEdit /&gt;} /&gt;
+    &lt;Route path=&quot;products/:id&quot; element={&lt;AdminProductEdit /&gt;} /&gt;
+    &lt;Route path=&quot;products/:id/variants&quot; element={&lt;AdminProductVariants /&gt;} /&gt;
+    &lt;Route path=&quot;categories&quot; element={&lt;AdminCategories /&gt;} /&gt;
+    &lt;Route path=&quot;inventory&quot; element={&lt;AdminInventory /&gt;} /&gt;
+    &lt;Route path=&quot;orders&quot; element={&lt;AdminOrders /&gt;} /&gt;
+    &lt;Route path=&quot;orders/:id&quot; element={&lt;AdminOrderDetail /&gt;} /&gt;
+  &lt;/Route&gt;
+&lt;/Route&gt;
+</code></pre>
+<h2>Why this structure works</h2>
+<ul>
+<li>It keeps the UI layer focused on pages and presentation,</li>
+<li>shared state is centralized in React Context providers,</li>
+<li>API logic is isolated from components,</li>
+<li>routes and layouts cleanly separate public user flows from admin workflows.</li>
+</ul>
+    </article>
+  </main>
+</div>
+<script src="script.js"></script>
+</body>
+</html>

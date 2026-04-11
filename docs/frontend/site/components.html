@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Frontend Components | Frontend Docs</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body data-page="components">
+<div class="page-shell">
+  <aside class="sidebar">
+    <h2>Frontend docs</h2>
+    <input id="nav-search" class="nav-search" type="search" placeholder="Filter pages...">
+    <ul class="nav-list">
+      <li><a href="api-services.html" data-page="api-services">Frontend API and Services</a></li>
+<li><a href="components.html" data-page="components">Frontend Components</a></li>
+<li><a href="context.html" data-page="context">Frontend Context</a></li>
+<li><a href="entrypoints-and-config.html" data-page="entrypoints-and-config">Frontend Entrypoints and Configuration</a></li>
+<li><a href="index.html" data-page="index">Frontend Documentation</a></li>
+<li><a href="overview.html" data-page="overview">Frontend Overview</a></li>
+<li><a href="pages.html" data-page="pages">Frontend Pages</a></li>
+<li><a href="routes-and-layouts.html" data-page="routes-and-layouts">Frontend Routes and Layouts</a></li>
+<li><a href="styles-assets.html" data-page="styles-assets">Frontend Styles and Assets</a></li>
+<li><a href="testing-build.html" data-page="testing-build">Frontend Testing and Build</a></li>
+    </ul>
+    <div class="footer">Static docs generated from markdown.</div>
+  </aside>
+  <main class="main-content">
+    <div class="page-header">
+      <div>
+        <h1>Frontend Components</h1>
+        <p class="page-description">The frontend uses reusable components to keep the UI consistent and maintainable.</p>
+      </div>
+    </div>
+    <article class="content-block">
+      <h1>Frontend Components</h1>
+<p>The frontend uses reusable components to keep the UI consistent and maintainable.</p>
+<h2><code>src/components/</code></h2>
+<h3><code>ProductsGrid.jsx</code></h3>
+<ul>
+<li>Likely renders product cards in a responsive grid.</li>
+<li>Useful for product discovery screens such as the home and browse pages.</li>
+</ul>
+<h3><code>ProductSkeletonGrid.jsx</code></h3>
+<ul>
+<li>Displays loading skeletons while data is fetched.</li>
+<li>Useful to keep users engaged before content appears.</li>
+</ul>
+<h3><code>ShoppingCart.jsx</code></h3>
+<ul>
+<li>Renders a cart summary or floating mini-cart UI.</li>
+<li>Useful for quickly displaying cart totals and item counts across pages.</li>
+</ul>
+<h3><code>EmptyState.jsx</code></h3>
+<ul>
+<li>Shows a placeholder screen when there is no content.</li>
+<li>Useful for good UX on empty carts, no search results, or missing data.</li>
+</ul>
+<h3><code>Pagination.jsx</code></h3>
+<ul>
+<li>Provides next/previous page controls.</li>
+<li>Useful for browsing paged product lists.</li>
+</ul>
+<h3><code>ProductPrice.tsx</code></h3>
+<ul>
+<li>Formats the display price using a shared price resolver.</li>
+</ul>
+<p>Example:</p>
+<pre><code>
+import { resolvePrice } from &quot;../utils/priceResolver&quot;;
+
+export default function ProductPrice({ product, locale, currency }) {
+  const price = resolvePrice(product, { locale, currency });
+  return &lt;span&gt;{price.formatted ?? &quot;—&quot;}&lt;/span&gt;;
+}
+</code></pre>
+<p>Why it matters:</p>
+<ul>
+<li>price formatting is centralized,</li>
+<li>every product price appears consistently,</li>
+<li>display logic is separated from page markup.</li>
+</ul>
+<h3><code>SceneryBackground.jsx</code></h3>
+<ul>
+<li>Renders decorative backgrounds for the main user layout.</li>
+<li>Useful for visual polish and atmosphere.</li>
+</ul>
+<h2><code>src/common/</code></h2>
+<h3><code>Button.jsx</code></h3>
+<ul>
+<li>Shared button wrapper for consistent appearance.</li>
+<li>Useful to avoid repeating class names and interaction behaviors.</li>
+</ul>
+<h3><code>Card.jsx</code></h3>
+<ul>
+<li>Reusable card container for product and dashboard layouts.</li>
+<li>Useful for standardizing spacing and elevation.</li>
+</ul>
+<h3><code>Badge.jsx</code></h3>
+<ul>
+<li>Small label component for status badges.</li>
+<li>Useful for showing stock, promotions, and category labels.</li>
+</ul>
+<h3><code>SearchBar.jsx</code></h3>
+<ul>
+<li>Input component for search and filtering.</li>
+<li>Useful across product lists and dashboard screens.</li>
+</ul>
+<h2>Why component folders matter</h2>
+<ul>
+<li>Components keep UI logic modular and reusable.</li>
+<li>Smaller components are easier to test and refactor.</li>
+<li>Shared components enforce design consistency across the app.</li>
+</ul>
+    </article>
+  </main>
+</div>
+<script src="script.js"></script>
+</body>
+</html>

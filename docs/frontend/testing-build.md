@@ -1,35 +1,64 @@
 # Frontend Testing and Build
 
-This section explains how frontend testing and build tooling are configured.
+This document describes how to run, build, and test the frontend application.
 
 ## `package.json` scripts
 
-- `npm run dev` / `npm start`: starts the Vite development server.
-- `npm run build`: creates a production-ready build.
-- `npm run preview`: serves the built application locally.
-- `npm run test`: runs frontend tests with Vitest.
+The frontend uses Vite for development and Vitest for tests.
+
+```json
+"scripts": {
+  "dev": "vite",
+  "build": "vite build",
+  "preview": "vite preview",
+  "start": "vite",
+  "test": "vitest"
+}
+```
+
+Why it matters:
+- `dev` starts the live development server with HMR,
+- `build` creates optimized production bundles,
+- `preview` lets you inspect the built app locally,
+- `test` runs unit tests.
 
 ## Testing setup
 
-### `src/setupTests.js`
-- Used to configure the testing environment.
-- Useful for setting up test utilities and mocking APIs.
+### `vitest`
 
-### Vitest
-- A fast test runner and assertion library for Vite projects.
-- Useful for unit and component tests.
+Vitest is the test runner used for component and logic tests.
+It is configured through the frontend project dependencies.
+
+### `src/setupTests.js`
+
+This file is intended to configure the test environment and add utilities for React testing.
+
+Why it matters:
+- test setup ensures consistent behavior across test files,
+- it can register global mocks and custom matchers.
 
 ## Build tooling
 
-### Vite
-- Provides fast hot module replacement and bundling.
-- Useful for quick local development and production builds.
+### `Vite`
 
-### Tailwind CSS + PostCSS
-- Styles are processed through PostCSS during the build.
-- Useful for compiling custom CSS and applying Tailwind utilities.
+Vite provides fast builds and development tooling.
+The project uses the React plugin and proxy configuration for backend API access.
+
+Why it matters:
+- fast startup and reload during development,
+- production bundles are optimized automatically,
+- proxying backend calls avoids CORS issues during local development.
+
+### `Tailwind CSS` + `PostCSS`
+
+The build pipeline compiles Tailwind classes and autoprefixes CSS.
+
+Why it matters:
+- Tailwind utilities are transformed into production-ready CSS,
+- autoprefixer ensures cross-browser compatibility.
 
 ## Why testing/build docs matter
 
-- These docs help developers understand how to run the app locally and verify changes.
-- They also explain which tools are responsible for bundling and styling.
+- they help new developers run the project locally,
+- they explain how to verify UI and logic changes,
+- they document the tools powering the frontend development workflow.

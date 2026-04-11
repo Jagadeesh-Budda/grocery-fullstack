@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Frontend Pages | Frontend Docs</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body data-page="pages">
+<div class="page-shell">
+  <aside class="sidebar">
+    <h2>Frontend docs</h2>
+    <input id="nav-search" class="nav-search" type="search" placeholder="Filter pages...">
+    <ul class="nav-list">
+      <li><a href="api-services.html" data-page="api-services">Frontend API and Services</a></li>
+<li><a href="components.html" data-page="components">Frontend Components</a></li>
+<li><a href="context.html" data-page="context">Frontend Context</a></li>
+<li><a href="entrypoints-and-config.html" data-page="entrypoints-and-config">Frontend Entrypoints and Configuration</a></li>
+<li><a href="index.html" data-page="index">Frontend Documentation</a></li>
+<li><a href="overview.html" data-page="overview">Frontend Overview</a></li>
+<li><a href="pages.html" data-page="pages">Frontend Pages</a></li>
+<li><a href="routes-and-layouts.html" data-page="routes-and-layouts">Frontend Routes and Layouts</a></li>
+<li><a href="styles-assets.html" data-page="styles-assets">Frontend Styles and Assets</a></li>
+<li><a href="testing-build.html" data-page="testing-build">Frontend Testing and Build</a></li>
+    </ul>
+    <div class="footer">Static docs generated from markdown.</div>
+  </aside>
+  <main class="main-content">
+    <div class="page-header">
+      <div>
+        <h1>Frontend Pages</h1>
+        <p class="page-description">The `src/pages/` folder contains page-level components representing the main screens of the application.</p>
+      </div>
+    </div>
+    <article class="content-block">
+      <h1>Frontend Pages</h1>
+<p>The <code>src/pages/</code> folder contains page-level components representing the main screens of the application.</p>
+<h2>User-facing page examples</h2>
+<h3><code>Home.jsx</code></h3>
+<ul>
+<li>The main storefront screen.</li>
+<li>Loads products in pages and renders them in a grid.</li>
+<li>Uses <code>useInView</code> for infinite scrolling and <code>useCart</code> to add products to the cart.</li>
+</ul>
+<p>Example code from <code>Home.jsx</code>:</p>
+<pre><code>
+const loadMore = useCallback(async () =&gt; {
+  if (loading || !hasMore) return;
+  const data = await getUserProductsPaged(currentPage, pageSize);
+  setProducts((prev) =&gt; [...prev, ...data]);
+  setCurrentPage((prev) =&gt; prev + 1);
+}, [currentPage, loading, hasMore]);
+</code></pre>
+<p>Why it matters:</p>
+<ul>
+<li>the page fetches products incrementally,</li>
+<li>it keeps the UI responsive,</li>
+<li>it adapts to both guest and signed-in users.</li>
+</ul>
+<h3><code>CartPage.jsx</code></h3>
+<ul>
+<li>Displays cart items, quantity controls, and order summary.</li>
+<li>Uses <code>useCart()</code> to update and remove items.</li>
+<li>Shows an empty state when the cart is empty.</li>
+</ul>
+<p>Example code from <code>CartPage.jsx</code>:</p>
+<pre><code>
+const handleQtyChange = async (variantId, nextQty) =&gt; {
+  if (nextQty &lt; 1) return;
+  setUpdatingId(variantId);
+  try {
+    await updateItem(variantId, nextQty);
+  } finally {
+    setUpdatingId(null);
+  }
+};
+</code></pre>
+<p>Why it matters:</p>
+<ul>
+<li>quantity changes are handled optimistically,</li>
+<li>the page displays totals and checkout flow,</li>
+<li>it uses guard logic for loading and invalid carts.</li>
+</ul>
+<h3><code>CheckoutPage.jsx</code> and <code>OrderSuccess.jsx</code></h3>
+<ul>
+<li><code>CheckoutPage</code> collects order submission details.</li>
+<li><code>OrderSuccess</code> confirms the purchase.</li>
+<li>They complete the user checkout flow after cart review.</li>
+</ul>
+<h3><code>OrdersPage.jsx</code></h3>
+<ul>
+<li>Shows the logged-in user’s past orders.</li>
+<li>Useful for order history and tracking.</li>
+</ul>
+<h2>Auth pages</h2>
+<h3><code>Login.jsx</code></h3>
+<ul>
+<li>Handles sign-in with backend authentication.</li>
+<li>Likely calls auth services or <code>AuthContext.login()</code>.</li>
+</ul>
+<h3><code>Register.jsx</code></h3>
+<ul>
+<li>Handles new user registration.</li>
+<li>Useful for capturing account details and creating users.</li>
+</ul>
+<h2>Admin pages</h2>
+<p>The admin section is built with page components for store management:</p>
+<ul>
+<li><code>AdminDashboard.jsx</code> — high-level admin summary,</li>
+<li><code>AdminProducts.jsx</code> — product list and inventory actions,</li>
+<li><code>AdminProductEdit.jsx</code> — create/edit product details,</li>
+<li><code>AdminProductVariants.jsx</code> — manage variant pricing and stock,</li>
+<li><code>AdminCategories.jsx</code> — category administration,</li>
+<li><code>AdminInventory.jsx</code> — inventory stock management,</li>
+<li><code>AdminOrders.jsx</code> — order list and search,</li>
+<li><code>AdminOrderDetail.jsx</code> — order detail and status updates.</li>
+</ul>
+<p>Why page files matter</p>
+<ul>
+<li>Pages map directly to routes and user workflows.</li>
+<li>They orchestrate components, layout, and state.</li>
+<li>Keeping them grouped helps new developers understand screens quickly.</li>
+</ul>
+    </article>
+  </main>
+</div>
+<script src="script.js"></script>
+</body>
+</html>

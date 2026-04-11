@@ -1,57 +1,87 @@
 # Frontend Pages
 
-The `src/pages/` folder contains page-level components, each representing a distinct screen in the app.
+The `src/pages/` folder contains page-level components representing the main screens of the application.
 
-## Key page files
+## User-facing page examples
 
 ### `Home.jsx`
-- The main storefront page for product discovery.
-- Likely displays featured products, categories, and promotions.
-- Why it exists: this is the default user experience for browsing groceries.
+- The main storefront screen.
+- Loads products in pages and renders them in a grid.
+- Uses `useInView` for infinite scrolling and `useCart` to add products to the cart.
 
-### `Products.jsx`
-- Lists available products and allows filtering.
-- Why it exists: to show product search results and browsing views.
+Example code from `Home.jsx`:
 
-### `ProductDetailPage.jsx`
-- Displays details for a selected product variant.
-- Why it exists: to show product description, pricing, and add-to-cart actions.
+```jsx
+const loadMore = useCallback(async () => {
+  if (loading || !hasMore) return;
+  const data = await getUserProductsPaged(currentPage, pageSize);
+  setProducts((prev) => [...prev, ...data]);
+  setCurrentPage((prev) => prev + 1);
+}, [currentPage, loading, hasMore]);
+```
+
+Why it matters:
+- the page fetches products incrementally,
+- it keeps the UI responsive,
+- it adapts to both guest and signed-in users.
 
 ### `CartPage.jsx`
-- Shows the current shopping cart contents.
-- Includes cart update and checkout actions.
-- Why it exists: to let the user review cart items before purchase.
+- Displays cart items, quantity controls, and order summary.
+- Uses `useCart()` to update and remove items.
+- Shows an empty state when the cart is empty.
 
-### `CheckoutPage.jsx`
-- Handles checkout form and order submission.
-- Why it exists: to place orders and gather shipping/payment information.
+Example code from `CartPage.jsx`:
 
-### `OrderSuccess.jsx`
-- A confirmation page after a successful order.
-- Why it exists: to inform the user that checkout completed.
+```jsx
+const handleQtyChange = async (variantId, nextQty) => {
+  if (nextQty < 1) return;
+  setUpdatingId(variantId);
+  try {
+    await updateItem(variantId, nextQty);
+  } finally {
+    setUpdatingId(null);
+  }
+};
+```
+
+Why it matters:
+- quantity changes are handled optimistically,
+- the page displays totals and checkout flow,
+- it uses guard logic for loading and invalid carts.
+
+### `CheckoutPage.jsx` and `OrderSuccess.jsx`
+- `CheckoutPage` collects order submission details.
+- `OrderSuccess` confirms the purchase.
+- They complete the user checkout flow after cart review.
 
 ### `OrdersPage.jsx`
-- Displays a user’s order history.
-- Why it exists: to allow users to review past orders.
+- Shows the logged-in user’s past orders.
+- Useful for order history and tracking.
 
-### `Login.jsx` and `Register.jsx`
-- Authentication pages for sign-in and sign-up.
-- Why they exist: to let users create accounts and log in.
+## Auth pages
 
-### Admin pages
-- `AdminDashboard.jsx`
-- `AdminProducts.jsx`
-- `AdminProductEdit.jsx`
-- `AdminProductVariants.jsx`
-- `AdminCategories.jsx`
-- `AdminInventory.jsx`
-- `AdminOrders.jsx`
-- `AdminOrderDetail.jsx`
+### `Login.jsx`
+- Handles sign-in with backend authentication.
+- Likely calls auth services or `AuthContext.login()`.
 
-These pages provide administrative views for managing the store, products, categories, inventory, and orders.
+### `Register.jsx`
+- Handles new user registration.
+- Useful for capturing account details and creating users.
 
-## Why page files matter
+## Admin pages
 
-- Pages represent the main screens of the app.
-- They are usually the only components mapped directly to routes.
-- Keeping them in one folder helps developers find route-specific logic quickly.
+The admin section is built with page components for store management:
+- `AdminDashboard.jsx` — high-level admin summary,
+- `AdminProducts.jsx` — product list and inventory actions,
+- `AdminProductEdit.jsx` — create/edit product details,
+- `AdminProductVariants.jsx` — manage variant pricing and stock,
+- `AdminCategories.jsx` — category administration,
+- `AdminInventory.jsx` — inventory stock management,
+- `AdminOrders.jsx` — order list and search,
+- `AdminOrderDetail.jsx` — order detail and status updates.
+
+Why page files matter
+
+- Pages map directly to routes and user workflows.
+- They orchestrate components, layout, and state.
+- Keeping them grouped helps new developers understand screens quickly.

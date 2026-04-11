@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Frontend API and Services | Frontend Docs</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body data-page="api-services">
+<div class="page-shell">
+  <aside class="sidebar">
+    <h2>Frontend docs</h2>
+    <input id="nav-search" class="nav-search" type="search" placeholder="Filter pages...">
+    <ul class="nav-list">
+      <li><a href="api-services.html" data-page="api-services">Frontend API and Services</a></li>
+<li><a href="components.html" data-page="components">Frontend Components</a></li>
+<li><a href="context.html" data-page="context">Frontend Context</a></li>
+<li><a href="entrypoints-and-config.html" data-page="entrypoints-and-config">Frontend Entrypoints and Configuration</a></li>
+<li><a href="index.html" data-page="index">Frontend Documentation</a></li>
+<li><a href="overview.html" data-page="overview">Frontend Overview</a></li>
+<li><a href="pages.html" data-page="pages">Frontend Pages</a></li>
+<li><a href="routes-and-layouts.html" data-page="routes-and-layouts">Frontend Routes and Layouts</a></li>
+<li><a href="styles-assets.html" data-page="styles-assets">Frontend Styles and Assets</a></li>
+<li><a href="testing-build.html" data-page="testing-build">Frontend Testing and Build</a></li>
+    </ul>
+    <div class="footer">Static docs generated from markdown.</div>
+  </aside>
+  <main class="main-content">
+    <div class="page-header">
+      <div>
+        <h1>Frontend API and Services</h1>
+        <p class="page-description">This section documents how the frontend calls backend APIs and handles service logic.</p>
+      </div>
+    </div>
+    <article class="content-block">
+      <h1>Frontend API and Services</h1>
+<p>This section documents how the frontend calls backend APIs and handles service logic.</p>
+<h2><code>src/api/axios.js</code></h2>
+<p>The app uses an Axios instance for all JSON API requests.</p>
+<pre><code>
+import axios from &quot;axios&quot;;
+
+const api = axios.create({
+    baseURL: &quot;http://localhost:8080/api&quot;,
+    withCredentials: true,
+});
+
+export default api;
+</code></pre>
+<p>Why it matters:</p>
+<ul>
+<li><code>baseURL</code> centralizes the backend API root,</li>
+<li><code>withCredentials: true</code> sends cookies for Spring Security session auth,</li>
+<li>it allows other modules to reuse the same client.</li>
+</ul>
+<h2><code>src/api/urls.js</code></h2>
+<p>Static URL constants are kept in one place.</p>
+<pre><code>
+export const API_BASE_URL = &quot;http://localhost:8080/api&quot;;
+export const IMAGE_BASE_URL = &quot;http://localhost:8080&quot;;
+</code></pre>
+<p>Why it exists:</p>
+<ul>
+<li>avoids hardcoding backend roots across the app,</li>
+<li>makes it easier to update endpoint hosts or ports.</li>
+</ul>
+<h2><code>src/api/apiError.ts</code></h2>
+<p>This helper normalizes errors from Axios or fetch into a simple shape.</p>
+<pre><code>
+export function normalizeApiError(error: unknown) {
+  const err = error as any;
+  const status = err?.response?.status as number | undefined;
+  const data = err?.response?.data as unknown;
+
+  const backendMessage = extractBackendMessage(data);
+  const fallbackMessage = typeof err?.message === &quot;string&quot; ? err.message : &quot;Request failed&quot;;
+
+  return {
+    status,
+    code: extractBackendCode(data),
+    message: backendMessage || fallbackMessage,
+    raw: error,
+  };
+}
+</code></pre>
+<p>Why it matters:</p>
+<ul>
+<li>it keeps error handling consistent,</li>
+<li>it understands backend shape like <code>{ status, error, message, code }</code>,</li>
+<li>it provides a single source of truth for UI messages.</li>
+</ul>
+<h3>Mapping backend errors to user text</h3>
+<pre><code>
+export function getApiErrorMessage(normalized) {
+  if (status === 403) return &quot;Not authorized&quot;;
+  if (status === 401) return &quot;Please log in to continue&quot;;
+  if (status === 400) return msg || &quot;Bad request&quot;;
+  return &quot;Something went wrong. Please try again.&quot;;
+}
+</code></pre>
+<h2><code>src/api/homeDashboardApi.ts</code></h2>
+<p>A small API client for the home dashboard endpoint:</p>
+<pre><code>
+import api from &quot;./axios&quot;;
+
+export async function fetchHomeDashboard() {
+  const response = await api.get(&quot;/home-dashboard&quot;);
+  return response.data;
+}
+</code></pre>
+<p>Why it exists:</p>
+<ul>
+<li>keeps dashboard requests isolated,</li>
+<li>avoids duplicating endpoint code in components.</li>
+</ul>
+<h2><code>src/api/ordersApi.ts</code></h2>
+<p>This module wraps order API calls and normalizes errors.</p>
+<pre><code>
+export async function createOrder() {
+  try {
+    const res = await api.post(&quot;/orders&quot;, undefined, { withCredentials: true });
+    return res.data;
+  } catch (e) {
+    throw normalizeApiError(e);
+  }
+}
+</code></pre>
+<p>Why it exists:</p>
+<ul>
+<li>encapsulates order-specific request logic,</li>
+<li>makes the calling code easier to read,</li>
+<li>returns typed response shapes for order creation and summaries.</li>
+</ul>
+<h2><code>src/services/groceryApi.js</code></h2>
+<p>Product and category helpers live here.</p>
+<p>Example:</p>
+<pre><code>
+export async function fetchGroceries(page = 0, size = 10, category = &quot;&quot;) {
+  const res = await api.get(&quot;/products/grouped&quot;, {
+    params: { page, size, category }
+  });
+  return res.data;
+}
+</code></pre>
+<p>Why it matters:</p>
+<ul>
+<li>it reuses the shared Axios client,</li>
+<li>it returns backend page objects directly,</li>
+<li>it keeps product API calls centralized.</li>
+</ul>
+<h2><code>src/services/authServices.ts</code></h2>
+<p>This file handles login via the classic browser fetch API.</p>
+<pre><code>
+export async function loginUser(username, password) {
+  const res = await fetch(`${API_BASE_URL}/auth/login`, {
+    method: &quot;POST&quot;,
+    headers: { &quot;Content-Type&quot;: &quot;application/json&quot; },
+    body: JSON.stringify({ username, password }),
+    credentials: &quot;include&quot;,
+  });
+
+  if (!res.ok) {
+    throw new Error(&quot;Login failed&quot;);
+  }
+
+  return res.json();
+}
+</code></pre>
+<p>Why it matters:</p>
+<ul>
+<li>it shows an alternative to Axios for auth requests,</li>
+<li><code>credentials: &quot;include&quot;</code> ensures cookies are sent,</li>
+<li>it also contains localStorage helpers for token-based session helpers.</li>
+</ul>
+<h2><code>src/services/voiceService.js</code></h2>
+<p>This utility parses natural language grocery commands.</p>
+<p>Example behavior:</p>
+<ul>
+<li><code>add 2 kg onions</code> → <code>{ action: &#39;add&#39;, name: &#39;onions&#39;, quantity: 2, unit: &#39;kg&#39; }</code></li>
+<li><code>remove a dozen eggs</code> → <code>{ action: &#39;remove&#39;, name: &#39;eggs&#39;, quantity: 12, unit: &#39;pack&#39; }</code></li>
+</ul>
+<p>Why it matters:</p>
+<ul>
+<li>it adds a voice/intent layer to the app,</li>
+<li>separates parsing logic from UI code,</li>
+<li>supports quantity and unit normalization.</li>
+</ul>
+<h2>Why API/services matter</h2>
+<ul>
+<li>components can focus on rendering instead of networking,</li>
+<li>changes to endpoint URLs and error handling are isolated,</li>
+<li>services keep the codebase easier to maintain and test.</li>
+</ul>
+    </article>
+  </main>
+</div>
+<script src="script.js"></script>
+</body>
+</html>

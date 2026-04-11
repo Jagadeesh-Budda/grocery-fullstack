@@ -1,40 +1,87 @@
 # Frontend Overview
 
-The frontend is located in `frontend/` and is a modern React application created with Vite.
+The frontend lives in the `frontend/` folder and is a React application built with Vite. It is designed to serve both shopper and admin experiences using a shared design system and API integration layer.
 
 ## Purpose
 
-This layer provides the user interface for shoppers and administrators. It communicates with the Spring Boot backend through HTTP APIs and renders pages, forms, and dashboards.
+The frontend provides:
+- a product discovery and shopping experience for customers,
+- cart management, checkout, and order history,
+- admin dashboards for product, category, inventory, and order management.
 
-## Key technologies
+It communicates with the Spring Boot backend through REST APIs and supports session-based auth using cookies.
 
-- **React**: component-based UI.
-- **Vite**: fast development server and build tool.
-- **Tailwind CSS**: utility-first styling.
-- **Axios**: API requests.
-- **React Router**: client-side routing.
-- **React Context**: global state like auth and cart.
+## Core technologies
 
-## Project structure
+- **React** for UI composition.
+- **React Router v6** for client-side routing.
+- **Vite** for fast development and build.
+- **Tailwind CSS** for utility-first styling.
+- **Axios** for HTTP requests with session credentials.
+- **React Context** for auth and cart state.
 
-- `src/main.jsx`: app entrypoint and provider setup.
-- `src/App.jsx`: route definitions.
-- `src/pages/`: page-level views.
-- `src/components/`: reusable user-facing components.
-- `src/common/`: shared UI pieces.
-- `src/context/`: global state providers.
-- `src/api/`: HTTP client and endpoint utilities.
-- `src/services/`: business service helpers and API wrappers.
-- `src/ifli/`: advanced voice and interface logic.
-- `src/layouts/`: layout shells for user and admin sections.
-- `src/hooks/`: custom React hooks.
-- `src/styles/`: styling files and themes.
-- `src/assets/`: static assets and images.
-- `src/utils/`: generic frontend utilities.
+## Main structure
 
-## Why this structure?
+- `frontend/src/main.jsx` — bootstraps the React app, wraps providers, and mounts the root component.
+- `frontend/src/App.jsx` — defines routes, public vs admin sections, and shared global UI like toast notifications.
+- `frontend/src/pages/` — page-level screens such as `Home`, `CartPage`, `CheckoutPage`, and admin pages.
+- `frontend/src/components/` — reusable UI pieces like `Card`, `Button`, and `ProductPrice`.
+- `frontend/src/common/` — shared UI elements used across screens.
+- `frontend/src/context/` — global state providers for auth and cart behavior.
+- `frontend/src/api/` — Axios configuration, API endpoints, and error normalization.
+- `frontend/src/services/` — higher-level service helpers and voice command parsing.
+- `frontend/src/layouts/` — layout shells for user and admin experiences.
+- `frontend/src/styles/` — theme and page-specific CSS.
 
-- Separates concerns between pages, components, and services.
-- Keeps state management isolated from UI components.
-- Makes API integration reusable and consistent.
-- Enables admin and user sections to share common layout patterns.
+## Example entrypoint
+
+In `src/main.jsx`, the app is wrapped with `BrowserRouter`, `AuthProvider`, and `CartProvider`:
+
+```jsx
+ReactDOM.createRoot(document.getElementById("root")).render(
+  <React.StrictMode>
+    <BrowserRouter>
+      <AuthProvider>
+        <CartProvider>
+          <App />
+        </CartProvider>
+      </AuthProvider>
+    </BrowserRouter>
+  </React.StrictMode>
+);
+```
+
+## Example route structure
+
+`src/App.jsx` defines user and admin routes. Admin routes are wrapped by `ProtectedRoute` and `AdminLayout`, while user pages use `MainLayout`:
+
+```jsx
+<Route path="/groceries" element={<MainLayout />}>
+  <Route index element={<UserDashboard />} />
+  <Route path="categories" element={<CategoriesPage />} />
+  <Route path="cart" element={<CartPage />} />
+  <Route path="checkout" element={<CheckoutPage />} />
+  <Route path="products/:id" element={<ProductDetailPage />} />
+</Route>
+
+<Route element={<ProtectedRoute allowedRoles={["ROLE_ADMIN"]} />}>
+  <Route path="/admin" element={<AdminLayout />}>
+    <Route index element={<AdminDashboard />} />
+    <Route path="products" element={<AdminProducts />} />
+    <Route path="products/new" element={<AdminProductEdit />} />
+    <Route path="products/:id" element={<AdminProductEdit />} />
+    <Route path="products/:id/variants" element={<AdminProductVariants />} />
+    <Route path="categories" element={<AdminCategories />} />
+    <Route path="inventory" element={<AdminInventory />} />
+    <Route path="orders" element={<AdminOrders />} />
+    <Route path="orders/:id" element={<AdminOrderDetail />} />
+  </Route>
+</Route>
+```
+
+## Why this structure works
+
+- It keeps the UI layer focused on pages and presentation,
+- shared state is centralized in React Context providers,
+- API logic is isolated from components,
+- routes and layouts cleanly separate public user flows from admin workflows.

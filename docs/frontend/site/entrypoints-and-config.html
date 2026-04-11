@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Frontend Entrypoints and Configuration | Frontend Docs</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body data-page="entrypoints-and-config">
+<div class="page-shell">
+  <aside class="sidebar">
+    <h2>Frontend docs</h2>
+    <input id="nav-search" class="nav-search" type="search" placeholder="Filter pages...">
+    <ul class="nav-list">
+      <li><a href="api-services.html" data-page="api-services">Frontend API and Services</a></li>
+<li><a href="components.html" data-page="components">Frontend Components</a></li>
+<li><a href="context.html" data-page="context">Frontend Context</a></li>
+<li><a href="entrypoints-and-config.html" data-page="entrypoints-and-config">Frontend Entrypoints and Configuration</a></li>
+<li><a href="index.html" data-page="index">Frontend Documentation</a></li>
+<li><a href="overview.html" data-page="overview">Frontend Overview</a></li>
+<li><a href="pages.html" data-page="pages">Frontend Pages</a></li>
+<li><a href="routes-and-layouts.html" data-page="routes-and-layouts">Frontend Routes and Layouts</a></li>
+<li><a href="styles-assets.html" data-page="styles-assets">Frontend Styles and Assets</a></li>
+<li><a href="testing-build.html" data-page="testing-build">Frontend Testing and Build</a></li>
+    </ul>
+    <div class="footer">Static docs generated from markdown.</div>
+  </aside>
+  <main class="main-content">
+    <div class="page-header">
+      <div>
+        <h1>Frontend Entrypoints and Configuration</h1>
+        <p class="page-description">This file explains the main startup files and build/runtime configuration for the frontend.</p>
+      </div>
+    </div>
+    <article class="content-block">
+      <h1>Frontend Entrypoints and Configuration</h1>
+<p>This file explains the main startup files and build/runtime configuration for the frontend.</p>
+<h2><code>package.json</code></h2>
+<p>The frontend uses Vite and React with supporting libraries such as Axios, Tailwind, and React Router.</p>
+<p>Key scripts:</p>
+<pre><code>
+&quot;scripts&quot;: {
+  &quot;dev&quot;: &quot;vite&quot;,
+  &quot;build&quot;: &quot;vite build&quot;,
+  &quot;preview&quot;: &quot;vite preview&quot;,
+  &quot;start&quot;: &quot;vite&quot;,
+  &quot;test&quot;: &quot;vitest&quot;
+}
+</code></pre>
+<p>Why it matters:</p>
+<ul>
+<li><code>dev</code> starts the local development server,</li>
+<li><code>build</code> creates production bundles,</li>
+<li><code>preview</code> serves the built output locally,</li>
+<li><code>test</code> runs unit tests with Vitest.</li>
+</ul>
+<p>The project also includes dependencies for React, React Router, Axios, and utility libraries like <code>react-hot-toast</code>.</p>
+<h2><code>vite.config.js</code></h2>
+<p>Vite is configured to use the React plugin and proxy backend API requests to Spring Boot.</p>
+<p>Example:</p>
+<pre><code>
+import { defineConfig } from &quot;vite&quot;;
+import react from &quot;@vitejs/plugin-react&quot;;
+
+export default defineConfig({
+  plugins: [react()],
+  server: {
+    proxy: {
+      &quot;/api&quot;: {
+        target: &quot;http://localhost:8080&quot;,
+        changeOrigin: true,
+        secure: false
+      },
+      &quot;/images&quot;: {
+        target: &quot;http://localhost:8080&quot;,
+        changeOrigin: true,
+        secure: false
+      }
+    }
+  }
+});
+</code></pre>
+<p>Why it matters:</p>
+<ul>
+<li>enables local frontend development without CORS errors,</li>
+<li>forwards <code>/api</code> and <code>/images</code> requests to the backend,</li>
+<li>keeps URL paths consistent between development and production.</li>
+</ul>
+<h2><code>tailwind.config.js</code></h2>
+<p>Tailwind is customized with a grocery-themed palette, rounded corners, and soft shadows.</p>
+<p>Example values:</p>
+<pre><code>
+export default {
+  content: [&quot;./index.html&quot;, &quot;./src/**/*.{js,jsx,ts,tsx}&quot;],
+  theme: {
+    extend: {
+      colors: {
+        grocery: {
+          primary: &quot;#0aad0a&quot;,
+          bg: &quot;#f0f3f2&quot;,
+          card: &quot;#ffffff&quot;
+        }
+      },
+      borderRadius: {
+        xl2: &quot;12px&quot;,
+        xl3: &quot;16px&quot;,
+        xl4: &quot;24px&quot;
+      },
+      boxShadow: {
+        glass: &quot;0 8px 32px 0 rgba(31, 38, 135, 0.07)&quot;,
+        card: &quot;0 2px 4px rgba(0,0,0,0.02), 0 1px 0 rgba(0,0,0,0.06)&quot;
+      }
+    }
+  },
+  plugins: [],
+};
+</code></pre>
+<p>Why it matters:</p>
+<ul>
+<li>Tailwind scans all frontend source files for class names,</li>
+<li>custom colors and shadows create the app’s visual identity,</li>
+<li>theme extensions make the UI easier to keep consistent.</li>
+</ul>
+<h2><code>postcss.config.cjs</code></h2>
+<p>PostCSS is configured to apply Tailwind and autoprefixer.</p>
+<pre><code>
+module.exports = { plugins: { tailwindcss: {}, autoprefixer: {}, } }
+</code></pre>
+<p>Why it matters:</p>
+<ul>
+<li>integrates Tailwind into the build pipeline,</li>
+<li>ensures CSS is compatible across browsers.</li>
+</ul>
+<h2><code>src/main.jsx</code></h2>
+<p>This entrypoint renders the React tree and attaches it to the <code>root</code> DOM node.</p>
+<p>Example:</p>
+<pre><code>
+import React from &quot;react&quot;;
+import ReactDOM from &quot;react-dom/client&quot;;
+import { BrowserRouter } from &quot;react-router-dom&quot;;
+import { CartProvider } from &quot;./context/CartContext&quot;;
+import App from &quot;./App&quot;;
+import &quot;./index.css&quot;;
+import { AuthProvider } from &quot;./context/AuthContext&quot;;
+
+ReactDOM.createRoot(document.getElementById(&quot;root&quot;)).render(
+  &lt;React.StrictMode&gt;
+    &lt;BrowserRouter&gt;
+      &lt;AuthProvider&gt;
+        &lt;CartProvider&gt;
+          &lt;App /&gt;
+        &lt;/CartProvider&gt;
+      &lt;/AuthProvider&gt;
+    &lt;/BrowserRouter&gt;
+  &lt;/React.StrictMode&gt;
+);
+</code></pre>
+<p>Why it matters:</p>
+<ul>
+<li>the app wiring is centralized here,</li>
+<li>auth and cart providers are available throughout the app,</li>
+<li>routing is enabled at the root of the React tree.</li>
+</ul>
+<h2><code>src/App.jsx</code></h2>
+<p><code>App.jsx</code> defines the route hierarchy and global UI behaviors.</p>
+<p>Example:</p>
+<pre><code>
+&lt;Routes&gt;
+  &lt;Route path=&quot;/&quot; element={&lt;Navigate to=&quot;/groceries&quot; replace /&gt;} /&gt;
+  &lt;Route path=&quot;/login&quot; element={&lt;Login /&gt;} /&gt;
+  &lt;Route path=&quot;/register&quot; element={&lt;Register /&gt;} /&gt;
+  &lt;Route path=&quot;/groceries&quot; element={&lt;MainLayout /&gt;}&gt;
+    &lt;Route index element={&lt;UserDashboard /&gt;} /&gt;
+    &lt;Route path=&quot;categories&quot; element={&lt;CategoriesPage /&gt;} /&gt;
+    &lt;Route path=&quot;cart&quot; element={&lt;CartPage /&gt;} /&gt;
+    &lt;Route path=&quot;checkout&quot; element={&lt;CheckoutPage /&gt;} /&gt;
+    &lt;Route path=&quot;products/:id&quot; element={&lt;ProductDetailPage /&gt;} /&gt;
+  &lt;/Route&gt;
+  &lt;Route element={&lt;ProtectedRoute allowedRoles={[&quot;ROLE_ADMIN&quot;]} /&gt;}&gt;
+    &lt;Route path=&quot;/admin&quot; element={&lt;AdminLayout /&gt;}&gt;
+      &lt;Route index element={&lt;AdminDashboard /&gt;} /&gt;
+      &lt;Route path=&quot;products&quot; element={&lt;AdminProducts /&gt;} /&gt;
+      &lt;Route path=&quot;products/new&quot; element={&lt;AdminProductEdit /&gt;} /&gt;
+      &lt;Route path=&quot;products/:id&quot; element={&lt;AdminProductEdit /&gt;} /&gt;
+      &lt;Route path=&quot;products/:id/variants&quot; element={&lt;AdminProductVariants /&gt;} /&gt;
+      &lt;Route path=&quot;categories&quot; element={&lt;AdminCategories /&gt;} /&gt;
+      &lt;Route path=&quot;inventory&quot; element={&lt;AdminInventory /&gt;} /&gt;
+      &lt;Route path=&quot;orders&quot; element={&lt;AdminOrders /&gt;} /&gt;
+      &lt;Route path=&quot;orders/:id&quot; element={&lt;AdminOrderDetail /&gt;} /&gt;
+    &lt;/Route&gt;
+  &lt;/Route&gt;
+  &lt;Route path=&quot;*&quot; element={&lt;Navigate to=&quot;/groceries&quot; replace /&gt;} /&gt;
+&lt;/Routes&gt;
+</code></pre>
+<p>Why it matters:</p>
+<ul>
+<li>route configuration maps URL paths to pages,</li>
+<li>protected routes keep admin workflows safe,</li>
+<li>global UI like <code>Toaster</code> is mounted once for notifications.</li>
+</ul>
+    </article>
+  </main>
+</div>
+<script src="script.js"></script>
+</body>
+</html>

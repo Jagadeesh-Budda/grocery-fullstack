@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Frontend Context | Frontend Docs</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body data-page="context">
+<div class="page-shell">
+  <aside class="sidebar">
+    <h2>Frontend docs</h2>
+    <input id="nav-search" class="nav-search" type="search" placeholder="Filter pages...">
+    <ul class="nav-list">
+      <li><a href="api-services.html" data-page="api-services">Frontend API and Services</a></li>
+<li><a href="components.html" data-page="components">Frontend Components</a></li>
+<li><a href="context.html" data-page="context">Frontend Context</a></li>
+<li><a href="entrypoints-and-config.html" data-page="entrypoints-and-config">Frontend Entrypoints and Configuration</a></li>
+<li><a href="index.html" data-page="index">Frontend Documentation</a></li>
+<li><a href="overview.html" data-page="overview">Frontend Overview</a></li>
+<li><a href="pages.html" data-page="pages">Frontend Pages</a></li>
+<li><a href="routes-and-layouts.html" data-page="routes-and-layouts">Frontend Routes and Layouts</a></li>
+<li><a href="styles-assets.html" data-page="styles-assets">Frontend Styles and Assets</a></li>
+<li><a href="testing-build.html" data-page="testing-build">Frontend Testing and Build</a></li>
+    </ul>
+    <div class="footer">Static docs generated from markdown.</div>
+  </aside>
+  <main class="main-content">
+    <div class="page-header">
+      <div>
+        <h1>Frontend Context</h1>
+        <p class="page-description">The frontend uses React Context providers to share auth and cart state throughout the app.</p>
+      </div>
+    </div>
+    <article class="content-block">
+      <h1>Frontend Context</h1>
+<p>The frontend uses React Context providers to share auth and cart state throughout the app.</p>
+<h2><code>src/context/AuthContext.jsx</code></h2>
+<p><code>AuthContext</code> manages the current user, loading state, and login/logout methods.</p>
+<p>Example:</p>
+<pre><code>
+const AuthContext = createContext(null);
+
+export const AuthProvider = ({ children }) =&gt; {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() =&gt; {
+    const loadUser = async () =&gt; {
+      try {
+        const res = await api.get(&quot;/user/me&quot;);
+        setUser(res.data);
+      } catch (err) {
+        setUser(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadUser();
+  }, []);
+
+  const login = async (credentials) =&gt; {
+    await api.post(&quot;/auth/login&quot;, credentials);
+    const res = await api.get(&quot;/user/me&quot;);
+    setUser(res.data);
+    return res.data;
+  };
+
+  const logout = async () =&gt; {
+    try {
+      await api.post(&quot;/auth/logout&quot;);
+    } finally {
+      setUser(null);
+    }
+  };
+
+  return (
+    &lt;AuthContext.Provider value={{ user, loading, isAuthenticated: !!user, login, logout }}&gt;
+      {children}
+    &lt;/AuthContext.Provider&gt;
+  );
+};
+</code></pre>
+<p>Why it matters:</p>
+<ul>
+<li>auth state is available across every page,</li>
+<li>the app checks the logged-in user on startup,</li>
+<li>login/logout actions are centralized.</li>
+</ul>
+<h2><code>src/context/CartContext.jsx</code></h2>
+<p><code>CartContext</code> contains cart items, derived totals, and sync logic.</p>
+<p>Example patterns:</p>
+<ul>
+<li>loads cart data from the backend when a user is signed in,</li>
+<li>persists guest carts to <code>localStorage</code>,</li>
+<li>caches authenticated carts in <code>sessionStorage</code>,</li>
+<li>uses debounced quantity updates to avoid too many API calls,</li>
+<li>provides optimistic UI updates for quantity changes.</li>
+</ul>
+<p>A key section from <code>CartContext</code>:</p>
+<pre><code>
+const addItem = async (payload, qty = 1) =&gt; {
+  setItems((prev) =&gt; { ... });
+  if (user?.id) {
+    await api.post(`/cart/${user.id}/add`, null, {
+      params: { variantId: payload.variantId, quantity: qty },
+    });
+  }
+};
+</code></pre>
+<p>Why it matters:</p>
+<ul>
+<li>cart actions are available to product and cart pages,</li>
+<li>the UI and backend stay synchronized,</li>
+<li>it supports both authenticated and guest shopping.</li>
+</ul>
+<h2>Why context matters</h2>
+<ul>
+<li>Context removes prop drilling for global state,</li>
+<li>it keeps auth and cart behavior out of page components,</li>
+<li>it allows consistent state across the storefront and admin screens.</li>
+</ul>
+    </article>
+  </main>
+</div>
+<script src="script.js"></script>
+</body>
+</html>
