@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Backend Security and Authentication | Backend Docs</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body data-page="security-and-auth">
+<div class="page-shell">
+  <aside class="sidebar">
+    <h2>Backend docs</h2>
+    <input id="nav-search" class="nav-search" type="search" placeholder="Filter pages...">
+    <ul class="nav-list">
+      <li><a href="audit-exception.html" data-page="audit-exception">Backend Audit and Error Handling</a></li>
+<li><a href="configuration.html" data-page="configuration">Backend Configuration</a></li>
+<li><a href="controllers.html" data-page="controllers">Backend Controllers</a></li>
+<li><a href="database-and-migrations.html" data-page="database-and-migrations">Backend Database and Migrations</a></li>
+<li><a href="index.html" data-page="index">Backend Documentation</a></li>
+<li><a href="models.html" data-page="models">Backend Models</a></li>
+<li><a href="overview.html" data-page="overview">Backend Overview</a></li>
+<li><a href="repositories.html" data-page="repositories">Backend Repositories</a></li>
+<li><a href="security-and-auth.html" data-page="security-and-auth">Backend Security and Authentication</a></li>
+<li><a href="services.html" data-page="services">Backend Services</a></li>
+    </ul>
+    <div class="footer">Documentation generated from markdown for easy reading.</div>
+  </aside>
+  <main class="main-content">
+    <div class="page-header">
+      <div>
+        <h1>Backend Security and Authentication</h1>
+        <p class="page-description">The backend uses Spring Security with session-based authentication, role-based authorization, and custom user details mapping.</p>
+      </div>
+    </div>
+    <article class="content-block">
+      <h1>Backend Security and Authentication</h1>
+<p>The backend uses Spring Security with session-based authentication, role-based authorization, and custom user details mapping.</p>
+<h2>Key security classes</h2>
+<h3><code>SecurityConfig.java</code></h3>
+<p>This class wires Spring Security and defines which endpoints are public, authenticated, or admin-only.</p>
+<p>Example:</p>
+<pre><code>
+@Bean
+public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    http
+            .cors(cors -&gt; cors.configurationSource(corsConfigurationSource()))
+            .csrf(csrf -&gt; csrf.disable())
+            .sessionManagement(session -&gt; session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
+            .authorizeHttpRequests(auth -&gt; auth
+                    .requestMatchers(&quot;/api/auth/**&quot;).permitAll()
+                    .requestMatchers(HttpMethod.GET, &quot;/categories/**&quot;, &quot;/api/categories/**&quot;).permitAll()
+                    .requestMatchers(
+                            &quot;/products/**&quot;,
+                            &quot;/api/products/**&quot;,
+                            &quot;/api/images/**&quot;,
+                            &quot;/images/**&quot;,
+                            &quot;/api/user/me&quot;,
+                            &quot;/api/home-dashboard/**&quot;
+                    ).permitAll()
+                    .requestMatchers(&quot;/api/admin/**&quot;).hasRole(&quot;ADMIN&quot;)
+                    .requestMatchers(HttpMethod.PUT, &quot;/api/orders/**/status&quot;).hasRole(&quot;ADMIN&quot;)
+                    .requestMatchers(HttpMethod.PATCH, &quot;/api/orders/**/status&quot;).hasRole(&quot;ADMIN&quot;)
+                    .requestMatchers(&quot;/api/orders/**&quot;).authenticated()
+                    .anyRequest().authenticated()
+            )
+            .exceptionHandling(ex -&gt; ex
+                    .authenticationEntryPoint((request, response, authException) -&gt;
+                            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, &quot;Unauthorized&quot;)
+                    )
+                    .accessDeniedHandler((request, response, accessDeniedException) -&gt;
+                            response.sendError(HttpServletResponse.SC_FORBIDDEN, &quot;Forbidden&quot;)
+                    )
+            )
+            .authenticationProvider(authenticationProvider());
+
+    return http.build();
+}
+</code></pre>
+<p>Why it matters:</p>
+<ul>
+<li><code>permitAll()</code> opens auth and public read endpoints,</li>
+<li><code>hasRole(&quot;ADMIN&quot;)</code> protects admin-only APIs,</li>
+<li><code>authenticated()</code> ensures only logged-in users can access order-related endpoints,</li>
+<li>custom handlers return clean 401/403 responses.</li>
+</ul>
+<p>The authentication provider is configured as:</p>
+<pre><code>
+@Bean
+public DaoAuthenticationProvider authenticationProvider() {
+    DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
+    provider.setUserDetailsService(userDetailsService);
+    provider.setPasswordEncoder(passwordEncoder());
+    return provider;
+}
+</code></pre>
+<p>This links Spring Security to the database-backed user lookup and password hashing.</p>
+<h3><code>CustomUserDetailsService.java</code></h3>
+<p>This service loads a <code>User</code> entity from the database and converts it into Spring Security credentials.</p>
+<p>Example:</p>
+<pre><code>
+@Override
+public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+    User user = userRepository.findByUsername(username)
+            .orElseThrow(() -&gt; new UsernameNotFoundException(&quot;User not found&quot;));
+
+    String roleName = user.getRole().name();
+    String finalAuthority = roleName.startsWith(&quot;ROLE_&quot;) ? roleName : &quot;ROLE_&quot; + roleName;
+
+    return new UserPrincipal(
+            user.getId(),
+            user.getUsername(),
+            user.getPassword(),
+            List.of(new SimpleGrantedAuthority(finalAuthority))
+    );
+}
+</code></pre>
+<p>Why it exists:</p>
+<ul>
+<li>Spring Security needs a <code>UserDetails</code> object to authenticate and authorize users,</li>
+<li>this class bridges the domain <code>User</code> entity with Spring Security,</li>
+<li>it also normalizes roles to a <code>ROLE_</code> authority format.</li>
+</ul>
+<h3><code>UserPrincipal.java</code></h3>
+<p>This class is the authenticated user principal stored in the security context.</p>
+<p>Example:</p>
+<pre><code>
+public class UserPrincipal implements UserDetails, Serializable {
+    private final Long id;
+    private final String username;
+    private final String password;
+    private final Collection&lt;? extends GrantedAuthority&gt; authorities;
+
+    public UserPrincipal(Long id, String username, String password, Collection&lt;? extends GrantedAuthority&gt; authorities) {
+        this.id = id;
+        this.username = username;
+        this.password = password;
+        this.authorities = authorities;
+    }
+
+    @Override
+    public Collection&lt;? extends GrantedAuthority&gt; getAuthorities() {
+        return authorities;
+    }
+
+    @Override
+    public String getPassword() {
+        return password;
+    }
+
+    @Override
+    public String getUsername() {
+        return username;
+    }
+
+    @Override
+    public boolean isAccountNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return true;
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return true;
+    }
+}
+</code></pre>
+<p>Why it matters:</p>
+<ul>
+<li>it is immutable and safe to store in the security context,</li>
+<li>it avoids serializing JPA entities directly,</li>
+<li>it carries the internal user ID for later audit and authorization checks.</li>
+</ul>
+<h3><code>AuthController.java</code></h3>
+<p>This controller implements login, registration, and logout flows for the frontend.</p>
+<p>Login example:</p>
+<pre><code>
+@PostMapping(&quot;/login&quot;)
+public ResponseEntity&lt;?&gt; login(@RequestBody LoginRequest request, HttpServletRequest httpRequest, HttpServletResponse httpResponse) {
+    Authentication authentication = authenticationManager.authenticate(
+            new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
+    );
+
+    var context = SecurityContextHolder.createEmptyContext();
+    context.setAuthentication(authentication);
+    SecurityContextHolder.setContext(context);
+    securityContextRepository.saveContext(context, httpRequest, httpResponse);
+
+    User user = userService.findByUsername(request.getUsername()).orElseThrow();
+    return ResponseEntity.ok(Map.of(
+            &quot;id&quot;, user.getId(),
+            &quot;username&quot;, user.getUsername(),
+            &quot;role&quot;, user.getRole()
+    ));
+}
+</code></pre>
+<p>Why it matters:</p>
+<ul>
+<li>it authenticates credentials using <code>AuthenticationManager</code>,</li>
+<li>it stores the authenticated security context in the HTTP session,</li>
+<li>it returns the logged-in user&#39;s ID, username, and role to the frontend.</li>
+</ul>
+<p>Registration example:</p>
+<pre><code>
+@PostMapping(&quot;/register&quot;)
+public ResponseEntity&lt;?&gt; register(@RequestBody RegisterRequest request) {
+    if (userService.findByUsername(request.getUsername()).isPresent()) {
+        return ResponseEntity.badRequest().body(&quot;Username already exists&quot;);
+    }
+    if (userService.findByEmail(request.getEmail()).isPresent()) {
+        return ResponseEntity.badRequest().body(&quot;Email already exists&quot;);
+    }
+    User user = userService.registerUser(request.getUsername(), request.getEmail(), request.getPassword());
+    return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
+            &quot;id&quot;, user.getId(),
+            &quot;username&quot;, user.getUsername(),
+            &quot;role&quot;, user.getRole()
+    ));
+}
+</code></pre>
+<p>Logout example:</p>
+<pre><code>
+@PostMapping(&quot;/logout&quot;)
+public ResponseEntity&lt;String&gt; logout(HttpServletRequest request) {
+    SecurityContextHolder.clearContext();
+    HttpSession session = request.getSession(false);
+    if (session != null) {
+        session.invalidate();
+    }
+    return ResponseEntity.ok(&quot;Logged out successfully&quot;);
+}
+</code></pre>
+<p>Why these flows matter:</p>
+<ul>
+<li>login creates a session and issues <code>JSESSIONID</code>,</li>
+<li>registration prevents duplicate usernames or emails,</li>
+<li>logout clears session state so the user is effectively signed out.</li>
+</ul>
+<h2>Security patterns</h2>
+<ul>
+<li>Uses session-based authentication with HTTP session state.</li>
+<li>Stores authorities as <code>ROLE_...</code> values so Spring Security <code>hasRole(...)</code> works correctly.</li>
+<li>Permits frontend access from <code>http://localhost:5173</code> using CORS.</li>
+<li>Disables CSRF because the backend is consumed as a JSON API and uses explicit session cookies.</li>
+</ul>
+<h2>Beginner reading path</h2>
+<ul>
+<li>Start with <code>AuthController.java</code> to understand login and logout endpoints.</li>
+<li>Read <code>SecurityConfig.java</code> to learn how routes are protected.</li>
+<li>Inspect <code>CustomUserDetailsService.java</code> to see how the database user is converted to security credentials.</li>
+<li>Inspect <code>UserPrincipal.java</code> to see how authenticated identity is stored.</li>
+</ul>
+<h2>Why auth matters</h2>
+<ul>
+<li>authentication protects user data and actions,</li>
+<li>authorization ensures admin-only operations stay restricted,</li>
+<li>session handling supports browser-based workflows without JWT complexity.</li>
+</ul>
+    </article>
+  </main>
+</div>
+<script src="script.js"></script>
+</body>
+</html>

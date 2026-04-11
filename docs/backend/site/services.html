@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Backend Services | Backend Docs</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body data-page="services">
+<div class="page-shell">
+  <aside class="sidebar">
+    <h2>Backend docs</h2>
+    <input id="nav-search" class="nav-search" type="search" placeholder="Filter pages...">
+    <ul class="nav-list">
+      <li><a href="audit-exception.html" data-page="audit-exception">Backend Audit and Error Handling</a></li>
+<li><a href="configuration.html" data-page="configuration">Backend Configuration</a></li>
+<li><a href="controllers.html" data-page="controllers">Backend Controllers</a></li>
+<li><a href="database-and-migrations.html" data-page="database-and-migrations">Backend Database and Migrations</a></li>
+<li><a href="index.html" data-page="index">Backend Documentation</a></li>
+<li><a href="models.html" data-page="models">Backend Models</a></li>
+<li><a href="overview.html" data-page="overview">Backend Overview</a></li>
+<li><a href="repositories.html" data-page="repositories">Backend Repositories</a></li>
+<li><a href="security-and-auth.html" data-page="security-and-auth">Backend Security and Authentication</a></li>
+<li><a href="services.html" data-page="services">Backend Services</a></li>
+    </ul>
+    <div class="footer">Documentation generated from markdown for easy reading.</div>
+  </aside>
+  <main class="main-content">
+    <div class="page-header">
+      <div>
+        <h1>Backend Services</h1>
+        <p class="page-description">The `service` package contains the backend business logic. Controllers call services to validate input, orchestrate repositories, calculate values, and build DTOs.</p>
+      </div>
+    </div>
+    <article class="content-block">
+      <h1>Backend Services</h1>
+<p>The <code>service</code> package contains the backend business logic. Controllers call services to validate input, orchestrate repositories, calculate values, and build DTOs.</p>
+<h2>UserService.java</h2>
+<p><code>UserService</code> centralizes user creation, lookup, and password handling.</p>
+<p>Example:</p>
+<pre><code>
+public User registerUser(String username, String email, String password) {
+    User user = new User();
+    user.setUsername(username);
+    user.setEmail(email);
+    user.setPassword(passwordEncoder.encode(password));
+    user.setRole(Role.ROLE_USER);
+    return userRepository.save(user);
+}
+</code></pre>
+<p>Why this matters:</p>
+<ul>
+<li>Password encoding is done here, not in the controller.</li>
+<li>The service sets the default user role.</li>
+<li><code>findByUsername</code> and <code>findByEmail</code> are simple repository delegations used by auth flows.</li>
+</ul>
+<h2>CartService.java</h2>
+<p><code>CartService</code> manages cart creation, merging, updates, and summary calculation.</p>
+<p>Example: get or create cart</p>
+<pre><code>
+public Cart getOrCreateCart(Long userId) {
+    Cart cart = cartRepository.findByUserId(userId)
+            .orElseGet(() -&gt; {
+                User user = userRepository.findById(userId)
+                        .orElseThrow(() -&gt; new RuntimeException(&quot;User not found&quot;));
+                Cart c = new Cart();
+                c.setUser(user);
+                c.setItems(new ArrayList&lt;&gt;());
+                return cartRepository.save(c);
+            });
+
+    if (cart.getItems() == null) {
+        cart.setItems(new ArrayList&lt;&gt;());
+    }
+    return cart;
+}
+</code></pre>
+<p>Example: add item to cart</p>
+<pre><code>
+public Cart addItem(Long userId, Long variantId, Integer quantity) {
+    Cart cart = getOrCreateCart(userId);
+    ProductVariant variant = productVariantRepository.findById(variantId)
+            .orElseThrow(() -&gt; new RuntimeException(&quot;Variant not found&quot;));
+    int qty = quantity != null &amp;&amp; quantity &gt; 0 ? quantity : 1;
+    Optional&lt;CartItem&gt; existing = cart.getItems().stream()
+            .filter(i -&gt; i.getProductVariant().getId().equals(variantId))
+            .findFirst();
+    if (existing.isPresent()) {
+        existing.get().setQuantity(existing.get().getQuantity() + qty);
+    } else {
+        CartItem item = new CartItem();
+        item.setCart(cart);
+        item.setProductVariant(variant);
+        item.setQuantity(qty);
+        cart.getItems().add(item);
+    }
+    return cartRepository.save(cart);
+}
+</code></pre>
+<p>Example: calculate summary</p>
+<pre><code>
+@Transactional(readOnly = true)
+public CartSummaryResponse getSummary(Long userId) {
+    Cart cart = getOrCreateCart(userId);
+    BigDecimal total = BigDecimal.ZERO;
+    int count = 0;
+    for (CartItem item : cart.getItems()) {
+        total = total.add(item.getProductVariant().getPrice()
+                .multiply(BigDecimal.valueOf(item.getQuantity())));
+        count += item.getQuantity();
+    }
+    return new CartSummaryResponse(count, total);
+}
+</code></pre>
+<p>Why this matters:</p>
+<ul>
+<li>Business rules like quantity merging and cart initialization stay in the service.</li>
+<li>DTO conversion is separate from controller logic.</li>
+<li>Transactions ensure multi-step cart updates are atomic.</li>
+</ul>
+<h2>ProductService.java</h2>
+<p><code>ProductService</code> exposes shopping product behavior and catalog queries.</p>
+<p>Example: paged user products</p>
+<pre><code>
+public Page&lt;UserProductDTO&gt; getUserProducts(Pageable pageable) {
+    Page&lt;ProductVariant&gt; page = productVariantRepository.findActiveVariants(pageable);
+    return page.map(productMapper::toUserProductDTO);
+}
+</code></pre>
+<p>Example: recommended products</p>
+<pre><code>
+public List&lt;UserProductDTO&gt; getRecommendations(Long productId, Long userId) {
+    ProductMaster product = productMasterRepository.findById(productId)
+            .orElseThrow(() -&gt; new RuntimeException(&quot;Product not found&quot;));
+    List&lt;ProductMaster&gt; sameCategoryProducts = productMasterRepository.findByCategoryId(product.getCategory().getId());
+    Set&lt;Long&gt; productsInCart = cartRepository.findByUserId(userId)
+            .map(Cart::getItems)
+            .orElse(Collections.emptyList())
+            .stream()
+            .map(item -&gt; item.getProductVariant().getProductMaster().getId())
+            .collect(Collectors.toSet());
+    return sameCategoryProducts.stream()
+            .filter(pm -&gt; !pm.getId().equals(productId))
+            .filter(pm -&gt; !productsInCart.contains(pm.getId()))
+            .filter(pm -&gt; pm.getIs_active() != null &amp;&amp; pm.getIs_active())
+            .flatMap(pm -&gt; pm.getVariants().stream())
+            .limit(5)
+            .map(productMapper::toUserProductDTO)
+            .collect(Collectors.toList());
+}
+</code></pre>
+<p>Why this matters:</p>
+<ul>
+<li>Shows how product browsing and recommendation logic live in services.</li>
+<li>Demonstrates DTO mapping from entities.</li>
+<li>Separates query orchestration from controller request handling.</li>
+</ul>
+<h2>OrderCreateService.java</h2>
+<p><code>OrderCreateService</code> handles checkout and cart-to-order conversion.</p>
+<p>Example: create order safely</p>
+<pre><code>
+@Transactional
+public OrderCreateResponse createOrderSafely(Long userId, String couponCode) {
+    Cart cart = cartRepository.findByUserId(userId)
+            .orElseThrow(() -&gt; new OrderCreateException(OrderCreateErrorCode.EMPTY_CART, &quot;Cart is empty&quot;));
+    User user = userRepository.findById(userId)
+            .orElseThrow(() -&gt; new RuntimeException(&quot;User not found&quot;));
+    Order order = new Order();
+    order.setUser(user);
+    order.setStatus(OrderStatus.CREATED);
+    order.setCreatedAt(LocalDateTime.now());
+    order.setSubtotalAmount(BigDecimal.ZERO);
+    order.setDiscountAmount(BigDecimal.ZERO);
+    order.setTotalAmount(BigDecimal.ZERO);
+
+    BigDecimal subtotal = BigDecimal.ZERO;
+    for (CartItem cartItem : cart.getItems()) {
+        ProductVariant variant = productVariantRepository.findById(cartItem.getProductVariant().getId())
+                .orElseThrow(() -&gt; new RuntimeException(&quot;Variant not found&quot;));
+        if (variant.getStock() == null || variant.getStock() &lt; cartItem.getQuantity()) {
+            throw new OrderCreateException(OrderCreateErrorCode.OUT_OF_STOCK, &quot;Out of stock for variantId=&quot; + variant.getId());
+        }
+        BigDecimal lineTotal = variant.getPrice().multiply(BigDecimal.valueOf(cartItem.getQuantity()));
+        OrderItem orderItem = new OrderItem();
+        orderItem.setVariant(variant);
+        orderItem.setProductId(variant.getProductMaster().getId());
+        orderItem.setProductName(variant.getProductMaster().getName());
+        orderItem.setVariantName(variant.getVariantName());
+        orderItem.setQuantity(cartItem.getQuantity());
+        orderItem.setPrice(variant.getPrice());
+        orderItem.setSubtotal(lineTotal);
+        order.addOrderItem(orderItem);
+        subtotal = subtotal.add(lineTotal);
+    }
+    order.setSubtotalAmount(subtotal);
+    BigDecimal discountAmount = BigDecimal.ZERO;
+    if (couponCode != null &amp;&amp; !couponCode.isBlank()) {
+        CouponService.CouponApplication applied = couponService.applyAndConsume(couponCode, subtotal);
+        order.setCoupon(applied.coupon());
+        discountAmount = applied.discountAmount();
+    }
+    order.setDiscountAmount(discountAmount);
+    order.setTotalAmount(subtotal.subtract(discountAmount).max(BigDecimal.ZERO));
+    Order saved = orderRepository.save(order);
+    return OrderCreateResponse.builder()
+            .orderId(saved.getId())
+            .subtotalAmount(saved.getSubtotalAmount())
+            .discountAmount(saved.getDiscountAmount())
+            .totalAmount(saved.getTotalAmount())
+            .couponCode(saved.getCoupon() != null ? saved.getCoupon().getCode() : null)
+            .status(saved.getStatus())
+            .build();
+}
+</code></pre>
+<p>Why this matters:</p>
+<ul>
+<li>Complex checkout validation is centralized in one service.</li>
+<li>It loads fresh product pricing before creating line items.</li>
+<li>It applies coupon logic through <code>CouponService</code>.</li>
+</ul>
+<h2>OrderService.java</h2>
+<p><code>OrderService</code> manages order lifecycle events and stock adjustments.</p>
+<p>Example: update order status</p>
+<pre><code>
+@Transactional
+public Order updateOrderStatus(Long orderId, OrderStatus newStatus) {
+    Order order = orderRepository.findById(orderId)
+            .orElseThrow(() -&gt; new RuntimeException(&quot;Order not found&quot;));
+    OrderStatus oldStatus = order.getStatus();
+    if (oldStatus == newStatus) {
+        return order;
+    }
+    OrderStatusValidator.validate(oldStatus, newStatus);
+    if (newStatus == OrderStatus.CONFIRMED &amp;&amp; oldStatus != OrderStatus.CONFIRMED) {
+        reduceStockForOrder(order);
+    } else if (newStatus == OrderStatus.CANCELLED &amp;&amp; (oldStatus == OrderStatus.CONFIRMED || oldStatus == OrderStatus.SHIPPED)) {
+        restoreStockForOrder(order);
+    }
+    order.setStatus(newStatus);
+    return orderRepository.save(order);
+}
+</code></pre>
+<p>Example: reduce stock for order</p>
+<pre><code>
+private void reduceStockForOrder(Order order) {
+    for (OrderItem item : order.getOrderItems()) {
+        ProductVariant variant = item.getVariant();
+        int before = variant.getStock();
+        int after = before - item.getQuantity();
+        variant.setStock(after);
+        productVariantRepository.save(variant);
+        inventoryTransactionService.record(
+                InventoryTransactionType.ORDER_CONFIRMED,
+                variant.getId(),
+                order.getId(),
+                -item.getQuantity(),
+                before,
+                after,
+                null
+        );
+    }
+}
+</code></pre>
+<p>Why this matters:</p>
+<ul>
+<li>Order state transitions have business rules and audit hooks.</li>
+<li>Stock reduction and restoration are done in the service layer.</li>
+<li>The service keeps order lifecycle behavior separate from controllers.</li>
+</ul>
+<h2>CategoryService.java</h2>
+<p><code>CategoryService</code> keeps category management simple.</p>
+<p>Example: save category with admin audit</p>
+<pre><code>
+@AdminAuditMutation(
+        entity = &quot;Category&quot;,
+        entityClass = Category.class,
+        entityIdBefore = &quot;#category.id&quot;,
+        entityIdAfter = &quot;#result.id&quot;,
+        operation = AdminAuditMutation.Operation.UPDATE
+)
+public Category saveCategory(Category category) {
+    return categoryRepository.save(category);
+}
+</code></pre>
+<p>Why this matters:</p>
+<ul>
+<li>Admin audit annotations are applied in the service.</li>
+<li>The service hides repository details from controllers.</li>
+</ul>
+<h2>InventoryService.java</h2>
+<p><code>InventoryService</code> manages stock reads and adjustments.</p>
+<p>Example: adjust stock and record a transaction</p>
+<pre><code>
+@Transactional
+@AdminAuditMutation(
+        entity = &quot;ProductVariant&quot;,
+        entityClass = ProductVariant.class,
+        entityIdBefore = &quot;#variantId&quot;,
+        entityIdAfter = &quot;#variantId&quot;,
+        operation = AdminAuditMutation.Operation.UPDATE
+)
+public InventoryResponse adjustVariantInventory(Long variantId, InventoryAdjustRequest request) {
+    ProductVariant variant = findVariantOrThrow(variantId);
+    int currentStock = variant.getStock() != null ? variant.getStock() : 0;
+    long newStockLong = (long) currentStock + request.getDelta();
+    if (newStockLong &lt; 0) {
+        throw new IllegalStateException(&quot;Insufficient stock: current=&quot; + currentStock + &quot;, delta=&quot; + request.getDelta());
+    }
+    variant.setStock((int) newStockLong);
+    ProductVariant saved = productVariantRepository.save(variant);
+    inventoryTransactionService.record(
+            InventoryTransactionType.ADMIN_ADJUSTMENT,
+            saved.getId(),
+            null,
+            request.getDelta(),
+            currentStock,
+            saved.getStock(),
+            null
+    );
+    return new InventoryResponse(saved.getId(), saved.getStock());
+}
+</code></pre>
+<p>Why this matters:</p>
+<ul>
+<li>It validates stock changes before persisting them.</li>
+<li>It records inventory transactions for audit and traceability.</li>
+</ul>
+<h2>InventoryTransactionService.java</h2>
+<p><code>InventoryTransactionService</code> writes inventory audit records.</p>
+<p>Example:</p>
+<pre><code>
+public void record(InventoryTransactionType type, Long variantId, Long orderId, int delta, int stockBefore, int stockAfter, String reason) {
+    InventoryTransaction tx = new InventoryTransaction();
+    tx.setType(type);
+    tx.setVariantId(variantId);
+    tx.setOrderId(orderId);
+    tx.setDelta(delta);
+    tx.setStockBefore(stockBefore);
+    tx.setStockAfter(stockAfter);
+    tx.setReason(reason);
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    if (authentication != null) {
+        tx.setActorUsername(authentication.getName());
+        if (authentication.getPrincipal() instanceof UserPrincipal up) {
+            tx.setActorUserId(up.getId());
+        }
+    }
+    inventoryTransactionRepository.save(tx);
+}
+</code></pre>
+<p>Why this matters:</p>
+<ul>
+<li>It captures the current user from Spring Security.</li>
+<li>It centralizes inventory audit persistence.</li>
+</ul>
+<h2>CouponService.java</h2>
+<p><code>CouponService</code> checks coupon validity and consumption.</p>
+<p>Example: apply and consume coupon</p>
+<pre><code>
+@Transactional
+public CouponApplication applyAndConsume(String code, BigDecimal subtotal) {
+    Coupon coupon = getByCodeOrThrow(code);
+    if (!Boolean.TRUE.equals(coupon.getIs_active())) {
+        throw new IllegalStateException(&quot;Coupon is inactive&quot;);
+    }
+    if (coupon.getExpiresAt() != null &amp;&amp; coupon.getExpiresAt().isBefore(LocalDateTime.now())) {
+        throw new IllegalStateException(&quot;Coupon has expired&quot;);
+    }
+    BigDecimal discount = subtotal.multiply(BigDecimal.valueOf(coupon.getPercentOff()))
+            .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+    int updated = couponRepository.incrementTimesUsedIfAvailable(coupon.getId());
+    if (updated != 1) {
+        throw new IllegalStateException(&quot;Coupon usage limit reached&quot;);
+    }
+    return new CouponApplication(coupon, discount);
+}
+</code></pre>
+<p>Why this matters:</p>
+<ul>
+<li>Coupon validation is isolated from controller logic.</li>
+<li>The service handles expiration, activity, and usage limits.</li>
+</ul>
+<h2>HomeDashboardService.java</h2>
+<p><code>HomeDashboardService</code> composes read models for the home dashboard.</p>
+<p>Example: build dashboard DTO</p>
+<pre><code>
+public HomeDashboardDTO getDashboard(Long userId) {
+    return new HomeDashboardDTO(
+            monthlyStock(userId),
+            buyAgainTop3(userId),
+            lowStock(userId)
+    );
+}
+</code></pre>
+<p>Example: use repository projections</p>
+<pre><code>
+public List&lt;BuyAgainDTO&gt; buyAgainTop3(Long userId) {
+    List&lt;BuyAgainProjection&gt; rows = homeDashboardRepository.findTop3BuyAgain(userId);
+    return rows.stream()
+            .map(r -&gt; new BuyAgainDTO(r.getProductVariantId(), r.getOrderCount(), r.getLastOrderedAt()))
+            .toList();
+}
+</code></pre>
+<p>Why this matters:</p>
+<ul>
+<li>It maps repository projections into UI DTOs.</li>
+<li>It keeps dashboard aggregation logic in one place.</li>
+<li>Injecting <code>Clock</code> makes time-based behavior testable.</li>
+</ul>
+<h2>AdminProductService.java</h2>
+<p><code>AdminProductService</code> demonstrates a typical admin service with creation, update, and audit annotations.</p>
+<p>Example: create a product</p>
+<pre><code>
+@Transactional
+@AdminAuditMutation(
+        entity = &quot;ProductMaster&quot;,
+        entityClass = ProductMaster.class,
+        entityIdAfter = &quot;#result&quot;,
+        operation = AdminAuditMutation.Operation.CREATE
+)
+public Long createProduct(ProductCreateRequest request) {
+    Category category = findCategoryOrThrow(request.getCategoryId());
+    ProductMaster product = new ProductMaster();
+    product.setName(request.getName());
+    product.setSlug(request.getSlug());
+    product.setDescription(request.getDescription());
+    product.setImageUrl(request.getImageUrl());
+    product.setIs_active(request.getActive() != null ? request.getActive() : true);
+    product.setLowStockThreshold(request.getLowStockThreshold());
+    product.setCategory(category);
+    return productMasterRepository.save(product).getId();
+}
+</code></pre>
+<p>Why this matters:</p>
+<ul>
+<li>It shows admin-specific creation logic.</li>
+<li>Audit metadata is attached at the service layer.</li>
+<li>Service methods validate request payloads and relationships.</li>
+</ul>
+<h2>Why services matter</h2>
+<ul>
+<li>Services implement domain rules, not controllers.</li>
+<li>They provide transactional boundaries.</li>
+<li>They combine repository data into business outputs.</li>
+<li>They make testing easier by isolating business logic.</li>
+</ul>
+<h2>Practical notes for beginners</h2>
+<ul>
+<li>Keep controllers thin: controllers should call services, not perform business logic.</li>
+<li>Use services to coordinate multiple repositories and DTO construction.</li>
+<li>Put validation, calculation, and auditing in services.</li>
+<li>Keep entity mapping in mapper classes so services remain readable.</li>
+</ul>
+    </article>
+  </main>
+</div>
+<script src="script.js"></script>
+</body>
+</html>

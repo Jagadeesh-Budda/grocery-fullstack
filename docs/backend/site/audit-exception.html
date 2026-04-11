@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Backend Audit and Error Handling | Backend Docs</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body data-page="audit-exception">
+<div class="page-shell">
+  <aside class="sidebar">
+    <h2>Backend docs</h2>
+    <input id="nav-search" class="nav-search" type="search" placeholder="Filter pages...">
+    <ul class="nav-list">
+      <li><a href="audit-exception.html" data-page="audit-exception">Backend Audit and Error Handling</a></li>
+<li><a href="configuration.html" data-page="configuration">Backend Configuration</a></li>
+<li><a href="controllers.html" data-page="controllers">Backend Controllers</a></li>
+<li><a href="database-and-migrations.html" data-page="database-and-migrations">Backend Database and Migrations</a></li>
+<li><a href="index.html" data-page="index">Backend Documentation</a></li>
+<li><a href="models.html" data-page="models">Backend Models</a></li>
+<li><a href="overview.html" data-page="overview">Backend Overview</a></li>
+<li><a href="repositories.html" data-page="repositories">Backend Repositories</a></li>
+<li><a href="security-and-auth.html" data-page="security-and-auth">Backend Security and Authentication</a></li>
+<li><a href="services.html" data-page="services">Backend Services</a></li>
+    </ul>
+    <div class="footer">Documentation generated from markdown for easy reading.</div>
+  </aside>
+  <main class="main-content">
+    <div class="page-header">
+      <div>
+        <h1>Backend Audit and Error Handling</h1>
+        <p class="page-description">This section explains the audit support and exception handling implementation in the backend.</p>
+      </div>
+    </div>
+    <article class="content-block">
+      <h1>Backend Audit and Error Handling</h1>
+<p>This section explains the audit support and exception handling implementation in the backend.</p>
+<h2>Audit support</h2>
+<p>The audit system is built around admin mutation tracing. It captures before/after snapshots for audited entities and stores them in the <code>audit_log</code> table.</p>
+<h3><code>AuditLog.java</code></h3>
+<p><code>AuditLog</code> is the JPA entity that stores audit records.</p>
+<pre><code>
+@Entity
+@Table(name = &quot;audit_log&quot;)
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+public class AuditLog {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @CreationTimestamp
+    @Column(name = &quot;created_at&quot;, nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    @Column(name = &quot;actor_username&quot;)
+    private String actorUsername;
+
+    @Column(name = &quot;actor_user_id&quot;)
+    private Long actorUserId;
+
+    @Column(name = &quot;entity&quot;, nullable = false, length = 100)
+    private String entity;
+
+    @Column(name = &quot;entity_id&quot;, nullable = false, length = 64)
+    private String entityId;
+
+    @Column(name = &quot;before_json&quot;, length = 100000)
+    private String beforeJson;
+
+    @Column(name = &quot;after_json&quot;, length = 100000)
+    private String afterJson;
+}
+</code></pre>
+<p>Why it exists:</p>
+<ul>
+<li>stores who changed what and when,</li>
+<li>keeps before/after snapshots for audit review,</li>
+<li>decouples audit history from business entities.</li>
+</ul>
+<h3><code>AdminAuditAspect.java</code></h3>
+<p>This aspect intercepts methods annotated with <code>@AdminAuditMutation</code> and writes audit logs for admin actions.</p>
+<pre><code>
+@Around(&quot;@annotation(com.example.groceries.audit.AdminAuditMutation)&quot;)
+public Object auditMutation(ProceedingJoinPoint pjp) throws Throwable {
+    Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+    if (!isAdmin(auth)) {
+        return pjp.proceed();
+    }
+
+    MethodSignature sig = (MethodSignature) pjp.getSignature();
+    Method method = sig.getMethod();
+    AdminAuditMutation ann = method.getAnnotation(AdminAuditMutation.class);
+
+    Object idBefore = evalSpel(ann.entityIdBefore(), sig.getParameterNames(), args, null);
+    String beforeJson = ...;
+    Object result = pjp.proceed();
+    Object idAfter = evalSpel(ann.entityIdAfter(), sig.getParameterNames(), args, result);
+    String afterJson = ...;
+
+    auditLogService.record(...);
+    return result;
+}
+</code></pre>
+<p>Why it exists:</p>
+<ul>
+<li>separates audit behavior from business logic,</li>
+<li>automatically audits admin methods without manual log calls,</li>
+<li>prevents audit failures from breaking the main operation.</li>
+</ul>
+<p>Key behavior:</p>
+<ul>
+<li>only admins are audited (<code>isAdmin(auth)</code>),</li>
+<li>before/after snapshots are generated for non-create/delete operations,</li>
+<li>entity IDs can be extracted from method args or the returned result.</li>
+</ul>
+<h3><code>AdminAuditMutation.java</code></h3>
+<p>This annotation marks methods whose changes should be audited.</p>
+<pre><code>
+@Target(ElementType.METHOD)
+@Retention(RetentionPolicy.RUNTIME)
+@Documented
+public @interface AdminAuditMutation {
+    String entity();
+    Class&lt;?&gt; entityClass();
+    String entityIdBefore() default &quot;&quot;;
+    String entityIdAfter() default &quot;&quot;;
+    Operation operation();
+
+    enum Operation {
+        CREATE,
+        UPDATE,
+        DELETE
+    }
+}
+</code></pre>
+<p>Why it exists:</p>
+<ul>
+<li>declares audit metadata in one place,</li>
+<li>makes admin audit rules explicit and readable,</li>
+<li>supports SpEL expressions for flexible ID extraction.</li>
+</ul>
+<h3><code>AuditSnapshotter.java</code> and <code>AuditJson.java</code></h3>
+<p>These classes turn JPA entities into serializable snapshots.</p>
+<p><code>AuditSnapshotter</code> reads entity fields, skips collection relationships, and converts nested entity relationships into <code>fieldNameId</code> values.</p>
+<p><code>AuditJson</code> uses Jackson to produce stable JSON from the snapshot map.</p>
+<p>Why they exist:</p>
+<ul>
+<li>they create compact, readable audit records,</li>
+<li>they avoid loading full collections or lazy proxies,</li>
+<li>they store only the important state needed for review.</li>
+</ul>
+<h3><code>AdminAuditLogService.java</code></h3>
+<p>This service queries saved audit logs using dynamic filters and returns DTO pages.</p>
+<p>Why it exists:</p>
+<ul>
+<li>provides a dedicated layer for audit retrieval,</li>
+<li>hides query details from the controller,</li>
+<li>maps <code>AuditLog</code> entities to admin-friendly DTOs.</li>
+</ul>
+<h3><code>AdminAuditLogController.java</code></h3>
+<p>This controller exposes paged audit logs under <code>/api/admin/audit-logs</code>.</p>
+<p>Why it exists:</p>
+<ul>
+<li>lets administrators inspect audit history,</li>
+<li>supports filtering by entity, entityId, actor, and date range,</li>
+<li>is protected by admin-only security rules.</li>
+</ul>
+<h2>Exception handling</h2>
+<p>The backend uses a centralized <code>RestControllerAdvice</code> to convert exceptions into consistent HTTP responses.</p>
+<h3><code>GlobalExceptionHandler.java</code></h3>
+<p>The real handler covers validation, data integrity, order creation errors, not-found resources, illegal arguments, illegal state, and generic runtime failures.</p>
+<p>Example:</p>
+<pre><code>
+@ExceptionHandler(MethodArgumentNotValidException.class)
+public ResponseEntity&lt;Map&lt;String, Object&gt;&gt; handleMethodArgumentNotValid(MethodArgumentNotValidException ex) {
+    HttpStatus status = HttpStatus.BAD_REQUEST;
+    Map&lt;String, Object&gt; body = baseErrorBody(status, &quot;Validation failed&quot;);
+    Map&lt;String, String&gt; fieldErrors = new HashMap&lt;&gt;();
+    ex.getBindingResult().getFieldErrors()
+            .forEach(err -&gt; fieldErrors.put(err.getField(), err.getDefaultMessage()));
+    body.put(&quot;fieldErrors&quot;, fieldErrors);
+    return new ResponseEntity&lt;&gt;(body, status);
+}
+
+@ExceptionHandler(DataIntegrityViolationException.class)
+public ResponseEntity&lt;Map&lt;String, Object&gt;&gt; handleDataIntegrityViolation(DataIntegrityViolationException ex) {
+    String message = ex.getMostSpecificCause() != null ? ex.getMostSpecificCause().getMessage() : ex.getMessage();
+    if (message != null &amp;&amp; message.toLowerCase().contains(&quot;uq_products_slug&quot;)) {
+        return createErrorResponse(HttpStatus.CONFLICT, &quot;slug already exists&quot;);
+    }
+    return createErrorResponse(HttpStatus.CONFLICT, &quot;Data constraint violation&quot;);
+}
+
+@ExceptionHandler(OrderCreateException.class)
+public ResponseEntity&lt;Map&lt;String, Object&gt;&gt; handleOrderCreateException(OrderCreateException ex) {
+    HttpStatus status = switch (ex.getCode()) {
+        case EMPTY_CART -&gt; HttpStatus.BAD_REQUEST;
+        case OUT_OF_STOCK, PRICE_MISMATCH -&gt; HttpStatus.CONFLICT;
+    };
+    Map&lt;String, Object&gt; body = baseErrorBody(status, ex.getMessage());
+    body.put(&quot;code&quot;, ex.getCode().name());
+    return new ResponseEntity&lt;&gt;(body, status);
+}
+</code></pre>
+<p>Why this matters:</p>
+<ul>
+<li>clients receive consistent error JSON instead of stack traces,</li>
+<li>validation failures return field-specific messages,</li>
+<li>domain-specific errors such as order creation failures use proper HTTP status codes.</li>
+</ul>
+<h3>Custom exception classes</h3>
+<ul>
+<li><code>ResourceNotFoundException.java</code> — thrown when an entity is missing,</li>
+<li><code>OrderCreateException.java</code> — thrown for cart or order creation failures,</li>
+<li><code>OrderCreateErrorCode</code> — provides structured error codes such as <code>EMPTY_CART</code>, <code>OUT_OF_STOCK</code>, and <code>PRICE_MISMATCH</code>.</li>
+</ul>
+<h2>Why audit and exception handling matter</h2>
+<ul>
+<li>Audit logging provides accountability and an actionable change history.</li>
+<li>Centralized exception handling keeps controller code simple and API responses predictable.</li>
+<li>The design separates cross-cutting concerns from business logic, making maintenance easier.</li>
+</ul>
+    </article>
+  </main>
+</div>
+<script src="script.js"></script>
+</body>
+</html>

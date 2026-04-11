@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Backend Overview | Backend Docs</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body data-page="overview">
+<div class="page-shell">
+  <aside class="sidebar">
+    <h2>Backend docs</h2>
+    <input id="nav-search" class="nav-search" type="search" placeholder="Filter pages...">
+    <ul class="nav-list">
+      <li><a href="audit-exception.html" data-page="audit-exception">Backend Audit and Error Handling</a></li>
+<li><a href="configuration.html" data-page="configuration">Backend Configuration</a></li>
+<li><a href="controllers.html" data-page="controllers">Backend Controllers</a></li>
+<li><a href="database-and-migrations.html" data-page="database-and-migrations">Backend Database and Migrations</a></li>
+<li><a href="index.html" data-page="index">Backend Documentation</a></li>
+<li><a href="models.html" data-page="models">Backend Models</a></li>
+<li><a href="overview.html" data-page="overview">Backend Overview</a></li>
+<li><a href="repositories.html" data-page="repositories">Backend Repositories</a></li>
+<li><a href="security-and-auth.html" data-page="security-and-auth">Backend Security and Authentication</a></li>
+<li><a href="services.html" data-page="services">Backend Services</a></li>
+    </ul>
+    <div class="footer">Documentation generated from markdown for easy reading.</div>
+  </aside>
+  <main class="main-content">
+    <div class="page-header">
+      <div>
+        <h1>Backend Overview</h1>
+        <p class="page-description">The backend of this project lives in `springboot-groceries/` and is built with **Spring Boot** using **Java 21**.</p>
+      </div>
+    </div>
+    <article class="content-block">
+      <h1>Backend Overview</h1>
+<p>The backend of this project lives in <code>springboot-groceries/</code> and is built with <strong>Spring Boot</strong> using <strong>Java 21</strong>.</p>
+<h2>Purpose</h2>
+<p>This backend provides the API, business rules, security, database access, and server-side state for the grocery application.</p>
+<h2>Architecture</h2>
+<p>The backend follows a common Spring Boot layered architecture:</p>
+<ul>
+<li><code>controller/</code> — HTTP request handling and REST endpoints.</li>
+<li><code>service/</code> — business logic and orchestration.</li>
+<li><code>repository/</code> — database access with Spring Data JPA.</li>
+<li><code>model/</code> — domain entities and enums mapped to database tables.</li>
+<li><code>config/</code> — application configuration, security, timezone, and initialization.</li>
+<li><code>security/</code> — authentication and user principal handling.</li>
+<li><code>audit/</code> — auditing support for tracking changes.</li>
+<li><code>exception/</code> — custom error types and exception handling.</li>
+</ul>
+<h2>Why this structure?</h2>
+<ul>
+<li><strong>Separation of concerns</strong>: controllers only handle HTTP and request/response mapping while services implement business rules.</li>
+<li><strong>Testability</strong>: each layer can be tested independently.</li>
+<li><strong>Maintainability</strong>: modular packages make the code easier to understand and extend.</li>
+<li><strong>Scalability</strong>: the application can grow with more controllers, services, and repository logic without becoming tangled.</li>
+</ul>
+<h2>How the backend is built and run</h2>
+<ul>
+<li><code>springboot-groceries/pom.xml</code> defines dependencies and build plugins.</li>
+<li><code>springboot-groceries/Dockerfile</code> packages the compiled JAR into a container.</li>
+<li><code>springboot-groceries/src/main/resources/application.properties</code> configures database access, Flyway, JPA, logging, and server behavior.</li>
+</ul>
+<h2>Entry points</h2>
+<ul>
+<li><code>GroceryApplication.java</code> is the Spring Boot entry point.</li>
+<li><code>application.properties</code> is the main application configuration.</li>
+<li><code>pom.xml</code> defines dependencies and the build process.</li>
+<li><code>docker-compose.yml</code> in the project root starts the backend along with PostgreSQL and the frontend.</li>
+</ul>
+<h2>How a beginner should read this</h2>
+<ul>
+<li>Start with <code>GroceryApplication.java</code> to see how Spring Boot launches the app.</li>
+<li>Read <code>application.properties</code> to understand the database connection and JPA settings.</li>
+<li>Open <code>pom.xml</code> to see which Spring modules and libraries are included.</li>
+<li>Explore <code>controller/</code>, <code>service/</code>, and <code>repository/</code> in that order to follow the request flow.</li>
+</ul>
+<h3>Example: Spring Boot entry point</h3>
+<pre><code>
+@SpringBootApplication
+public class GroceryApplication {
+    public static void main(String[] args) {
+        TimeZone.setDefault(TimeZone.getTimeZone(&quot;Asia/Kolkata&quot;));
+        SpringApplication.run(GroceryApplication.class, args);
+    }
+}
+</code></pre>
+<p>Why this matters:</p>
+<ul>
+<li><code>@SpringBootApplication</code> tells Spring Boot to scan for components and start the embedded server.</li>
+<li><code>TimeZone.setDefault(...)</code> sets a consistent timezone for the whole JVM.</li>
+<li><code>SpringApplication.run(...)</code> starts the application and loads all configured beans.</li>
+</ul>
+    </article>
+  </main>
+</div>
+<script src="script.js"></script>
+</body>
+</html>

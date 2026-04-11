@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Backend Database and Migrations | Backend Docs</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body data-page="database-and-migrations">
+<div class="page-shell">
+  <aside class="sidebar">
+    <h2>Backend docs</h2>
+    <input id="nav-search" class="nav-search" type="search" placeholder="Filter pages...">
+    <ul class="nav-list">
+      <li><a href="audit-exception.html" data-page="audit-exception">Backend Audit and Error Handling</a></li>
+<li><a href="configuration.html" data-page="configuration">Backend Configuration</a></li>
+<li><a href="controllers.html" data-page="controllers">Backend Controllers</a></li>
+<li><a href="database-and-migrations.html" data-page="database-and-migrations">Backend Database and Migrations</a></li>
+<li><a href="index.html" data-page="index">Backend Documentation</a></li>
+<li><a href="models.html" data-page="models">Backend Models</a></li>
+<li><a href="overview.html" data-page="overview">Backend Overview</a></li>
+<li><a href="repositories.html" data-page="repositories">Backend Repositories</a></li>
+<li><a href="security-and-auth.html" data-page="security-and-auth">Backend Security and Authentication</a></li>
+<li><a href="services.html" data-page="services">Backend Services</a></li>
+    </ul>
+    <div class="footer">Documentation generated from markdown for easy reading.</div>
+  </aside>
+  <main class="main-content">
+    <div class="page-header">
+      <div>
+        <h1>Backend Database and Migrations</h1>
+        <p class="page-description">This backend uses **PostgreSQL** as its primary database and **Flyway** for schema migrations.</p>
+      </div>
+    </div>
+    <article class="content-block">
+      <h1>Backend Database and Migrations</h1>
+<p>This backend uses <strong>PostgreSQL</strong> as its primary database and <strong>Flyway</strong> for schema migrations.</p>
+<h2>Database configuration</h2>
+<h3><code>application.properties</code></h3>
+<ul>
+<li>Defines the database connection:</li>
+<li><code>spring.datasource.url</code></li>
+<li><code>spring.datasource.username</code></li>
+<li><code>spring.datasource.password</code></li>
+<li>Controls JPA and Hibernate settings such as SQL logging, DDL auto, and timezone handling.</li>
+<li>Enables Flyway migrations using <code>spring.flyway.locations</code>.</li>
+</ul>
+<p>Example configuration from <code>application.properties</code>:</p>
+<pre><code>
+spring.datasource.url=jdbc:postgresql://localhost:5432/groceriesdb
+spring.datasource.username=pguser
+spring.datasource.password=pgpass
+spring.jpa.database-platform=org.hibernate.dialect.PostgreSQLDialect
+spring.jpa.hibernate.ddl-auto=validate
+spring.flyway.enabled=true
+spring.flyway.locations=classpath:db/migration/common
+</code></pre>
+<p>This shows:</p>
+<ul>
+<li>the database connection details used in development,</li>
+<li>that Hibernate validates the schema rather than generating it,</li>
+<li>and that Flyway runs migration scripts from the classpath.</li>
+</ul>
+<h3><code>docker-compose.yml</code></h3>
+<ul>
+<li>Starts a PostgreSQL container on port <code>5432</code>.</li>
+<li>Uses the <code>pgdata</code> Docker volume for persistent storage.</li>
+<li>Provides environment variables for the backend database connection.</li>
+<li>Why it exists: to make local development environments reproducible and portable.</li>
+</ul>
+<h2>Flyway migration files</h2>
+<p>Flyway migration scripts are stored in:</p>
+<ul>
+<li><code>springboot-groceries/src/main/resources/db/migration/common/</code></li>
+</ul>
+<h3>Migration naming conventions</h3>
+<ul>
+<li><code>V1__...</code> through <code>V9__...</code> are versioned schema migrations.</li>
+<li><code>R__seed_...</code> scripts are repeatable seed data migrations.</li>
+</ul>
+<h3>What the migrations do</h3>
+<ul>
+<li><code>V1__baseline_schema.sql</code> — creates the initial database schema.</li>
+<li><code>V2__add_unique_products_name.sql</code> — adds unique constraints.</li>
+<li><code>V3__add_username_to_users.sql</code> — alters the user table.</li>
+<li><code>V4__add_slug_to_products.sql</code> — extends product metadata.</li>
+<li><code>V5__add_low_stock_threshold_to_products.sql</code> — adds stock threshold data.</li>
+<li><code>V6__create_inventory_transactions.sql</code> — creates inventory transaction history.</li>
+<li><code>V7__create_audit_log.sql</code> — creates audit log tables.</li>
+<li><code>V8__create_stores_and_inventory_by_store.sql</code> — adds store and inventory-per-store support.</li>
+<li><code>V9__create_coupons_and_order_coupon_fields.sql</code> — adds coupons and order coupon fields.</li>
+</ul>
+<p>Example SQL from <code>V1__baseline_schema.sql</code>:</p>
+<pre><code>
+CREATE TABLE users (
+    id BIGSERIAL PRIMARY KEY,
+    role VARCHAR(50) NOT NULL,
+    username VARCHAR(255) NOT NULL UNIQUE,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+</code></pre>
+<p>This code shows how Flyway creates a table that matches the <code>User</code> JPA entity. The migration file is the source of truth for schema creation, while JPA maps entities to this schema in Java.</p>
+<h3>Seed scripts</h3>
+<ul>
+<li><code>R__seed_carts.sql</code></li>
+<li><code>R__seed_categories.sql</code></li>
+<li><code>R__seed_product_images.sql</code></li>
+<li><code>R__seed_products.sql</code></li>
+<li><code>R__seed_users.sql</code></li>
+</ul>
+<p>Why they exist:</p>
+<ul>
+<li>Seed scripts load sample data automatically during development.</li>
+<li>Repeatable migrations can rerun as data changes without version conflicts.</li>
+</ul>
+<h2>How the code uses these migrations</h2>
+<ul>
+<li>Flyway runs these scripts automatically before the Spring Boot app starts.</li>
+<li>The backend does not need to create tables manually in code because the migrations define the schema.</li>
+<li>Beginner note: to add a new table, create a new <code>Vn__</code> migration file and update the corresponding JPA entity.</li>
+</ul>
+<h2>Practical development advice</h2>
+<ul>
+<li>If the app fails at startup with a database error, check the latest Flyway migration script first.</li>
+<li>If you want to change schema safely, add a new migration rather than editing old ones.</li>
+<li>Use <code>spring.flyway.baseline-on-migrate=true</code> only when you need to initialize Flyway against an existing database.</li>
+</ul>
+<h2>Why database and migrations matter</h2>
+<ul>
+<li>Flyway ensures the database schema can be recreated consistently.</li>
+<li>The backend can safely evolve schema changes while preserving data.</li>
+<li>Using PostgreSQL locally mirrors production-like behavior.</li>
+<li>Seed data helps frontend developers work with realistic sample data immediately.</li>
+</ul>
+    </article>
+  </main>
+</div>
+<script src="script.js"></script>
+</body>
+</html>

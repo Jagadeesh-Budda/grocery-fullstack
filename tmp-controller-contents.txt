@@ -1,0 +1,1255 @@
+---FILESTART--- AdminAuditLogController.java
+package com.example.groceries.controller;
+
+import com.example.groceries.controller.dto.audit.AdminAuditLogDTO;
+import com.example.groceries.service.AdminAuditLogService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDateTime;
+
+@RestController
+@RequestMapping("/api/admin/audit-logs")
+@RequiredArgsConstructor
+@CrossOrigin(origins = "http://localhost:5173", allowCredentials = "true")
+@Slf4j
+public class AdminAuditLogController {
+
+    private final AdminAuditLogService adminAuditLogService;
+
+    @GetMapping
+    public ResponseEntity<Page<AdminAuditLogDTO>> list(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) String entity,
+            @RequestParam(required = false) String entityId,
+            @RequestParam(required = false) String actor,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to,
+            Authentication authentication
+    ) {
+        int safeSize = Math.min(Math.max(size, 1), 200);
+        PageRequest pageable = PageRequest.of(Math.max(page, 0), safeSize, Sort.by(Sort.Direction.DESC, "createdAt"));
+
+        Page<AdminAuditLogDTO> result = adminAuditLogService.list(entity, entityId, actor, from, to, pageable);
+
+        log.info(
+                "AUDIT admin_audit_logs_list admin={} page={} size={} entity={} entityId={} actor={} from={} to={} count={} ",
+                authentication != null ? authentication.getName() : "anonymous",
+                page,
+                safeSize,
+                entity,
+                entityId,
+                actor,
+                from,
+                to,
+                result.getNumberOfElements()
+        );
+
+        return ResponseEntity.ok(result);
+    }
+}
+
+---FILESTART--- AdminCategoryController.java
+package com.example.groceries.controller;
+
+import com.example.groceries.model.Category;
+import com.example.groceries.service.CategoryService;
+import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/api/admin/categories")
+@RequiredArgsConstructor
+@CrossOrigin(origins = "http://localhost:5173", allowCredentials = "true")
+public class AdminCategoryController {
+
+    private static final Logger log = LoggerFactory.getLogger(AdminCategoryController.class);
+
+    private final CategoryService categoryService;
+
+    @PostMapping
+    public ResponseEntity<Category> create(@RequestBody Category category) {
+        Category saved = categoryService.saveCategory(category);
+        log.info("admin={} action=createCategory id={} name={}", currentUsername(), saved.getId(), saved.getName());
+        return ResponseEntity.ok(saved);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Category> update(@PathVariable Long id, @RequestBody Category updated) {
+        Category category = categoryService.getCategoryById(id);
+        if (category == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        category.setName(updated.getName());
+        category.setImageUrl(updated.getImageUrl());
+
+        Category saved = categoryService.saveCategory(category);
+        log.info("admin={} action=updateCategory id={} name={}", currentUsername(), saved.getId(), saved.getName());
+        return ResponseEntity.ok(saved);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
+        categoryService.deleteCategory(id);
+        log.info("admin={} action=deleteCategory id={}", currentUsername(), id);
+        return ResponseEntity.noContent().build();
+    }
+
+    private String currentUsername() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null) {
+            return "anonymous";
+        }
+        return authentication.getName();
+    }
+}
+
+---FILESTART--- AdminCouponController.java
+package com.example.groceries.controller;
+
+import com.example.groceries.controller.dto.coupon.AdminCouponDTO;
+import com.example.groceries.controller.dto.coupon.AdminCouponUpsertRequest;
+import com.example.groceries.model.Coupon;
+import com.example.groceries.service.AdminCouponService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/admin/coupons")
+@RequiredArgsConstructor
+@CrossOrigin(origins = "http://localhost:5173", allowCredentials = "true")
+public class AdminCouponController {
+
+    private static final Logger log = LoggerFactory.getLogger(AdminCouponController.class);
+
+    private final AdminCouponService adminCouponService;
+
+    @GetMapping
+    public ResponseEntity<List<AdminCouponDTO>> list(Authentication authentication) {
+        List<AdminCouponDTO> result = adminCouponService.list();
+        log.info(
+                "AUDIT admin_coupon_list admin={} count={}"
+                , authentication != null ? authentication.getName() : "anonymous"
+                , result != null ? result.size() : 0
+        );
+        return ResponseEntity.ok(result);
+    }
+
+    @GetMapping("/{couponId}")
+    public ResponseEntity<AdminCouponDTO> get(
+            @PathVariable long couponId,
+            Authentication authentication
+    ) {
+        AdminCouponDTO result = adminCouponService.get(couponId);
+        log.info(
+                "AUDIT admin_coupon_get admin={} couponId={}"
+                , authentication != null ? authentication.getName() : "anonymous"
+                , couponId
+        );
+        return ResponseEntity.ok(result);
+    }
+
+    @PostMapping
+    public ResponseEntity<AdminCouponDTO> create(
+            @Valid @RequestBody AdminCouponUpsertRequest request,
+            Authentication authentication
+    ) {
+        Coupon created = adminCouponService.create(request);
+        log.info(
+                "AUDIT admin_coupon_create admin={} couponId={} code={}"
+                , authentication != null ? authentication.getName() : "anonymous"
+                , created.getId()
+                , created.getCode()
+        );
+        return ResponseEntity.ok(adminCouponService.get(created.getId()));
+    }
+
+    @PutMapping("/{couponId}")
+    public ResponseEntity<AdminCouponDTO> update(
+            @PathVariable long couponId,
+            @Valid @RequestBody AdminCouponUpsertRequest request,
+            Authentication authentication
+    ) {
+        Coupon updated = adminCouponService.update(couponId, request);
+        log.info(
+                "AUDIT admin_coupon_update admin={} couponId={}"
+                , authentication != null ? authentication.getName() : "anonymous"
+                , updated.getId()
+        );
+        return ResponseEntity.ok(adminCouponService.get(updated.getId()));
+    }
+
+    @DeleteMapping("/{couponId}")
+    public ResponseEntity<Void> delete(
+            @PathVariable long couponId,
+            Authentication authentication
+    ) {
+        adminCouponService.delete(couponId);
+        log.info(
+                "AUDIT admin_coupon_delete admin={} couponId={}"
+                , authentication != null ? authentication.getName() : "anonymous"
+                , couponId
+        );
+        return ResponseEntity.noContent().build();
+    }
+}
+
+---FILESTART--- AdminDashboardController.java
+package com.example.groceries.controller;
+
+import com.example.groceries.controller.dto.DashboardStatsDTO;
+import com.example.groceries.service.DashboardService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/api/admin/dashboard")
+@RequiredArgsConstructor
+@CrossOrigin(origins = "http://localhost:5173", allowCredentials = "true")
+public class AdminDashboardController {
+
+    private final DashboardService dashboardService;
+
+    @GetMapping("/stats")
+    public DashboardStatsDTO getStats() {
+        return dashboardService.getDashboardStats();
+    }
+
+    @GetMapping("/test")
+    public String testAdmin() {
+        return "Admin access verified";
+    }
+}
+---FILESTART--- AdminInventoryController.java
+package com.example.groceries.controller;
+
+import com.example.groceries.controller.dto.inventory.AdminLowStockInventoryItemDTO;
+import com.example.groceries.service.AdminInventoryService;
+import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/admin/inventory")
+@RequiredArgsConstructor
+@CrossOrigin(origins = "http://localhost:5173", allowCredentials = "true")
+public class AdminInventoryController {
+
+    private static final Logger log = LoggerFactory.getLogger(AdminInventoryController.class);
+
+    private final AdminInventoryService adminInventoryService;
+
+    @GetMapping("/low-stock")
+    public ResponseEntity<List<AdminLowStockInventoryItemDTO>> lowStock(Authentication authentication) {
+        List<AdminLowStockInventoryItemDTO> result = adminInventoryService.lowStock();
+
+        log.info(
+                "AUDIT admin_inventory_low_stock admin={} count={}",
+                authentication != null ? authentication.getName() : "anonymous",
+                result != null ? result.size() : 0
+        );
+
+        return ResponseEntity.ok(result);
+    }
+}
+
+---FILESTART--- AdminInventoryTransactionController.java
+package com.example.groceries.controller;
+
+import com.example.groceries.controller.dto.inventory.AdminInventoryTransactionDTO;
+import com.example.groceries.repository.AdminInventoryTransactionProjection;
+import com.example.groceries.repository.InventoryTransactionRepository;
+import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+@RequestMapping("/api/admin/inventory/transactions")
+@RequiredArgsConstructor
+@CrossOrigin(origins = "http://localhost:5173", allowCredentials = "true")
+public class AdminInventoryTransactionController {
+
+    private static final Logger log = LoggerFactory.getLogger(AdminInventoryTransactionController.class);
+
+    private final InventoryTransactionRepository inventoryTransactionRepository;
+
+    @GetMapping
+    public ResponseEntity<Page<AdminInventoryTransactionDTO>> history(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "50") int size,
+            @RequestParam(required = false) Long variantId,
+            @RequestParam(required = false) Long orderId,
+            @RequestParam(required = false) String type,
+            Authentication authentication
+    ) {
+        int safeSize = Math.min(Math.max(size, 1), 200);
+        PageRequest pageable = PageRequest.of(Math.max(page, 0), safeSize, Sort.by(Sort.Direction.DESC, "id"));
+
+        Page<AdminInventoryTransactionDTO> result = inventoryTransactionRepository
+                .findAdminHistory(variantId, orderId, type, pageable)
+                .map(this::toDto);
+
+        log.info(
+                "AUDIT admin_inventory_transactions_list admin={} page={} size={} variantId={} orderId={} type={}",
+                authentication != null ? authentication.getName() : "anonymous",
+                page,
+                safeSize,
+                variantId,
+                orderId,
+                type
+        );
+
+        return ResponseEntity.ok(result);
+    }
+
+    private AdminInventoryTransactionDTO toDto(AdminInventoryTransactionProjection r) {
+        return new AdminInventoryTransactionDTO(
+                r.getId(),
+                r.getCreatedAt(),
+                r.getType(),
+                r.getVariantId(),
+                r.getVariantName(),
+                r.getProductId(),
+                r.getProductName(),
+                r.getOrderId(),
+                r.getDelta(),
+                r.getStockBefore(),
+                r.getStockAfter(),
+                r.getActorUsername(),
+                r.getReason()
+        );
+    }
+}
+
+---FILESTART--- AdminOrderController.java
+package com.example.groceries.controller;
+
+import com.example.groceries.controller.dto.AdminOrderDetailDTO;
+import com.example.groceries.controller.dto.AdminOrderSummaryDTO;
+import com.example.groceries.model.Order;
+import com.example.groceries.model.OrderStatus;
+import com.example.groceries.service.AdminOrderService;
+import com.example.groceries.service.OrderService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/api/admin/orders")
+@RequiredArgsConstructor
+@CrossOrigin(origins = "http://localhost:5173", allowCredentials = "true")
+@Slf4j
+public class AdminOrderController {
+
+    private final OrderService orderService;
+    private final AdminOrderService adminOrderService;
+
+    @GetMapping
+    public ResponseEntity<Page<AdminOrderSummaryDTO>> listOrders(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) OrderStatus status,
+            @RequestParam(required = false) String q
+    ) {
+        log.info("admin={} action=listOrders status={} q={} page={} size={}", currentUsername(), status, q, page, size);
+        return ResponseEntity.ok(adminOrderService.listOrders(page, size, status, q));
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<AdminOrderDetailDTO> getOrder(@PathVariable Long id) {
+        log.info("admin={} action=getOrder orderId={}", currentUsername(), id);
+        return ResponseEntity.ok(adminOrderService.getOrder(id));
+    }
+
+    @PatchMapping("/{orderId}/status")
+    public ResponseEntity<Order> updateOrderStatus(@PathVariable Long orderId, @RequestBody OrderStatus status) {
+        Order updatedOrder = orderService.updateOrderStatus(orderId, status);
+        log.info("admin={} action=updateOrderStatus orderId={} newStatus={}", currentUsername(), orderId, status);
+        return ResponseEntity.ok(updatedOrder);
+    }
+
+    private String currentUsername() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null) {
+            return "anonymous";
+        }
+        return authentication.getName();
+    }
+}
+
+---FILESTART--- AdminProductController.java
+package com.example.groceries.controller;
+
+import com.example.groceries.controller.dto.ProductCreateRequest;
+import com.example.groceries.controller.dto.ProductMasterDTO;
+import com.example.groceries.controller.dto.ProductUpdateRequest;
+import com.example.groceries.controller.dto.VariantCreateRequest;
+import com.example.groceries.controller.dto.VariantUpdateRequest;
+import com.example.groceries.service.AdminProductService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/api/admin/products")
+@RequiredArgsConstructor
+@CrossOrigin(origins = "http://localhost:5173", allowCredentials = "true")
+public class AdminProductController {
+
+    private static final Logger log = LoggerFactory.getLogger(AdminProductController.class);
+
+    private final AdminProductService adminProductService;
+
+    @GetMapping
+    public ResponseEntity<Page<ProductMasterDTO>> listProducts(
+        @RequestParam(defaultValue = "0") int page,
+        @RequestParam(defaultValue = "20") int size,
+        @RequestParam(required = false) String q,
+        @RequestParam(required = false) Boolean active,
+        Authentication authentication
+    ) {
+    int safeSize = Math.min(Math.max(size, 1), 100);
+    PageRequest pageable = PageRequest.of(Math.max(page, 0), safeSize, Sort.by(Sort.Direction.ASC, "name"));
+    Page<ProductMasterDTO> result = adminProductService.listProducts(q, active, pageable);
+
+    log.info(
+        "AUDIT admin_products_list admin={} page={} size={} q={} active={}",
+        authentication != null ? authentication.getName() : "anonymous",
+        page,
+        safeSize,
+        q,
+        active
+    );
+
+    return ResponseEntity.ok(result);
+    }
+
+    @GetMapping("/{productId}")
+    public ResponseEntity<ProductMasterDTO> getProduct(
+        @PathVariable Long productId,
+        Authentication authentication
+    ) {
+    ProductMasterDTO dto = adminProductService.getProduct(productId);
+    log.info(
+        "AUDIT admin_product_read admin={} productId={}",
+        authentication != null ? authentication.getName() : "anonymous",
+        productId
+    );
+    return ResponseEntity.ok(dto);
+    }
+
+    @PostMapping
+    public ResponseEntity<Long> createProduct(
+        @Valid @RequestBody ProductCreateRequest request,
+        Authentication authentication
+    ) {
+    Long id = adminProductService.createProduct(request);
+    log.info(
+        "AUDIT admin_product_create admin={} productId={}",
+        authentication != null ? authentication.getName() : "anonymous",
+        id
+    );
+    return ResponseEntity.ok(id);
+    }
+
+    @PutMapping("/{productId}")
+    public ResponseEntity<Long> updateProduct(
+            @PathVariable Long productId,
+        @Valid @RequestBody ProductUpdateRequest request,
+        Authentication authentication
+    ) {
+    Long id = adminProductService.updateProduct(productId, request);
+    log.info(
+        "AUDIT admin_product_update admin={} productId={}",
+        authentication != null ? authentication.getName() : "anonymous",
+        productId
+    );
+    return ResponseEntity.ok(id);
+    }
+
+    @DeleteMapping("/{productId}")
+    public ResponseEntity<Void> deleteProduct(
+        @PathVariable Long productId,
+        Authentication authentication
+    ) {
+        adminProductService.deleteProduct(productId);
+    log.info(
+        "AUDIT admin_product_delete admin={} productId={}",
+        authentication != null ? authentication.getName() : "anonymous",
+        productId
+    );
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/{productId}/variants")
+    public ResponseEntity<Long> createVariant(
+            @PathVariable Long productId,
+            @RequestBody VariantCreateRequest request,
+            Authentication authentication
+    ) {
+        Long id = adminProductService.createVariant(productId, request);
+        log.info(
+                "AUDIT admin_variant_create admin={} productId={} variantId={}",
+                authentication != null ? authentication.getName() : "anonymous",
+                productId,
+                id
+        );
+        return ResponseEntity.ok(id);
+    }
+
+    @PutMapping("/variants/{variantId}")
+    public ResponseEntity<Long> updateVariant(
+            @PathVariable Long variantId,
+            @RequestBody VariantUpdateRequest request,
+            Authentication authentication
+    ) {
+        Long id = adminProductService.updateVariant(variantId, request);
+        log.info(
+                "AUDIT admin_variant_update admin={} variantId={}",
+                authentication != null ? authentication.getName() : "anonymous",
+                variantId
+        );
+        return ResponseEntity.ok(id);
+    }
+
+    @DeleteMapping("/variants/{variantId}")
+    public ResponseEntity<Void> deleteVariant(
+            @PathVariable Long variantId,
+            Authentication authentication
+    ) {
+        adminProductService.deleteVariant(variantId);
+        log.info(
+                "AUDIT admin_variant_delete admin={} variantId={}",
+                authentication != null ? authentication.getName() : "anonymous",
+                variantId
+        );
+        return ResponseEntity.noContent().build();
+    }
+}
+
+---FILESTART--- AdminStoreController.java
+package com.example.groceries.controller;
+
+import com.example.groceries.controller.dto.store.AdminStoreDTO;
+import com.example.groceries.service.AdminStoreService;
+import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/admin/stores")
+@RequiredArgsConstructor
+@CrossOrigin(origins = "http://localhost:5173", allowCredentials = "true")
+public class AdminStoreController {
+
+    private static final Logger log = LoggerFactory.getLogger(AdminStoreController.class);
+
+    private final AdminStoreService adminStoreService;
+
+    @GetMapping
+    public ResponseEntity<List<AdminStoreDTO>> list(Authentication authentication) {
+        List<AdminStoreDTO> result = adminStoreService.listStores();
+
+        log.info(
+                "AUDIT admin_store_list admin={} count={}"
+                , authentication != null ? authentication.getName() : "anonymous"
+                , result != null ? result.size() : 0
+        );
+
+        return ResponseEntity.ok(result);
+    }
+
+    @GetMapping("/{storeId}")
+    public ResponseEntity<AdminStoreDTO> get(
+            @PathVariable long storeId,
+            Authentication authentication
+    ) {
+        AdminStoreDTO result = adminStoreService.getStore(storeId);
+
+        log.info(
+                "AUDIT admin_store_get admin={} storeId={}"
+                , authentication != null ? authentication.getName() : "anonymous"
+                , storeId
+        );
+
+        return ResponseEntity.ok(result);
+    }
+}
+
+---FILESTART--- AdminStoreInventoryController.java
+package com.example.groceries.controller;
+
+import com.example.groceries.controller.dto.store.AdminStoreInventoryItemDTO;
+import com.example.groceries.service.AdminStoreInventoryService;
+import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/admin/stores/{storeId}/inventory")
+@RequiredArgsConstructor
+@CrossOrigin(origins = "http://localhost:5173", allowCredentials = "true")
+public class AdminStoreInventoryController {
+
+    private static final Logger log = LoggerFactory.getLogger(AdminStoreInventoryController.class);
+
+    private final AdminStoreInventoryService adminStoreInventoryService;
+
+    @GetMapping
+    public ResponseEntity<List<AdminStoreInventoryItemDTO>> list(
+            @PathVariable long storeId,
+            Authentication authentication
+    ) {
+        List<AdminStoreInventoryItemDTO> result = adminStoreInventoryService.listInventory(storeId);
+
+        log.info(
+                "AUDIT admin_store_inventory_list admin={} storeId={} count={}"
+                , authentication != null ? authentication.getName() : "anonymous"
+                , storeId
+                , result != null ? result.size() : 0
+        );
+
+        return ResponseEntity.ok(result);
+    }
+
+    @GetMapping("/low-stock")
+    public ResponseEntity<List<AdminStoreInventoryItemDTO>> lowStock(
+            @PathVariable long storeId,
+            Authentication authentication
+    ) {
+        List<AdminStoreInventoryItemDTO> result = adminStoreInventoryService.lowStock(storeId);
+
+        log.info(
+                "AUDIT admin_store_inventory_low_stock admin={} storeId={} count={}"
+                , authentication != null ? authentication.getName() : "anonymous"
+                , storeId
+                , result != null ? result.size() : 0
+        );
+
+        return ResponseEntity.ok(result);
+    }
+}
+
+---FILESTART--- AuthController.java
+package com.example.groceries.controller;
+
+import com.example.groceries.controller.dto.LoginRequest;
+import com.example.groceries.controller.dto.RegisterRequest;
+import com.example.groceries.model.User;
+import com.example.groceries.service.UserService;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
+import org.springframework.security.web.context.SecurityContextRepository;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
+
+@RestController
+@RequestMapping("/api/auth")
+@RequiredArgsConstructor
+public class AuthController {
+
+    private final AuthenticationManager authenticationManager;
+    private final UserService userService;
+    private final SecurityContextRepository securityContextRepository = new HttpSessionSecurityContextRepository();
+
+    @PostMapping("/register")
+    public ResponseEntity<?> register(@RequestBody RegisterRequest request) {
+        if (userService.findByUsername(request.getUsername()).isPresent()) {
+            return ResponseEntity.badRequest().body("Username already exists");
+        }
+        if (userService.findByEmail(request.getEmail()).isPresent()) {
+            return ResponseEntity.badRequest().body("Email already exists");
+        }
+        User user = userService.registerUser(request.getUsername(), request.getEmail(), request.getPassword());
+        return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
+                "id", user.getId(),
+                "username", user.getUsername(),
+                "role", user.getRole()
+        ));
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@RequestBody LoginRequest request, HttpServletRequest httpRequest, HttpServletResponse httpResponse) {
+        try {
+            // 1. Authenticate the user credentials
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
+            );
+
+            // 2. Create and set the Security Context
+            var context = SecurityContextHolder.createEmptyContext();
+            context.setAuthentication(authentication);
+            SecurityContextHolder.setContext(context);
+
+            // 3. PERSIST THE SESSION: This generates the JSESSIONID cookie
+            securityContextRepository.saveContext(context, httpRequest, httpResponse);
+
+            User user = userService.findByUsername(request.getUsername()).orElseThrow();
+
+            return ResponseEntity.ok(Map.of(
+                    "id", user.getId(),
+                    "username", user.getUsername(),
+                    "role", user.getRole()
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid username or password");
+        }
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<String> logout(HttpServletRequest request) {
+        // Clear the security context and invalidate the session
+        SecurityContextHolder.clearContext();
+        HttpSession session = request.getSession(false);
+        if (session != null) {
+            session.invalidate();
+        }
+        return ResponseEntity.ok("Logged out successfully");
+    }
+}
+---FILESTART--- CartController.java
+package com.example.groceries.controller;
+
+import com.example.groceries.controller.dto.CartItemRequest;
+import com.example.groceries.controller.dto.CartItemResponse;
+import com.example.groceries.controller.dto.CartSummaryResponse;
+import com.example.groceries.service.CartService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/cart")
+@RequiredArgsConstructor
+public class CartController {
+
+    private final CartService cartService;
+
+    @GetMapping("/{userId}")
+    public ResponseEntity<List<CartItemResponse>> getCart(@PathVariable Long userId) {
+        return ResponseEntity.ok(cartService.getCartItems(userId));
+    }
+
+    @PostMapping("/{userId}/add")
+    public ResponseEntity<List<CartItemResponse>> addItem(
+            @PathVariable Long userId,
+            @RequestParam Long variantId,
+            @RequestParam(defaultValue = "1") Integer quantity) {
+        return ResponseEntity.ok(
+                cartService.addItemAndReturn(userId, variantId, quantity)
+        );
+    }
+
+    @PutMapping("/{userId}/update")
+    public ResponseEntity<List<CartItemResponse>> updateQuantity(
+            @PathVariable Long userId,
+            @RequestParam Long variantId,
+            @RequestParam Integer delta) {
+        return ResponseEntity.ok(
+                cartService.updateQuantityAndReturn(userId, variantId, delta)
+        );
+    }
+
+    @PostMapping("/{userId}/merge")
+    public ResponseEntity<List<CartItemResponse>> mergeCart(
+            @PathVariable Long userId,
+            @RequestBody List<CartItemRequest> items) {
+        return ResponseEntity.ok(
+                cartService.mergeAndReturn(userId, items)
+        );
+    }
+
+    @GetMapping("/{userId}/summary")
+    public ResponseEntity<CartSummaryResponse> summary(@PathVariable Long userId) {
+        return ResponseEntity.ok(cartService.getSummary(userId));
+    }
+    @DeleteMapping("/{userId}/clear")
+    public ResponseEntity<Void> clearCart(@PathVariable Long userId) {
+        cartService.clearCartByUserId(userId);
+        return ResponseEntity.noContent().build();
+    }
+
+}
+
+---FILESTART--- CategoryController.java
+package com.example.groceries.controller;
+
+import com.example.groceries.model.Category;
+import com.example.groceries.service.CategoryService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping({"/categories", "/api/categories"})
+@RequiredArgsConstructor
+@CrossOrigin(origins = "http://localhost:5173", allowCredentials = "true")
+public class CategoryController {
+
+    private final CategoryService categoryService;
+
+    // PUBLIC
+    @GetMapping
+    public ResponseEntity<List<Category>> getAll() {
+        return ResponseEntity.ok(categoryService.getAllCategories());
+    }
+}
+---FILESTART--- GlobalExceptionHandler.java
+package com.example.groceries.controller;
+
+import com.example.groceries.exception.OrderCreateException;
+import com.example.groceries.exception.ResourceNotFoundException;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
+
+@RestControllerAdvice
+public class GlobalExceptionHandler {
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<Map<String, Object>> handleMethodArgumentNotValid(MethodArgumentNotValidException ex) {
+        HttpStatus status = HttpStatus.BAD_REQUEST;
+        Map<String, Object> body = baseErrorBody(status, "Validation failed");
+        Map<String, String> fieldErrors = new HashMap<>();
+        ex.getBindingResult().getFieldErrors().forEach(err -> fieldErrors.put(err.getField(), err.getDefaultMessage()));
+        body.put("fieldErrors", fieldErrors);
+        return new ResponseEntity<>(body, status);
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<Map<String, Object>> handleDataIntegrityViolation(DataIntegrityViolationException ex) {
+        // Most common for admin product edits: unique constraint on products.slug
+        String message = ex.getMostSpecificCause() != null ? ex.getMostSpecificCause().getMessage() : ex.getMessage();
+        if (message != null && message.toLowerCase().contains("uq_products_slug")) {
+            return createErrorResponse(HttpStatus.CONFLICT, "slug already exists");
+        }
+        return createErrorResponse(HttpStatus.CONFLICT, "Data constraint violation");
+    }
+
+    @ExceptionHandler(OrderCreateException.class)
+    public ResponseEntity<Map<String, Object>> handleOrderCreateException(OrderCreateException ex) {
+        HttpStatus status = switch (ex.getCode()) {
+            case EMPTY_CART -> HttpStatus.BAD_REQUEST;
+            case OUT_OF_STOCK, PRICE_MISMATCH -> HttpStatus.CONFLICT;
+        };
+
+        Map<String, Object> body = baseErrorBody(status, ex.getMessage());
+        body.put("code", ex.getCode().name());
+        return new ResponseEntity<>(body, status);
+    }
+
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleResourceNotFoundException(ResourceNotFoundException ex) {
+        return createErrorResponse(HttpStatus.NOT_FOUND, ex.getMessage());
+    }
+
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<Map<String, Object>> handleRuntimeException(RuntimeException ex) {
+        return createErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage());
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<Map<String, Object>> handleIllegalArgumentException(IllegalArgumentException ex) {
+        return createErrorResponse(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
+
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<Map<String, Object>> handleIllegalStateException(IllegalStateException ex) {
+        return createErrorResponse(HttpStatus.CONFLICT, ex.getMessage());
+    }
+
+    private ResponseEntity<Map<String, Object>> createErrorResponse(HttpStatus status, String message) {
+        Map<String, Object> body = baseErrorBody(status, message);
+        return new ResponseEntity<>(body, status);
+    }
+
+    private Map<String, Object> baseErrorBody(HttpStatus status, String message) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("timestamp", LocalDateTime.now());
+        body.put("status", status.value());
+        body.put("error", status.getReasonPhrase());
+        body.put("message", message);
+        return body;
+    }
+}
+---FILESTART--- HomeDashboardController.java
+package com.example.groceries.controller;
+
+import com.example.groceries.controller.dto.dashboard.HomeDashboardDTO;
+import com.example.groceries.security.UserPrincipal;
+import com.example.groceries.service.HomeDashboardService;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+/**
+ * Thin REST controller exposing the Home Dashboard read model.
+ *
+ * This controller intentionally does not contain any business logic.
+ */
+@RestController
+public class HomeDashboardController {
+
+    private final HomeDashboardService homeDashboardService;
+
+    public HomeDashboardController(HomeDashboardService homeDashboardService) {
+        this.homeDashboardService = homeDashboardService;
+    }
+
+    @GetMapping("/api/home-dashboard")
+    public ResponseEntity<HomeDashboardDTO> getDashboard(@AuthenticationPrincipal UserPrincipal principal) {
+        Long userId = principal.getId();
+        return ResponseEntity.ok(homeDashboardService.getDashboard(userId));
+    }
+}
+
+---FILESTART--- InventoryController.java
+package com.example.groceries.controller;
+
+import com.example.groceries.controller.dto.InventoryAdjustRequest;
+import com.example.groceries.controller.dto.InventoryResponse;
+import com.example.groceries.service.InventoryService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+@RestController
+@RequestMapping("/api/admin/inventory")
+@RequiredArgsConstructor
+@CrossOrigin(origins = "http://localhost:5173", allowCredentials = "true")
+public class InventoryController {
+
+    private static final Logger log = LoggerFactory.getLogger(InventoryController.class);
+
+    /**
+     * TODO(security): enforce admin role for /api/admin/** endpoints.
+     */
+    private final InventoryService inventoryService;
+
+    @GetMapping("/variants/{variantId}")
+    public ResponseEntity<InventoryResponse> getVariantInventory(@PathVariable Long variantId) {
+        return ResponseEntity.ok(inventoryService.getVariantInventory(variantId));
+    }
+
+    @PutMapping("/variants/{variantId}/adjust")
+    public ResponseEntity<InventoryResponse> adjustVariantInventory(
+            @PathVariable Long variantId,
+            @RequestBody InventoryAdjustRequest request
+    ) {
+        InventoryResponse res = inventoryService.adjustVariantInventory(variantId, request);
+        log.info(
+                "AUDIT admin_inventory_adjust variantId={} delta={} actor={}",
+                variantId,
+                request != null ? request.getDelta() : null,
+                currentUsername()
+        );
+        return ResponseEntity.ok(res);
+    }
+
+    private String currentUsername() {
+        Authentication authentication = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null) {
+            return "anonymous";
+        }
+        return authentication.getName();
+    }
+}
+
+---FILESTART--- OrderController.java
+package com.example.groceries.controller;
+
+import com.example.groceries.controller.dto.OrderCreateResponse;
+import com.example.groceries.controller.dto.OrderSummaryResponse;
+import com.example.groceries.model.Order;
+import com.example.groceries.service.OrderCreateService;
+import com.example.groceries.service.OrderService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import jakarta.servlet.http.HttpSession;
+
+import java.util.Objects;
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/orders")
+@RequiredArgsConstructor
+@CrossOrigin(origins = "http://localhost:5173", allowCredentials = "true")
+public class OrderController {
+
+    private final OrderService orderService;
+    private final OrderCreateService orderCreateService;
+
+    @PostMapping
+    public ResponseEntity<OrderCreateResponse> createOrder(
+            HttpSession session,
+            @RequestParam(name = "couponCode", required = false) String couponCode
+    ) {
+        // Assumption: userId is stored in server-side session post-login.
+        Long userId = (Long) session.getAttribute("userId");
+        if (userId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        if (couponCode == null || couponCode.isBlank()) {
+            return ResponseEntity.ok(orderCreateService.createOrderSafely(userId));
+        }
+
+        return ResponseEntity.ok(orderCreateService.createOrderSafely(userId, couponCode));
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<List<OrderSummaryResponse>> getMyOrders(HttpSession session) {
+        Long userId = (Long) session.getAttribute("userId");
+        if (userId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        List<OrderSummaryResponse> orders = orderService.getOrdersByUser(userId)
+                .stream()
+                .filter(Objects::nonNull)
+                .map(OrderController::toOrderSummaryResponse)
+                .toList();
+
+        return ResponseEntity.ok(orders);
+    }
+
+    @PostMapping("/{orderId}/cancel")
+    public ResponseEntity<OrderSummaryResponse> cancelOrder(@PathVariable Long orderId) {
+        Order cancelled = orderService.cancelOrder(orderId);
+        return ResponseEntity.ok(toOrderSummaryResponse(cancelled));
+    }
+
+    private static OrderSummaryResponse toOrderSummaryResponse(Order order) {
+        if (order == null) {
+            return null;
+        }
+
+        return OrderSummaryResponse.builder()
+                .orderId(order.getId())
+                .totalAmount(order.getTotalAmount())
+                .status(order.getStatus())
+                .createdAt(order.getCreatedAt())
+                .build();
+    }
+
+    @GetMapping
+    public String health() {
+        return "Orders API is running";
+    }
+}
+
+---FILESTART--- ProductController.java
+package com.example.groceries.controller;
+
+import com.example.groceries.controller.dto.GroupedProductDTO;
+import com.example.groceries.controller.dto.ProductDetailDTO;
+import com.example.groceries.controller.dto.UserProductDTO;
+import com.example.groceries.service.ProductService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/products")
+@RequiredArgsConstructor
+@CrossOrigin(origins = "http://localhost:5173", allowCredentials = "true")
+public class ProductController {
+
+    private final ProductService productService;
+
+
+
+    @GetMapping
+    public ResponseEntity<Page<UserProductDTO>> getAllProducts(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(productService.getUserProducts(PageRequest.of(page, size)));
+    }
+
+    /* =========================
+       PRODUCT DETAILS & RECOMMENDATIONS
+       ========================= */
+    @GetMapping("/{id}")
+    public ResponseEntity<ProductDetailDTO> getProductDetail(@PathVariable Long id) {
+        return ResponseEntity.ok(productService.getProductDetail(id));
+    }
+
+    @GetMapping("/{id}/recommendations")
+    public ResponseEntity<List<UserProductDTO>> getRecommendations(
+            @PathVariable Long id,
+            @RequestParam(required = false) Long userId) {
+        return ResponseEntity.ok(productService.getRecommendations(id, userId));
+    }
+
+    /* =========================
+       GROUPED PRODUCTS (USER / ADMIN)
+       ========================= */
+    @GetMapping("/grouped")
+    public ResponseEntity<Page<GroupedProductDTO>> getGroupedProducts(
+            @RequestParam(required = false) String category,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+        return ResponseEntity.ok(
+                productService.getGroupedProducts(category, PageRequest.of(page, size))
+        );
+    }
+
+
+    @GetMapping("/discount")
+    public ResponseEntity<Page<UserProductDTO>> getProductsByDiscount(
+            @RequestParam Integer threshold,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(
+                productService.getProductsByDiscount(threshold, PageRequest.of(page, size))
+        );
+    }
+}
+
+---FILESTART--- UserController.java
+package com.example.groceries.controller;
+
+import com.example.groceries.model.User;
+import com.example.groceries.repository.UserRepository;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.Map;
+
+@RestController
+@RequestMapping("/api/user")
+public class UserController {
+
+    private final UserRepository userRepository;
+
+    public UserController(UserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<?> me(Authentication authentication) {
+
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.status(401).build();
+        }
+
+        String username = authentication.getName();
+
+        User user = userRepository.findByUsername(username)
+                .orElseThrow();
+
+        return ResponseEntity.ok(
+                Map.of(
+                        "id", user.getId(),
+                        "username", user.getUsername(),
+                        "role", user.getRole()
+                )
+        );
+    }
+}
+

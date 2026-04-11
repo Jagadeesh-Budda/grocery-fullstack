@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Backend Repositories | Backend Docs</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body data-page="repositories">
+<div class="page-shell">
+  <aside class="sidebar">
+    <h2>Backend docs</h2>
+    <input id="nav-search" class="nav-search" type="search" placeholder="Filter pages...">
+    <ul class="nav-list">
+      <li><a href="audit-exception.html" data-page="audit-exception">Backend Audit and Error Handling</a></li>
+<li><a href="configuration.html" data-page="configuration">Backend Configuration</a></li>
+<li><a href="controllers.html" data-page="controllers">Backend Controllers</a></li>
+<li><a href="database-and-migrations.html" data-page="database-and-migrations">Backend Database and Migrations</a></li>
+<li><a href="index.html" data-page="index">Backend Documentation</a></li>
+<li><a href="models.html" data-page="models">Backend Models</a></li>
+<li><a href="overview.html" data-page="overview">Backend Overview</a></li>
+<li><a href="repositories.html" data-page="repositories">Backend Repositories</a></li>
+<li><a href="security-and-auth.html" data-page="security-and-auth">Backend Security and Authentication</a></li>
+<li><a href="services.html" data-page="services">Backend Services</a></li>
+    </ul>
+    <div class="footer">Documentation generated from markdown for easy reading.</div>
+  </aside>
+  <main class="main-content">
+    <div class="page-header">
+      <div>
+        <h1>Backend Repositories</h1>
+        <p class="page-description">The `repository` package contains Spring Data JPA interfaces and projection interfaces that access the database.</p>
+      </div>
+    </div>
+    <article class="content-block">
+      <h1>Backend Repositories</h1>
+<p>The <code>repository</code> package contains Spring Data JPA interfaces and projection interfaces that access the database.</p>
+<h2>How repositories are used</h2>
+<ul>
+<li>Repositories define database access methods using Spring Data JPA conventions.</li>
+<li>Services inject repositories to fetch entities and run queries.</li>
+<li>Repositories keep SQL and query logic out of services and controllers.</li>
+<li>Many methods are automatically implemented by Spring Data from method names.</li>
+<li>Custom queries are declared with <code>@Query</code> for complex joins, filters, and native SQL.</li>
+</ul>
+<h2>Key repository examples</h2>
+<h3><code>UserRepository.java</code></h3>
+<p>This repository provides user lookup and uniqueness checks.</p>
+<pre><code>
+public interface UserRepository extends JpaRepository&lt;User, Long&gt; {
+    boolean existsByUsername(String username);
+    boolean existsByEmail(String email);
+    Optional&lt;User&gt; findByUsername(String username);
+    Optional&lt;User&gt; findByEmail(String email);
+}
+</code></pre>
+<p>Why this matters:</p>
+<ul>
+<li><code>findByUsername</code> and <code>findByEmail</code> are derived query methods that Spring Data implements automatically.</li>
+<li><code>existsByUsername</code> is a simple boolean query useful for sign-up validation.</li>
+<li>No SQL is written in the service layer.</li>
+</ul>
+<h3><code>ProductMasterRepository.java</code></h3>
+<p>This repository shows both method-name queries and JPQL-based custom queries.</p>
+<pre><code>
+List&lt;ProductMaster&gt; findByCategoryId(Long categoryId);
+
+@Query(&quot;&quot;&quot;
+    SELECT DISTINCT pm
+    FROM ProductMaster pm
+    LEFT JOIN FETCH pm.variants
+    WHERE pm.id = :id
+&quot;&quot;&quot;)
+Optional&lt;ProductMaster&gt; findByIdWithVariants(@Param(&quot;id&quot;) Long id);
+</code></pre>
+<p>It also includes a paged admin query:</p>
+<pre><code>
+@EntityGraph(attributePaths = {&quot;category&quot;})
+@Query(&quot;&quot;&quot;
+    SELECT pm
+    FROM ProductMaster pm
+    WHERE (:active IS NULL OR pm.is_active = :active)
+      AND (:q IS NULL OR :q = &#39;&#39; OR LOWER(pm.name) LIKE LOWER(CONCAT(&#39;%&#39;, :q, &#39;%&#39;)))
+&quot;&quot;&quot;)
+Page&lt;ProductMaster&gt; findAdminProducts(
+        @Param(&quot;q&quot;) String q,
+        @Param(&quot;active&quot;) Boolean active,
+        Pageable pageable
+);
+</code></pre>
+<p>Why this matters:</p>
+<ul>
+<li><code>@Query</code> lets the repository express complex selection logic in JPQL.</li>
+<li><code>@EntityGraph</code> avoids N+1 queries when loading the category relationship.</li>
+<li>The repository uses both read-only and paginated query patterns.</li>
+</ul>
+<h3><code>ProductListingRepository.java</code></h3>
+<p>This repository uses native SQL for optimized paging across products and variants.</p>
+<pre><code>
+@Query(
+        value = &quot;&quot;&quot;
+    WITH paged_products AS (
+        SELECT pm.id
+                    FROM products pm
+                    WHERE pm.is_active = true
+        ORDER BY pm.name ASC
+        LIMIT :size OFFSET :offset
+    )
+    SELECT
+      pm.id    AS productId,
+      pm.name  AS productName,
+      c.name   AS category,
+      pv.id    AS variantId,
+      pv.sku   AS variantName,
+      pv.price AS price
+    FROM paged_products pp
+            JOIN products pm ON pm.id = pp.id
+    JOIN product_variants pv ON pv.product_master_id = pm.id
+            JOIN categories c ON c.id = pm.category_id
+    ORDER BY pm.name ASC, pv.price ASC
+&quot;&quot;&quot;,
+        nativeQuery = true
+)
+List&lt;ProductListView&gt; findProducts(
+        @Param(&quot;size&quot;) int size,
+        @Param(&quot;offset&quot;) int offset
+);
+</code></pre>
+<p>Why this matters:</p>
+<ul>
+<li>Native SQL is used when JPQL is not enough or when performance matters.</li>
+<li>The repository returns a projection interface instead of full entities.</li>
+<li><code>countVariants()</code> is also defined with native SQL to support pagination.</li>
+</ul>
+<h3><code>InventoryByStoreRepository.java</code></h3>
+<p>This repository demonstrates native queries for store-level inventory reports.</p>
+<pre><code>
+@Query(
+        value = &quot;&quot;&quot;
+            SELECT
+                inv.product_variant_id AS variantId,
+                v.sku AS variantName,
+                pm.id AS productId,
+                pm.name AS productName,
+                inv.stock AS stock,
+                pm.low_stock_threshold AS threshold
+            FROM inventory_by_store inv
+            JOIN product_variants v ON v.id = inv.product_variant_id
+            JOIN products pm ON pm.id = v.product_master_id
+            WHERE inv.store_id = :storeId
+              AND inv.is_active = true
+            ORDER BY pm.name ASC, v.id ASC
+        &quot;&quot;&quot;,
+        nativeQuery = true
+)
+List&lt;AdminStoreInventoryProjection&gt; findStoreInventory(long storeId);
+</code></pre>
+<p>Why this matters:</p>
+<ul>
+<li>Shows how repository methods can return projection interfaces for reports.</li>
+<li>Native SQL can join multiple tables and return only the fields needed.</li>
+</ul>
+<h3><code>InventoryTransactionRepository.java</code></h3>
+<p>This repository returns paged history with optional filters.</p>
+<pre><code>
+@Query(
+        value = &quot;&quot;&quot;
+            SELECT
+                tx.id AS id,
+                tx.created_at AS createdAt,
+                tx.type AS type,
+                tx.variant_id AS variantId,
+                v.sku AS variantName,
+                pm.id AS productId,
+                pm.name AS productName,
+                tx.order_id AS orderId,
+                tx.delta AS delta,
+                tx.stock_before AS stockBefore,
+                tx.stock_after AS stockAfter,
+                tx.actor_username AS actorUsername,
+                tx.reason AS reason
+            FROM inventory_transactions tx
+            JOIN product_variants v ON v.id = tx.variant_id
+            JOIN products pm ON pm.id = v.product_master_id
+            WHERE (:variantId IS NULL OR tx.variant_id = :variantId)
+              AND (:orderId IS NULL OR tx.order_id = :orderId)
+              AND (:type IS NULL OR tx.type = :type)
+            ORDER BY tx.created_at DESC, tx.id DESC
+        &quot;&quot;&quot;,
+        countQuery = &quot;&quot;&quot;
+            SELECT COUNT(*)
+            FROM inventory_transactions tx
+            WHERE (:variantId IS NULL OR tx.variant_id = :variantId)
+              AND (:orderId IS NULL OR tx.order_id = :orderId)
+              AND (:type IS NULL OR tx.type = :type)
+        &quot;&quot;&quot;,
+        nativeQuery = true
+)
+Page&lt;AdminInventoryTransactionProjection&gt; findAdminHistory(
+        @Param(&quot;variantId&quot;) Long variantId,
+        @Param(&quot;orderId&quot;) Long orderId,
+        @Param(&quot;type&quot;) String type,
+        Pageable pageable
+);
+</code></pre>
+<p>Why this matters:</p>
+<ul>
+<li>Supports advanced admin filtering with dynamic optional parameters.</li>
+<li>Returns paged results using a projection interface.</li>
+</ul>
+<h3><code>HomeDashboardRepository.java</code></h3>
+<p>This repository is a read-only reporting repository for dashboard queries.</p>
+<pre><code>
+@Query(&quot;&quot;&quot;
+    SELECT
+        oi.variant.id AS productVariantId,
+        SUM(oi.quantity) AS totalQuantity
+    FROM OrderItem oi
+    JOIN oi.order o
+    WHERE o.user.id = :userId
+      AND o.createdAt &gt;= :since
+      AND o.status IN (:completedStatuses)
+    GROUP BY oi.variant.id
+    ORDER BY SUM(oi.quantity) DESC, oi.variant.id ASC
+&quot;&quot;&quot;)
+List&lt;MonthlyUsageProjection&gt; findMonthlyUsage(
+        @Param(&quot;userId&quot;) Long userId,
+        @Param(&quot;since&quot;) LocalDateTime since,
+        @Param(&quot;completedStatuses&quot;) List&lt;OrderStatus&gt; completedStatuses
+);
+</code></pre>
+<p>Why this matters:</p>
+<ul>
+<li>Uses JPQL and projections for dashboard aggregation.</li>
+<li>Includes a default method that reduces service-layer complexity.</li>
+</ul>
+<p>Example native query from the same repository:</p>
+<pre><code>
+@Query(
+        value = &quot;&quot;&quot;
+            SELECT
+                oi.product_variant_id AS productVariantId,
+                COUNT(oi.id) AS orderCount,
+                MAX(o.created_at) AS lastOrderedAt
+            FROM order_items oi
+            JOIN orders o ON o.id = oi.order_id
+            JOIN product_variants v ON v.id = oi.product_variant_id
+            WHERE o.user_id = :userId
+              AND o.status IN (&#39;CONFIRMED&#39;,&#39;DELIVERED&#39;)
+              AND v.stock &gt; 0
+            GROUP BY oi.product_variant_id
+            ORDER BY COUNT(oi.id) DESC, MAX(o.created_at) DESC, oi.product_variant_id ASC
+            LIMIT 3
+        &quot;&quot;&quot;,
+        nativeQuery = true
+)
+List&lt;BuyAgainProjection&gt; findTop3BuyAgain(@Param(&quot;userId&quot;) Long userId);
+</code></pre>
+<p>Why this matters:</p>
+<ul>
+<li>Combines SQL ranking and filtering for “buy again” recommendations.</li>
+<li>Shows why projections are useful for read-only reporting.</li>
+</ul>
+<h3><code>CouponRepository.java</code></h3>
+<p>This repository shows derived lookup and modifying update logic.</p>
+<pre><code>
+Optional&lt;Coupon&gt; findByCodeIgnoreCase(String code);
+
+@Modifying
+@Query(&quot;&quot;&quot;
+    UPDATE Coupon c
+    SET c.timesUsed = c.timesUsed + 1
+    WHERE c.id = :couponId
+      AND (c.usageLimit IS NULL OR c.timesUsed &lt; c.usageLimit)
+&quot;&quot;&quot;)
+int incrementTimesUsedIfAvailable(@Param(&quot;couponId&quot;) Long couponId);
+</code></pre>
+<p>Why this matters:</p>
+<ul>
+<li><code>findByCodeIgnoreCase</code> is a derived query for case-insensitive lookup.</li>
+<li><code>@Modifying</code> is required for write operations with <code>@Query</code>.</li>
+<li>The update preserves coupon limits atomically.</li>
+</ul>
+<h3><code>OrderRepository.java</code></h3>
+<p>This repository mixes derived queries, counts, and projections.</p>
+<pre><code>
+List&lt;Order&gt; findByUserId(Long userId);
+long countByCreatedAtGreaterThanEqual(LocalDateTime since);
+
+@Query(&quot;SELECT SUM(o.totalAmount) FROM Order o WHERE o.status IN :statuses&quot;)
+BigDecimal sumTotalAmountByStatusIn(@Param(&quot;statuses&quot;) Collection&lt;OrderStatus&gt; statuses);
+</code></pre>
+<p>For admin summaries:</p>
+<pre><code>
+@Query(&quot;&quot;&quot;
+    SELECT
+        o.id as orderId,
+        u.email as userEmail,
+        o.totalAmount as totalAmount,
+        o.status as status,
+        o.createdAt as createdAt,
+        COUNT(oi.id) as itemsCount
+    FROM Order o
+    JOIN o.user u
+    LEFT JOIN o.orderItems oi
+    WHERE (:status IS NULL OR o.status = :status)
+        AND (:orderId IS NULL OR o.id = :orderId)
+        AND (:email IS NULL OR LOWER(u.email) LIKE LOWER(CONCAT(&#39;%&#39;, :email, &#39;%&#39;)))
+    GROUP BY o.id, u.email, o.totalAmount, o.status, o.createdAt
+&quot;&quot;&quot;)
+Page&lt;AdminOrderSummaryProjection&gt; findAdminOrderSummaries(
+        @Param(&quot;status&quot;) OrderStatus status,
+        @Param(&quot;orderId&quot;) Long orderId,
+        @Param(&quot;email&quot;) String email,
+        Pageable pageable
+);
+</code></pre>
+<p>Why this matters:</p>
+<ul>
+<li>Supports both simple entity retrieval and rich admin reporting.</li>
+<li>Uses projection interfaces for summary rows.</li>
+</ul>
+<h2>Repository categories and purpose</h2>
+<h3>Entity repositories</h3>
+<ul>
+<li><code>UserRepository.java</code> — login, registration, and user lookup.</li>
+<li><code>ProductMasterRepository.java</code> — product catalog and admin product queries.</li>
+<li><code>ProductVariantRepository.java</code> — variant-specific inventory and pricing queries.</li>
+<li><code>CategoryRepository.java</code> — category listing and lookup.</li>
+<li><code>CartRepository.java</code> — shopping cart session storage.</li>
+<li><code>CartItemRepository.java</code> — item-level cart operations.</li>
+<li><code>OrderRepository.java</code> — order retrieval, reporting, and summary queries.</li>
+<li><code>OrderItemRepository.java</code> — order item persistence.</li>
+<li><code>CouponRepository.java</code> — coupon validation and usage updates.</li>
+<li><code>InventoryByStoreRepository.java</code> — store-level stock reports.</li>
+<li><code>InventoryTransactionRepository.java</code> — audit of stock changes.</li>
+<li><code>StoreRepository.java</code> — store metadata and lookup.</li>
+<li><code>HomeDashboardRepository.java</code> — dashboard aggregations and recommendations.</li>
+<li><code>ProductListingRepository.java</code> — native SQL product listing optimized for a large catalog.</li>
+</ul>
+<h3>Projection interfaces</h3>
+<ul>
+<li><code>AdminInventoryTransactionProjection.java</code> — transaction history fields.</li>
+<li><code>AdminLowStockInventoryProjection.java</code> — low-stock inventory summary.</li>
+<li><code>AdminOrderSummaryProjection.java</code> — order summary for admin tables.</li>
+<li><code>AdminStoreInventoryProjection.java</code> — store inventory row data.</li>
+<li><code>BuyAgainProjection.java</code> — recommended buy-again products.</li>
+<li><code>MonthlyUsageProjection.java</code> — monthly usage totals.</li>
+<li><code>LowStockProjection.java</code> — low stock alert fields.</li>
+</ul>
+<h2>Why repositories matter</h2>
+<ul>
+<li>They provide a stable, typed API for data access.</li>
+<li>They avoid spreading SQL and query logic across services.</li>
+<li>They support method name queries, JPQL, native queries, and projections.</li>
+<li>They make the backend easier to maintain and easier for beginners to extend.</li>
+</ul>
+<h2>Beginner tips</h2>
+<ul>
+<li>Prefer derived methods (<code>findBy...</code>) for simple lookups.</li>
+<li>Use <code>@Query</code> when you need joins, grouping, or custom filtering.</li>
+<li>Use projections for DTO-like query results instead of returning full entities.</li>
+<li>Put all custom database logic in repositories, not services.</li>
+<li>Remember to use <code>@Modifying</code> for update/delete queries.</li>
+</ul>
+    </article>
+  </main>
+</div>
+<script src="script.js"></script>
+</body>
+</html>

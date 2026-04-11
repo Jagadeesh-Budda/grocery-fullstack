@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Backend Controllers | Backend Docs</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body data-page="controllers">
+<div class="page-shell">
+  <aside class="sidebar">
+    <h2>Backend docs</h2>
+    <input id="nav-search" class="nav-search" type="search" placeholder="Filter pages...">
+    <ul class="nav-list">
+      <li><a href="audit-exception.html" data-page="audit-exception">Backend Audit and Error Handling</a></li>
+<li><a href="configuration.html" data-page="configuration">Backend Configuration</a></li>
+<li><a href="controllers.html" data-page="controllers">Backend Controllers</a></li>
+<li><a href="database-and-migrations.html" data-page="database-and-migrations">Backend Database and Migrations</a></li>
+<li><a href="index.html" data-page="index">Backend Documentation</a></li>
+<li><a href="models.html" data-page="models">Backend Models</a></li>
+<li><a href="overview.html" data-page="overview">Backend Overview</a></li>
+<li><a href="repositories.html" data-page="repositories">Backend Repositories</a></li>
+<li><a href="security-and-auth.html" data-page="security-and-auth">Backend Security and Authentication</a></li>
+<li><a href="services.html" data-page="services">Backend Services</a></li>
+    </ul>
+    <div class="footer">Documentation generated from markdown for easy reading.</div>
+  </aside>
+  <main class="main-content">
+    <div class="page-header">
+      <div>
+        <h1>Backend Controllers</h1>
+        <p class="page-description">The `controller` package maps HTTP requests from the frontend or API clients to service operations. Each controller in this project is intentionally thin and delegates business logic to service classes.</p>
+      </div>
+    </div>
+    <article class="content-block">
+      <h1>Backend Controllers</h1>
+<p>The <code>controller</code> package maps HTTP requests from the frontend or API clients to service operations. Each controller in this project is intentionally thin and delegates business logic to service classes.</p>
+<h2>AuthController.java</h2>
+<p><code>AuthController</code> handles <code>/api/auth</code> endpoints for registration, login, and logout.</p>
+<p>Example: login flow</p>
+<pre><code>
+@PostMapping(&quot;/login&quot;)
+public ResponseEntity&lt;?&gt; login(@RequestBody LoginRequest request, HttpServletRequest httpRequest, HttpServletResponse httpResponse) {
+    try {
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
+        );
+
+        var context = SecurityContextHolder.createEmptyContext();
+        context.setAuthentication(authentication);
+        SecurityContextHolder.setContext(context);
+        securityContextRepository.saveContext(context, httpRequest, httpResponse);
+
+        User user = userService.findByUsername(request.getUsername()).orElseThrow();
+        return ResponseEntity.ok(Map.of(
+                &quot;id&quot;, user.getId(),
+                &quot;username&quot;, user.getUsername(),
+                &quot;role&quot;, user.getRole()
+        ));
+    } catch (Exception e) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(&quot;Invalid username or password&quot;);
+    }
+}
+</code></pre>
+<p>Why this matters:</p>
+<ul>
+<li><code>AuthenticationManager</code> validates credentials.</li>
+<li><code>SecurityContextHolder</code> stores the authenticated user for the current thread.</li>
+<li><code>HttpSessionSecurityContextRepository</code> persists authentication so the session remains logged in.</li>
+</ul>
+<p>Example: registration flow</p>
+<pre><code>
+@PostMapping(&quot;/register&quot;)
+public ResponseEntity&lt;?&gt; register(@RequestBody RegisterRequest request) {
+    if (userService.findByUsername(request.getUsername()).isPresent()) {
+        return ResponseEntity.badRequest().body(&quot;Username already exists&quot;);
+    }
+    if (userService.findByEmail(request.getEmail()).isPresent()) {
+        return ResponseEntity.badRequest().body(&quot;Email already exists&quot;);
+    }
+    User user = userService.registerUser(request.getUsername(), request.getEmail(), request.getPassword());
+    return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
+            &quot;id&quot;, user.getId(),
+            &quot;username&quot;, user.getUsername(),
+            &quot;role&quot;, user.getRole()
+    ));
+}
+</code></pre>
+<h2>ProductController.java</h2>
+<p><code>ProductController</code> exposes product browsing endpoints under <code>/api/products</code>.</p>
+<p>Example: list products with pagination</p>
+<pre><code>
+@GetMapping
+public ResponseEntity&lt;Page&lt;UserProductDTO&gt;&gt; getAllProducts(
+        @RequestParam(defaultValue = &quot;0&quot;) int page,
+        @RequestParam(defaultValue = &quot;10&quot;) int size) {
+    return ResponseEntity.ok(productService.getUserProducts(PageRequest.of(page, size)));
+}
+</code></pre>
+<p>Example: get product details</p>
+<pre><code>
+@GetMapping(&quot;/{id}&quot;)
+public ResponseEntity&lt;ProductDetailDTO&gt; getProductDetail(@PathVariable Long id) {
+    return ResponseEntity.ok(productService.getProductDetail(id));
+}
+</code></pre>
+<p>Example: recommendations</p>
+<pre><code>
+@GetMapping(&quot;/{id}/recommendations&quot;)
+public ResponseEntity&lt;List&lt;UserProductDTO&gt;&gt; getRecommendations(
+        @PathVariable Long id,
+        @RequestParam(required = false) Long userId) {
+    return ResponseEntity.ok(productService.getRecommendations(id, userId));
+}
+</code></pre>
+<p>Why this matters:</p>
+<ul>
+<li>Shows how one controller can serve multiple related endpoints.</li>
+<li>Demonstrates use of DTOs for both list and detail views.</li>
+</ul>
+<h2>CategoryController.java</h2>
+<p><code>CategoryController</code> exposes public category listings.</p>
+<p>Example:</p>
+<pre><code>
+@GetMapping
+public ResponseEntity&lt;List&lt;Category&gt;&gt; getAll() {
+    return ResponseEntity.ok(categoryService.getAllCategories());
+}
+</code></pre>
+<p>Why this matters:</p>
+<ul>
+<li>Uses dual mapping <code>@RequestMapping({&quot;/categories&quot;, &quot;/api/categories&quot;})</code> so the same data is available to both site and API clients.</li>
+<li>Demonstrates a simple read-only controller.</li>
+</ul>
+<h2>CartController.java</h2>
+<p><code>CartController</code> manages cart operations and returns cart DTOs.</p>
+<p>Examples:</p>
+<pre><code>
+@PostMapping(&quot;/{userId}/add&quot;)
+public ResponseEntity&lt;List&lt;CartItemResponse&gt;&gt; addItem(
+        @PathVariable Long userId,
+        @RequestParam Long variantId,
+        @RequestParam(defaultValue = &quot;1&quot;) Integer quantity) {
+    return ResponseEntity.ok(cartService.addItemAndReturn(userId, variantId, quantity));
+}
+</code></pre>
+<pre><code>
+@PostMapping(&quot;/{userId}/merge&quot;)
+public ResponseEntity&lt;List&lt;CartItemResponse&gt;&gt; mergeCart(
+        @PathVariable Long userId,
+        @RequestBody List&lt;CartItemRequest&gt; items) {
+    return ResponseEntity.ok(cartService.mergeAndReturn(userId, items));
+}
+</code></pre>
+<p>Why this matters:</p>
+<ul>
+<li>Demonstrates both <code>@RequestParam</code> and <code>@RequestBody</code> usage.</li>
+<li>Shows how controllers return typed lists and DTOs.</li>
+</ul>
+<h2>OrderController.java</h2>
+<p><code>OrderController</code> creates and retrieves user orders.</p>
+<p>Example: create an order</p>
+<pre><code>
+@PostMapping
+public ResponseEntity&lt;OrderCreateResponse&gt; createOrder(
+        HttpSession session,
+        @RequestParam(name = &quot;couponCode&quot;, required = false) String couponCode) {
+    Long userId = (Long) session.getAttribute(&quot;userId&quot;);
+    if (userId == null) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+    }
+
+    if (couponCode == null || couponCode.isBlank()) {
+        return ResponseEntity.ok(orderCreateService.createOrderSafely(userId));
+    }
+    return ResponseEntity.ok(orderCreateService.createOrderSafely(userId, couponCode));
+}
+</code></pre>
+<p>Example: get current user orders</p>
+<pre><code>
+@GetMapping(&quot;/me&quot;)
+public ResponseEntity&lt;List&lt;OrderSummaryResponse&gt;&gt; getMyOrders(HttpSession session) {
+    Long userId = (Long) session.getAttribute(&quot;userId&quot;);
+    if (userId == null) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+    }
+
+    List&lt;OrderSummaryResponse&gt; orders = orderService.getOrdersByUser(userId)
+            .stream()
+            .filter(Objects::nonNull)
+            .map(OrderController::toOrderSummaryResponse)
+            .toList();
+    return ResponseEntity.ok(orders);
+}
+</code></pre>
+<p>Why this matters:</p>
+<ul>
+<li>Shows server-side session authentication.</li>
+<li>Demonstrates returning filtered results transformed into response DTOs.</li>
+</ul>
+<h2>UserController.java</h2>
+<p><code>UserController</code> exposes <code>/api/user/me</code> for the current authenticated user.</p>
+<p>Example:</p>
+<pre><code>
+@GetMapping(&quot;/me&quot;)
+public ResponseEntity&lt;?&gt; me(Authentication authentication) {
+    if (authentication == null || !authentication.isAuthenticated()) {
+        return ResponseEntity.status(401).build();
+    }
+
+    String username = authentication.getName();
+    User user = userRepository.findByUsername(username).orElseThrow();
+    return ResponseEntity.ok(Map.of(
+            &quot;id&quot;, user.getId(),
+            &quot;username&quot;, user.getUsername(),
+            &quot;role&quot;, user.getRole()
+    ));
+}
+</code></pre>
+<p>Why this matters:</p>
+<ul>
+<li>Shows how Spring Security injects the current authentication object.</li>
+<li>Demonstrates a profile endpoint that returns minimal user data.</li>
+</ul>
+<h2>HomeDashboardController.java</h2>
+<p><code>HomeDashboardController</code> serves home dashboard metrics.</p>
+<p>Example:</p>
+<pre><code>
+@GetMapping(&quot;/api/home-dashboard&quot;)
+public ResponseEntity&lt;HomeDashboardDTO&gt; getDashboard(@AuthenticationPrincipal UserPrincipal principal) {
+    Long userId = principal.getId();
+    return ResponseEntity.ok(homeDashboardService.getDashboard(userId));
+}
+</code></pre>
+<p>Why this matters:</p>
+<ul>
+<li>Uses <code>@AuthenticationPrincipal</code> to access a custom principal object.</li>
+<li>Keeps the controller very thin.</li>
+</ul>
+<h2>InventoryController.java</h2>
+<p><code>InventoryController</code> exposes admin inventory status and adjustment endpoints.</p>
+<p>Examples:</p>
+<pre><code>
+@GetMapping(&quot;/variants/{variantId}&quot;)
+public ResponseEntity&lt;InventoryResponse&gt; getVariantInventory(@PathVariable Long variantId) {
+    return ResponseEntity.ok(inventoryService.getVariantInventory(variantId));
+}
+</code></pre>
+<pre><code>
+@PutMapping(&quot;/variants/{variantId}/adjust&quot;)
+public ResponseEntity&lt;InventoryResponse&gt; adjustVariantInventory(
+        @PathVariable Long variantId,
+        @RequestBody InventoryAdjustRequest request) {
+    InventoryResponse res = inventoryService.adjustVariantInventory(variantId, request);
+    log.info(&quot;AUDIT admin_inventory_adjust variantId={} delta={} actor={}&quot;,
+            variantId,
+            request != null ? request.getDelta() : null,
+            currentUsername());
+    return ResponseEntity.ok(res);
+}
+</code></pre>
+<p>Why this matters:</p>
+<ul>
+<li>Demonstrates how to write both GET and PUT endpoints.</li>
+<li>Shows audit logging inside a controller method.</li>
+</ul>
+<h2>AdminProductController.java</h2>
+<p>Example: list products with pagination and filtering</p>
+<pre><code>
+@GetMapping
+public ResponseEntity&lt;Page&lt;ProductMasterDTO&gt;&gt; listProducts(
+        @RequestParam(defaultValue = &quot;0&quot;) int page,
+        @RequestParam(defaultValue = &quot;20&quot;) int size,
+        @RequestParam(required = false) String q,
+        @RequestParam(required = false) Boolean active,
+        Authentication authentication) {
+    int safeSize = Math.min(Math.max(size, 1), 100);
+    PageRequest pageable = PageRequest.of(Math.max(page, 0), safeSize, Sort.by(Sort.Direction.ASC, &quot;name&quot;));
+    Page&lt;ProductMasterDTO&gt; result = adminProductService.listProducts(q, active, pageable);
+
+    log.info(&quot;AUDIT admin_products_list admin={} page={} size={} q={} active={}&quot;,
+            authentication != null ? authentication.getName() : &quot;anonymous&quot;,
+            page,
+            safeSize,
+            q,
+            active);
+    return ResponseEntity.ok(result);
+}
+</code></pre>
+<p>Example: create product</p>
+<pre><code>
+@PostMapping
+public ResponseEntity&lt;Long&gt; createProduct(
+        @Valid @RequestBody ProductCreateRequest request,
+        Authentication authentication) {
+    Long id = adminProductService.createProduct(request);
+    log.info(&quot;AUDIT admin_product_create admin={} productId={}&quot;,
+            authentication != null ? authentication.getName() : &quot;anonymous&quot;,
+            id);
+    return ResponseEntity.ok(id);
+}
+</code></pre>
+<p>Why this matters:</p>
+<ul>
+<li>Uses <code>@Valid</code> to validate request DTOs.</li>
+<li>Exposes multiple CRUD endpoints for product management.</li>
+</ul>
+<h2>AdminCategoryController.java</h2>
+<p>Example: update category</p>
+<pre><code>
+@PutMapping(&quot;/{id}&quot;)
+public ResponseEntity&lt;Category&gt; update(@PathVariable Long id, @RequestBody Category updated) {
+    Category category = categoryService.getCategoryById(id);
+    if (category == null) {
+        return ResponseEntity.notFound().build();
+    }
+    category.setName(updated.getName());
+    category.setImageUrl(updated.getImageUrl());
+    Category saved = categoryService.saveCategory(category);
+    log.info(&quot;admin={} action=updateCategory id={} name={}&quot;, currentUsername(), saved.getId(), saved.getName());
+    return ResponseEntity.ok(saved);
+}
+</code></pre>
+<p>Why this matters:</p>
+<ul>
+<li>Demonstrates an update pattern with existence checking.</li>
+<li>Shows using entity objects directly in admin endpoints.</li>
+</ul>
+<h2>AdminCouponController.java</h2>
+<p>Example: create coupon</p>
+<pre><code>
+@PostMapping
+public ResponseEntity&lt;AdminCouponDTO&gt; create(
+        @Valid @RequestBody AdminCouponUpsertRequest request,
+        Authentication authentication) {
+    Coupon created = adminCouponService.create(request);
+    log.info(&quot;AUDIT admin_coupon_create admin={} couponId={} code={}&quot;,
+            authentication != null ? authentication.getName() : &quot;anonymous&quot;,
+            created.getId(),
+            created.getCode());
+    return ResponseEntity.ok(adminCouponService.get(created.getId()));
+}
+</code></pre>
+<p>Why this matters:</p>
+<ul>
+<li>Shows request validation and mapping to a DTO response.</li>
+<li>Keeps admin create and update flows readable.</li>
+</ul>
+<h2>AdminOrderController.java</h2>
+<p>Example: update order status</p>
+<pre><code>
+@PatchMapping(&quot;/{orderId}/status&quot;)
+public ResponseEntity&lt;Order&gt; updateOrderStatus(@PathVariable Long orderId, @RequestBody OrderStatus status) {
+    Order updatedOrder = orderService.updateOrderStatus(orderId, status);
+    log.info(&quot;admin={} action=updateOrderStatus orderId={} newStatus={}&quot;, currentUsername(), orderId, status);
+    return ResponseEntity.ok(updatedOrder);
+}
+</code></pre>
+<p>Why this matters:</p>
+<ul>
+<li>Illustrates <code>PATCH</code> usage for partial updates.</li>
+<li>Shows using domain value objects like <code>OrderStatus</code>.</li>
+</ul>
+<h2>AdminInventoryController.java</h2>
+<p>Example: low stock list</p>
+<pre><code>
+@GetMapping(&quot;/low-stock&quot;)
+public ResponseEntity&lt;List&lt;AdminLowStockInventoryItemDTO&gt;&gt; lowStock(Authentication authentication) {
+    List&lt;AdminLowStockInventoryItemDTO&gt; result = adminInventoryService.lowStock();
+    log.info(&quot;AUDIT admin_inventory_low_stock admin={} count={}&quot;,
+            authentication != null ? authentication.getName() : &quot;anonymous&quot;,
+            result != null ? result.size() : 0);
+    return ResponseEntity.ok(result);
+}
+</code></pre>
+<p>Why this matters:</p>
+<ul>
+<li>Demonstrates admin read-only endpoints.</li>
+<li>Uses typed DTOs for inventory summaries.</li>
+</ul>
+<h2>AdminInventoryTransactionController.java</h2>
+<p>Example: paged transaction history</p>
+<pre><code>
+@GetMapping
+public ResponseEntity&lt;Page&lt;AdminInventoryTransactionDTO&gt;&gt; history(
+        @RequestParam(defaultValue = &quot;0&quot;) int page,
+        @RequestParam(defaultValue = &quot;50&quot;) int size,
+        @RequestParam(required = false) Long variantId,
+        @RequestParam(required = false) Long orderId,
+        @RequestParam(required = false) String type,
+        Authentication authentication) {
+    int safeSize = Math.min(Math.max(size, 1), 200);
+    PageRequest pageable = PageRequest.of(Math.max(page, 0), safeSize, Sort.by(Sort.Direction.DESC, &quot;id&quot;));
+    Page&lt;AdminInventoryTransactionDTO&gt; result = inventoryTransactionRepository
+            .findAdminHistory(variantId, orderId, type, pageable)
+            .map(this::toDto);
+    log.info(&quot;AUDIT admin_inventory_transactions_list admin={} page={} size={} variantId={} orderId={} type={}&quot;,
+            authentication != null ? authentication.getName() : &quot;anonymous&quot;,
+            page,
+            safeSize,
+            variantId,
+            orderId,
+            type);
+    return ResponseEntity.ok(result);
+}
+</code></pre>
+<p>Why this matters:</p>
+<ul>
+<li>Shows optional filtering and pagination.</li>
+<li>Supports admin reporting and audit review.</li>
+</ul>
+<h2>AdminStoreController.java</h2>
+<p>Example: list stores</p>
+<pre><code>
+@GetMapping
+public ResponseEntity&lt;List&lt;AdminStoreDTO&gt;&gt; list(Authentication authentication) {
+    List&lt;AdminStoreDTO&gt; result = adminStoreService.listStores();
+    log.info(&quot;AUDIT admin_store_list admin={} count={}&quot;,
+            authentication != null ? authentication.getName() : &quot;anonymous&quot;,
+            result != null ? result.size() : 0);
+    return ResponseEntity.ok(result);
+}
+</code></pre>
+<p>Why this matters:</p>
+<ul>
+<li>Shows a resource collection endpoint for store management.</li>
+<li>Demonstrates using <code>Authentication</code> just for auditing.</li>
+</ul>
+<h2>AdminStoreInventoryController.java</h2>
+<p>Example: low stock for a store</p>
+<pre><code>
+@GetMapping(&quot;/low-stock&quot;)
+public ResponseEntity&lt;List&lt;AdminStoreInventoryItemDTO&gt;&gt; lowStock(
+        @PathVariable long storeId,
+        Authentication authentication) {
+    List&lt;AdminStoreInventoryItemDTO&gt; result = adminStoreInventoryService.lowStock(storeId);
+    log.info(&quot;AUDIT admin_store_inventory_low_stock admin={} storeId={} count={}&quot;,
+            authentication != null ? authentication.getName() : &quot;anonymous&quot;,
+            storeId,
+            result != null ? result.size() : 0);
+    return ResponseEntity.ok(result);
+}
+</code></pre>
+<p>Why this matters:</p>
+<ul>
+<li>Shows nested route mapping with <code>@PathVariable</code>.</li>
+<li>Demonstrates store-specific admin APIs.</li>
+</ul>
+<h2>AdminDashboardController.java</h2>
+<p>Example: admin stats endpoint</p>
+<pre><code>
+@GetMapping(&quot;/stats&quot;)
+public DashboardStatsDTO getStats() {
+    return dashboardService.getDashboardStats();
+}
+</code></pre>
+<p>Why this matters:</p>
+<ul>
+<li>Demonstrates the simplest controller pattern: return a DTO directly.</li>
+<li>Keeps dashboard endpoints clean and focused.</li>
+</ul>
+<h2>AdminAuditLogController.java</h2>
+<p>Example: audit log filter endpoint</p>
+<pre><code>
+@GetMapping
+public ResponseEntity&lt;Page&lt;AdminAuditLogDTO&gt;&gt; list(
+        @RequestParam(defaultValue = &quot;0&quot;) int page,
+        @RequestParam(defaultValue = &quot;20&quot;) int size,
+        @RequestParam(required = false) String entity,
+        @RequestParam(required = false) String entityId,
+        @RequestParam(required = false) String actor,
+        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
+        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to,
+        Authentication authentication) {
+    int safeSize = Math.min(Math.max(size, 1), 200);
+    PageRequest pageable = PageRequest.of(Math.max(page, 0), safeSize, Sort.by(Sort.Direction.DESC, &quot;createdAt&quot;));
+    Page&lt;AdminAuditLogDTO&gt; result = adminAuditLogService.list(entity, entityId, actor, from, to, pageable);
+    log.info(&quot;AUDIT admin_audit_logs_list admin={} page={} size={} entity={} entityId={} actor={} from={} to={} count={}&quot;,
+            authentication != null ? authentication.getName() : &quot;anonymous&quot;,
+            page,
+            safeSize,
+            entity,
+            entityId,
+            actor,
+            from,
+            to,
+            result.getNumberOfElements());
+    return ResponseEntity.ok(result);
+}
+</code></pre>
+<p>Why this matters:</p>
+<ul>
+<li>Shows date/time filtering and paged responses.</li>
+<li>Reveals how audit logs are exposed for admin tooling.</li>
+</ul>
+<h2>Shared controller patterns</h2>
+<ul>
+<li>Use <code>@RestController</code> for REST APIs and <code>ResponseEntity</code> when you need status control.</li>
+<li>Use <code>@RequestBody</code> for JSON input and <code>@RequestParam</code> / <code>@PathVariable</code> for URL values.</li>
+<li>Keep controllers thin: let services hold business logic.</li>
+<li>Use <code>Authentication</code> or <code>@AuthenticationPrincipal</code> when endpoints need current user context.</li>
+<li>Log admin actions consistently for auditability.</li>
+</ul>
+<h2>Why controllers matter</h2>
+<ul>
+<li>They are the public API boundary of the backend.</li>
+<li>Controllers handle request validation, auth checks, and response shaping.</li>
+<li>Well-defined controllers make frontend integration predictable and easier to test.</li>
+</ul>
+    </article>
+  </main>
+</div>
+<script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Backend Models | Backend Docs</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body data-page="models">
+<div class="page-shell">
+  <aside class="sidebar">
+    <h2>Backend docs</h2>
+    <input id="nav-search" class="nav-search" type="search" placeholder="Filter pages...">
+    <ul class="nav-list">
+      <li><a href="audit-exception.html" data-page="audit-exception">Backend Audit and Error Handling</a></li>
+<li><a href="configuration.html" data-page="configuration">Backend Configuration</a></li>
+<li><a href="controllers.html" data-page="controllers">Backend Controllers</a></li>
+<li><a href="database-and-migrations.html" data-page="database-and-migrations">Backend Database and Migrations</a></li>
+<li><a href="index.html" data-page="index">Backend Documentation</a></li>
+<li><a href="models.html" data-page="models">Backend Models</a></li>
+<li><a href="overview.html" data-page="overview">Backend Overview</a></li>
+<li><a href="repositories.html" data-page="repositories">Backend Repositories</a></li>
+<li><a href="security-and-auth.html" data-page="security-and-auth">Backend Security and Authentication</a></li>
+<li><a href="services.html" data-page="services">Backend Services</a></li>
+    </ul>
+    <div class="footer">Documentation generated from markdown for easy reading.</div>
+  </aside>
+  <main class="main-content">
+    <div class="page-header">
+      <div>
+        <h1>Backend Models</h1>
+        <p class="page-description">The `model` package defines domain entities, enums, and audit objects used by JPA and the application.</p>
+      </div>
+    </div>
+    <article class="content-block">
+      <h1>Backend Models</h1>
+<p>The <code>model</code> package defines domain entities, enums, and audit objects used by JPA and the application.</p>
+<h2>Core entities</h2>
+<h3><code>User.java</code></h3>
+<p><code>User</code> represents application users and stores authentication details.</p>
+<p>Example:</p>
+<pre><code>
+@Entity
+@Table(name = &quot;users&quot;)
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@JsonIgnoreProperties({&quot;hibernateLazyInitializer&quot;, &quot;handler&quot;})
+public class User {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @NotNull
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Role role;
+
+    @NotBlank
+    @Column(unique = true, nullable = false)
+    private String username;
+
+    @NotBlank
+    @Email
+    @Column(unique = true, nullable = false)
+    private String email;
+
+    @NotBlank
+    @Column(nullable = false)
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    private String password;
+
+    @NotNull
+    @Column(name = &quot;is_active&quot;, nullable = false)
+    private Boolean isActive = true;
+}
+</code></pre>
+<p>Why this matters:</p>
+<ul>
+<li><code>@Entity</code> and <code>@Table</code> map the class to the <code>users</code> table.</li>
+<li>Validation annotations like <code>@NotBlank</code> and <code>@Email</code> enforce field constraints.</li>
+<li><code>@JsonProperty(access = WRITE_ONLY)</code> prevents serialized responses from exposing passwords.</li>
+</ul>
+<h3><code>Role.java</code></h3>
+<p><code>Role</code> defines safe, constant role values used by <code>User</code>.</p>
+<p>Example:</p>
+<pre><code>
+public enum Role {
+    ROLE_USER,
+    ROLE_ADMIN
+}
+</code></pre>
+<p>Why this matters:</p>
+<ul>
+<li>Enum types are stored as strings in the database with <code>@Enumerated(EnumType.STRING)</code>.</li>
+<li>They make role checks safer than raw strings.</li>
+</ul>
+<h3><code>Category.java</code></h3>
+<p><code>Category</code> stores product categories and generates slugs automatically.</p>
+<p>Example:</p>
+<pre><code>
+@Entity
+@Table(name = &quot;categories&quot;)
+public class Category {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @NotBlank
+    @Column(nullable = false)
+    private String name;
+
+    @NotBlank
+    @Column(nullable = false, unique = true)
+    private String slug;
+
+    @NotBlank
+    @Column(name = &quot;image_url&quot;, nullable = false)
+    private String imageUrl;
+
+    @Column(columnDefinition = &quot;TEXT&quot;)
+    private String description;
+
+    @NotNull
+    @Column(nullable = false)
+    private Boolean is_active = true;
+
+    @PrePersist
+    void prePersist() {
+        if (slug == null || slug.isBlank()) {
+            slug = slugify(name);
+        }
+    }
+
+    private static String slugify(String input) {
+        String value = input.trim().toLowerCase(Locale.ROOT);
+        value = value.replaceAll(&quot;[^a-z0-9]+&quot;, &quot;-&quot;);
+        value = value.replaceAll(&quot;-+&quot;, &quot;-&quot;);
+        value = value.replaceAll(&quot;(^-)|(-$)&quot;, &quot;&quot;);
+        return value.isBlank() ? null : value;
+    }
+}
+</code></pre>
+<p>Why this matters:</p>
+<ul>
+<li><code>@PrePersist</code> automatically normalizes the slug before saving.</li>
+<li>Categories are a key part of product filtering and storefront navigation.</li>
+</ul>
+<h2>Product entities</h2>
+<h3><code>ProductMaster.java</code></h3>
+<p><code>ProductMaster</code> defines the main catalog item and holds shared product data.</p>
+<p>Example:</p>
+<pre><code>
+@Entity
+@Table(name = &quot;products&quot;)
+public class ProductMaster {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @NotBlank
+    @Column(nullable = false)
+    private String name;
+
+    @Pattern(regexp = &quot;^[a-z0-9]+(?:-[a-z0-9]+)*$&quot;)
+    @Column(name = &quot;slug&quot;, length = 255, unique = true)
+    private String slug;
+
+    @NotBlank
+    @Column(nullable = false, length = 1000)
+    private String description;
+
+    @NotBlank
+    @Column(name = &quot;image_url&quot;, nullable = false)
+    private String imageUrl;
+
+    @NotNull
+    @ElementCollection
+    @CollectionTable(name = &quot;product_images&quot;, joinColumns = @JoinColumn(name = &quot;product_id&quot;, nullable = false))
+    @Column(name = &quot;image_url&quot;, nullable = false)
+    private List&lt;String&gt; images = new ArrayList&lt;&gt;();
+
+    @NotNull
+    @Column(nullable = false)
+    private Boolean is_active = true;
+
+    @NotNull
+    @Min(0)
+    @Max(100000)
+    @Column(name = &quot;low_stock_threshold&quot;, nullable = false)
+    private Integer lowStockThreshold = 5;
+
+    @NotNull
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = &quot;category_id&quot;, nullable = false)
+    private Category category;
+
+    @OneToMany(mappedBy = &quot;productMaster&quot;, cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
+    private List&lt;ProductVariant&gt; variants = new ArrayList&lt;&gt;();
+}
+</code></pre>
+<p>Why this matters:</p>
+<ul>
+<li><code>@ElementCollection</code> stores product images in a separate collection table.</li>
+<li><code>@OneToMany</code> links product variants to the product master.</li>
+<li><code>lowStockThreshold</code> is stored as part of the product definition.</li>
+</ul>
+<h3><code>ProductVariant.java</code></h3>
+<p><code>ProductVariant</code> stores price, stock, discount, and the relationship to a <code>ProductMaster</code>.</p>
+<p>Example:</p>
+<pre><code>
+@Entity
+@Table(name = &quot;product_variants&quot;)
+public class ProductVariant {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @NotBlank
+    @Column(name = &quot;sku&quot;, nullable = false)
+    private String variantName;
+
+    @NotNull
+    @DecimalMin(value = &quot;0.0&quot;, inclusive = false)
+    @Column(name = &quot;price&quot;, nullable = false, precision = 10, scale = 2)
+    private BigDecimal mrp;
+
+    @NotNull
+    @Min(0)
+    @Max(100)
+    @Column(name = &quot;discount_percent&quot;, nullable = false)
+    private Integer discountPercent = 0;
+
+    @NotBlank
+    @Column(nullable = false)
+    private String unit;
+
+    @NotBlank
+    @Column(name = &quot;image_url&quot;, nullable = false)
+    private String imageUrl;
+
+    @NotNull
+    @Min(0)
+    @Column(nullable = false)
+    private Integer stock = 0;
+
+    @NotNull
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = &quot;product_master_id&quot;, nullable = false)
+    @JsonBackReference
+    private ProductMaster productMaster;
+
+    public BigDecimal getPrice() {
+        int discount = (discountPercent != null) ? discountPercent : 0;
+        BigDecimal discountAmount = mrp.multiply(BigDecimal.valueOf(discount))
+                .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+        return mrp.subtract(discountAmount);
+    }
+}
+</code></pre>
+<p>Why this matters:</p>
+<ul>
+<li><code>getPrice()</code> computes the effective price using discount percentage.</li>
+<li>The entity keeps pricing and stock data close to the variant.</li>
+<li><code>@ManyToOne</code> links the variant back to its master product.</li>
+</ul>
+<h2>Shopping cart entities</h2>
+<h3><code>Cart.java</code></h3>
+<p><code>Cart</code> represents the user&#39;s current shopping cart.</p>
+<p>Example:</p>
+<pre><code>
+@Entity
+@Table(name = &quot;carts&quot;)
+public class Cart {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @NotNull
+    @OneToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = &quot;user_id&quot;, nullable = false, unique = true)
+    private User user;
+
+    @JsonManagedReference
+    @OneToMany(mappedBy = &quot;cart&quot;, cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List&lt;CartItem&gt; items = new ArrayList&lt;&gt;();
+}
+</code></pre>
+<p>Why this matters:</p>
+<ul>
+<li><code>@OneToOne</code> ensures each user has at most one cart.</li>
+<li><code>orphanRemoval = true</code> automatically deletes removed cart items.</li>
+</ul>
+<h3><code>CartItem.java</code></h3>
+<p><code>CartItem</code> stores a selected variant and quantity.</p>
+<p>Example:</p>
+<pre><code>
+@Entity
+@Table(name = &quot;cart_items&quot;)
+public class CartItem {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @JsonBackReference
+    @NotNull
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = &quot;cart_id&quot;, nullable = false)
+    private Cart cart;
+
+    @NotNull
+    @ManyToOne(fetch = FetchType.EAGER, optional = false)
+    @JoinColumn(name = &quot;product_variant_id&quot;, nullable = false)
+    private ProductVariant productVariant;
+
+    @NotNull
+    @Min(value = 1, message = &quot;Quantity must be at least 1&quot;)
+    @Column(nullable = false)
+    private Integer quantity;
+}
+</code></pre>
+<p>Why this matters:</p>
+<ul>
+<li>The cart item links to both a cart and a product variant.</li>
+<li><code>@ManyToOne(fetch = FetchType.EAGER)</code> loads variant details immediately, which is useful for cart display.</li>
+</ul>
+<h2>Order entities</h2>
+<h3><code>Order.java</code></h3>
+<p><code>Order</code> stores order totals, status, and line items.</p>
+<p>Example:</p>
+<pre><code>
+@Entity
+@Table(name = &quot;orders&quot;)
+public class Order {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @NotNull
+    @ManyToOne(fetch = FetchType.EAGER, optional = false)
+    @JoinColumn(name = &quot;user_id&quot;, nullable = false)
+    private User user;
+
+    @NotNull
+    @DecimalMin(value = &quot;0.0&quot;, inclusive = true)
+    @Column(name = &quot;total_amount&quot;, nullable = false, precision = 10, scale = 2)
+    private BigDecimal totalAmount;
+
+    @NotNull
+    @DecimalMin(value = &quot;0.0&quot;, inclusive = true)
+    @Column(name = &quot;subtotal_amount&quot;, nullable = false, precision = 10, scale = 2)
+    private BigDecimal subtotalAmount;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = &quot;coupon_id&quot;)
+    private Coupon coupon;
+
+    @NotNull
+    @Enumerated(EnumType.STRING)
+    @Column(name = &quot;status&quot;, nullable = false)
+    private OrderStatus status = OrderStatus.CREATED;
+
+    @NotNull
+    @Column(name = &quot;created_at&quot;, nullable = false)
+    private LocalDateTime createdAt = LocalDateTime.now();
+
+    @OneToMany(mappedBy = &quot;order&quot;, cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @JsonManagedReference
+    private List&lt;OrderItem&gt; orderItems = new ArrayList&lt;&gt;();
+
+    @PrePersist
+    @PreUpdate
+    private void ensureAmountBreakdown() {
+        if (discountAmount == null) {
+            discountAmount = BigDecimal.ZERO;
+        }
+        if (subtotalAmount == null) {
+            subtotalAmount = (totalAmount != null) ? totalAmount : BigDecimal.ZERO;
+        }
+        if (totalAmount == null) {
+            totalAmount = subtotalAmount.subtract(discountAmount);
+        }
+    }
+
+    public void addOrderItem(OrderItem item) {
+        orderItems.add(item);
+        item.setOrder(this);
+    }
+}
+</code></pre>
+<p>Why this matters:</p>
+<ul>
+<li><code>@PrePersist</code> and <code>@PreUpdate</code> ensure totals are consistent.</li>
+<li><code>addOrderItem()</code> keeps the bidirectional relationship in sync.</li>
+<li>The order contains both <code>subtotalAmount</code> and <code>discountAmount</code> for accurate billing.</li>
+</ul>
+<h3><code>OrderItem.java</code></h3>
+<p><code>OrderItem</code> stores the product snapshot for each line item.</p>
+<p>Example:</p>
+<pre><code>
+@Entity
+@Table(name = &quot;order_items&quot;)
+public class OrderItem {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @NotNull
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = &quot;order_id&quot;, nullable = false)
+    @JsonBackReference
+    private Order order;
+
+    @NotNull
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = &quot;product_variant_id&quot;, nullable = false)
+    private ProductVariant variant;
+
+    @NotNull
+    @Column(name = &quot;product_id&quot;, nullable = false)
+    private Long productId;
+
+    @NotBlank
+    @Column(name = &quot;product_name&quot;, nullable = false)
+    private String productName;
+
+    @NotBlank
+    @Column(name = &quot;variant_name&quot;, nullable = false)
+    private String variantName;
+
+    @NotNull
+    @Min(1)
+    @Column(nullable = false)
+    private Integer quantity;
+
+    @NotNull
+    @DecimalMin(value = &quot;0.0&quot;, inclusive = false)
+    @Column(nullable = false, precision = 10, scale = 2)
+    private BigDecimal price;
+
+    @NotNull
+    @DecimalMin(value = &quot;0.0&quot;, inclusive = false)
+    @Column(nullable = false, precision = 10, scale = 2)
+    private BigDecimal subtotal;
+
+    @PrePersist
+    @PreUpdate
+    private void calculateSubtotal() {
+        this.subtotal = price.multiply(BigDecimal.valueOf(quantity));
+    }
+}
+</code></pre>
+<p>Why this matters:</p>
+<ul>
+<li><code>OrderItem</code> keeps a snapshot of product details so order history remains stable even if the product later changes.</li>
+<li><code>calculateSubtotal()</code> guarantees line item totals are computed consistently.</li>
+</ul>
+<h2>Coupon and inventory models</h2>
+<h3><code>Coupon.java</code></h3>
+<p><code>Coupon</code> stores promotion rules and usage state.</p>
+<p>Example:</p>
+<pre><code>
+@Entity
+@Table(name = &quot;coupons&quot;)
+public class Coupon {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @NotBlank
+    @Column(nullable = false, unique = true, length = 50)
+    private String code;
+
+    @NotNull
+    @Min(1)
+    @Max(100)
+    @Column(name = &quot;percent_off&quot;, nullable = false)
+    private Integer percentOff;
+
+    @Column(name = &quot;expires_at&quot;)
+    private LocalDateTime expiresAt;
+
+    @Column(name = &quot;usage_limit&quot;)
+    private Integer usageLimit;
+
+    @NotNull
+    @Min(0)
+    @Column(name = &quot;times_used&quot;, nullable = false)
+    private Integer timesUsed = 0;
+
+    @NotNull
+    @Column(nullable = false)
+    private Boolean is_active = true;
+
+    @CreationTimestamp
+    @Column(name = &quot;created_at&quot;, nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+}
+</code></pre>
+<p>Why this matters:</p>
+<ul>
+<li>It includes both percentage discount and expiration/usage limit.</li>
+<li>The model is used by <code>CouponService</code> to validate and consume coupons.</li>
+</ul>
+<h3><code>InventoryByStore.java</code></h3>
+<p><code>InventoryByStore</code> tracks stock at each physical store.</p>
+<p>Example:</p>
+<pre><code>
+@Entity
+@Table(name = &quot;inventory_by_store&quot;, uniqueConstraints = {
+        @UniqueConstraint(name = &quot;uq_inventory_by_store_store_variant&quot;, columnNames = {&quot;store_id&quot;, &quot;product_variant_id&quot;})
+})
+public class InventoryByStore {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @NotNull
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = &quot;store_id&quot;, nullable = false)
+    private Store store;
+
+    @NotNull
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = &quot;product_variant_id&quot;, nullable = false)
+    private ProductVariant productVariant;
+
+    @NotNull
+    @Min(0)
+    @Column(nullable = false)
+    private Integer stock = 0;
+
+    @NotNull
+    @Column(nullable = false)
+    private Boolean is_active = true;
+}
+</code></pre>
+<p>Why this matters:</p>
+<ul>
+<li>It supports store-specific stock data for multi-store inventory.</li>
+<li>Unique constraints prevent duplicate store/variant rows.</li>
+</ul>
+<h3><code>InventoryTransaction.java</code></h3>
+<p><code>InventoryTransaction</code> records stock changes and the actor for audit.</p>
+<p>Example:</p>
+<pre><code>
+@Entity
+@Table(name = &quot;inventory_transactions&quot;)
+public class InventoryTransaction {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @CreationTimestamp
+    @Column(name = &quot;created_at&quot;, nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    @NotNull
+    @Enumerated(EnumType.STRING)
+    @Column(name = &quot;type&quot;, nullable = false, length = 50)
+    private InventoryTransactionType type;
+
+    @NotNull
+    @Column(name = &quot;variant_id&quot;, nullable = false)
+    private Long variantId;
+
+    @Column(name = &quot;order_id&quot;)
+    private Long orderId;
+
+    @NotNull
+    @Column(name = &quot;delta&quot;, nullable = false)
+    private Integer delta;
+
+    @NotNull
+    @Column(name = &quot;stock_before&quot;, nullable = false)
+    private Integer stockBefore;
+
+    @NotNull
+    @Column(name = &quot;stock_after&quot;, nullable = false)
+    private Integer stockAfter;
+
+    @Column(name = &quot;reason&quot;)
+    private String reason;
+
+    @Column(name = &quot;actor_username&quot;)
+    private String actorUsername;
+
+    @Column(name = &quot;actor_user_id&quot;)
+    private Long actorUserId;
+}
+</code></pre>
+<p>Why this matters:</p>
+<ul>
+<li>It supports audit trails for stock adjustments.</li>
+<li>It stores both before/after stock values and the user performing the action.</li>
+</ul>
+<h3><code>Store.java</code></h3>
+<p><code>Store</code> defines physical store metadata.</p>
+<p>Example:</p>
+<pre><code>
+@Entity
+@Table(name = &quot;stores&quot;)
+public class Store {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @NotBlank
+    @Column(nullable = false, unique = true, length = 50)
+    private String code;
+
+    @NotBlank
+    @Column(nullable = false)
+    private String name;
+
+    @NotNull
+    @Column(nullable = false)
+    private Boolean is_active = true;
+}
+</code></pre>
+<p>Why this matters:</p>
+<ul>
+<li>Store data supports multi-location inventory and admin store management.</li>
+</ul>
+<h3><code>AuditLog.java</code></h3>
+<p><code>AuditLog</code> stores change history for admin operations.</p>
+<p>Example:</p>
+<pre><code>
+@Entity
+@Table(name = &quot;audit_log&quot;)
+public class AuditLog {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @CreationTimestamp
+    @Column(name = &quot;created_at&quot;, nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    @Column(name = &quot;actor_username&quot;)
+    private String actorUsername;
+
+    @Column(name = &quot;actor_user_id&quot;)
+    private Long actorUserId;
+
+    @Column(name = &quot;entity&quot;, nullable = false, length = 100)
+    private String entity;
+
+    @Column(name = &quot;entity_id&quot;, nullable = false, length = 64)
+    private String entityId;
+
+    @Column(name = &quot;before_json&quot;, length = 100000)
+    private String beforeJson;
+
+    @Column(name = &quot;after_json&quot;, length = 100000)
+    private String afterJson;
+}
+</code></pre>
+<p>Why this matters:</p>
+<ul>
+<li>It captures a JSON snapshot of before and after state.</li>
+<li>It enables auditing of admin mutations.</li>
+</ul>
+<h2>Order state validation</h2>
+<h3><code>OrderStatus.java</code></h3>
+<p><code>OrderStatus</code> defines the allowed lifecycle values for an order.</p>
+<p>Example:</p>
+<pre><code>
+public enum OrderStatus {
+    PENDING,
+    CREATED,
+    CONFIRMED,
+    PACKED,
+    SHIPPED,
+    DELIVERED,
+    CANCELLED
+}
+</code></pre>
+<p>Why this matters:</p>
+<ul>
+<li>Enums restrict order statuses to a defined set.</li>
+<li>They are stored as strings with <code>@Enumerated(EnumType.STRING)</code>.</li>
+</ul>
+<h3><code>OrderStatusValidator.java</code></h3>
+<p><code>OrderStatusValidator</code> enforces valid transitions between statuses.</p>
+<p>Example:</p>
+<pre><code>
+public class OrderStatusValidator {
+    private static final Map&lt;OrderStatus, Set&lt;OrderStatus&gt;&gt; ALLOWED_TRANSITIONS = new EnumMap&lt;&gt;(OrderStatus.class);
+
+    static {
+        ALLOWED_TRANSITIONS.put(OrderStatus.CREATED, EnumSet.of(OrderStatus.PENDING, OrderStatus.CANCELLED));
+        ALLOWED_TRANSITIONS.put(OrderStatus.PENDING, EnumSet.of(OrderStatus.CONFIRMED, OrderStatus.CANCELLED));
+        ALLOWED_TRANSITIONS.put(OrderStatus.CONFIRMED, EnumSet.of(OrderStatus.PACKED, OrderStatus.CANCELLED));
+        ALLOWED_TRANSITIONS.put(OrderStatus.PACKED, EnumSet.of(OrderStatus.SHIPPED));
+        ALLOWED_TRANSITIONS.put(OrderStatus.SHIPPED, EnumSet.of(OrderStatus.DELIVERED));
+        ALLOWED_TRANSITIONS.put(OrderStatus.DELIVERED, EnumSet.noneOf(OrderStatus.class));
+        ALLOWED_TRANSITIONS.put(OrderStatus.CANCELLED, EnumSet.noneOf(OrderStatus.class));
+    }
+
+    public static void validate(OrderStatus currentStatus, OrderStatus nextStatus) {
+        if (currentStatus == nextStatus) {
+            return;
+        }
+        Set&lt;OrderStatus&gt; allowedNextStatuses = ALLOWED_TRANSITIONS.getOrDefault(currentStatus, EnumSet.noneOf(OrderStatus.class));
+        if (!allowedNextStatuses.contains(nextStatus)) {
+            throw new IllegalStateException(&quot;Invalid status transition from &quot; + currentStatus + &quot; to &quot; + nextStatus);
+        }
+    }
+}
+</code></pre>
+<p>Why this matters:</p>
+<ul>
+<li>It prevents invalid order state changes at the service layer.</li>
+<li>It makes order processing rules explicit and maintainable.</li>
+</ul>
+<h2>How models fit together</h2>
+<ul>
+<li><code>User</code> owns <code>Cart</code> and <code>Order</code> records.</li>
+<li><code>ProductMaster</code> groups multiple <code>ProductVariant</code>s.</li>
+<li><code>CartItem</code> references a <code>ProductVariant</code> and belongs to a <code>Cart</code>.</li>
+<li><code>OrderItem</code> references a <code>ProductVariant</code>, stores product snapshot fields, and belongs to an <code>Order</code>.</li>
+<li><code>InventoryByStore</code> links <code>Store</code> and <code>ProductVariant</code> stock levels.</li>
+<li><code>InventoryTransaction</code> records every stock change for audit.</li>
+</ul>
+<h2>Why models matter</h2>
+<ul>
+<li>Models define the database schema and business data structure.</li>
+<li>They combine persistence annotations, validation, and lifecycle hooks.</li>
+<li>Clear model design makes it easier to reason about services and controllers.</li>
+<li>Builders, enums, and validators help keep the domain consistent and safe.</li>
+</ul>
+    </article>
+  </main>
+</div>
+<script src="script.js"></script>
+</body>
+</html>
